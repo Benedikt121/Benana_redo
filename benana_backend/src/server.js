@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 
 const app = express();
 
@@ -12,3 +12,8 @@ const server = app.listen(PORT, () => {
 });
 
 
+// Users: username, password, profile picture, game history (kniffel und olympiade), statistics (win/loss ratio, average score, etc.),
+// maybe personal color scheme for UI and dice theme
+// Kniffel: room id, game state (players, score, current player, winner, ...), game history (for statistics), chat?
+// Olympiade: room id, game state (players, score, options, winner), game history (for statistics), chat?
+// Authentication: JWT, sessions, or similar
