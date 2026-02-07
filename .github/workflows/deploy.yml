@@ -65,9 +65,10 @@ jobs:
         sftp_only_newer: true
 
     - name: Restart Pterodactyl Server
-      uses: sinisterick/pterodactyl-action@master
-      with:
-        server_id: ${{ secrets.PTERO_SERVER_ID }}
-        api_key: ${{ secrets.PTERO_API_KEY }}
-        host_url: https://${{ secrets.PTERO_HOST }}
-        action: 'restart'
+      run: |
+        curl -X POST \
+          "https://${{ secrets.PTERO_HOST }}/api/client/servers/${{ secrets.PTERO_SERVER_ID }}/power" \
+          -H "Authorization: Bearer ${{ secrets.PTERO_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -H "Accept: application/json" \
+          -d '{"signal": "restart"}'
