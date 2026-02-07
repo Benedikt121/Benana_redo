@@ -24,6 +24,7 @@ jobs:
           cd benana_backend
           npm ci
           npm run build
+          zip -r backend.zip dist package.json package-lock.json
 
       # 2. Frontend: Installieren & Bauen
       - name: Build Frontend
@@ -31,6 +32,8 @@ jobs:
           cd benana_frontend
           npm ci
           npm run build
+          mv build client
+          zip -r frontend.zip client
 
       # 3. Upload: Backend Code (dist + package.json) via API
       # Wir laden 'dist' Ordner hoch. Ziel ist /dist auf dem Server.
@@ -40,8 +43,9 @@ jobs:
           panel-host: https://${{ secrets.PTERO_HOST }}
           api-key: ${{ secrets.PTERO_API_KEY }}
           server-id: ${{ secrets.PTERO_SERVER_ID }}
-          source: "benana_backend/dist/**/*"
-          target: "/dist/"
+          source: "benana_backend/backend.zip"
+          target: "/backend.zip"
+          decompress-target: true
 
       - name: Upload Backend Configs
         uses: rexlManu/pterodactyl-upload-action@v2.5
@@ -52,7 +56,7 @@ jobs:
           sources: |
             benana_backend/package.json
             benana_backend/package-lock.json
-          target: "/" # Lädt die Dateien ins Hauptverzeichnis
+          target: "/"
 
       # 4. Upload: Frontend Build (in den Ordner /client)
       - name: Upload Frontend Client
@@ -61,6 +65,7 @@ jobs:
           panel-host: https://${{ secrets.PTERO_HOST }}
           api-key: ${{ secrets.PTERO_API_KEY }}
           server-id: ${{ secrets.PTERO_SERVER_ID }}
-          source: "benana_frontend/build/**"
-          target: "/client/"
+          source: "benana_frontend/frontend.zip"
+          target: "/frontend.zip"
+          decompress-target: true
           restart: true
