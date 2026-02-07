@@ -1,0 +1,73 @@
+name: Deploy to Pterodactyl
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '21'
+        cache: 'npm'
+        cache-dependency-path: benana_backend/package-lock.json
+
+    - name: Install & Build Backend
+      run: |
+        cd benana_backend
+        npm ci
+        npm run build
+        npm prune --production 
+
+    - name: Install & Build Frontend
+      run: |
+        cd benana_frontend
+        npm ci
+        npm run build
+
+    - name: SFTP Upload
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        username: ${{ secrets.PTERO_USERNAME }}
+        server: ${{ secrets.PTERO_HOST }}
+        port: 2022
+        password: ${{ secrets.PTERO_PASSWORD }}
+        local_path: './benana_backend/dist/*'
+        remote_path: '/dist/'
+        sftp_only_newer: true
+
+    - name: Upload Node Modules (Backend)
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        username: ${{ secrets.PTERO_USERNAME }}
+        server: ${{ secrets.PTERO_HOST }}
+        port: 2022
+        password: ${{ secrets.PTERO_PASSWORD }}
+        local_path: './benana_backend/node_modules/*'
+        remote_path: '/node_modules/'
+        sftp_only_newer: true
+
+    - name: Upload Frontend Build (in public folder vom backend)
+      uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      with:
+        username: ${{ secrets.PTERO_USERNAME }}
+        server: ${{ secrets.PTERO_HOST }}
+        port: 2022
+        password: ${{ secrets.PTERO_PASSWORD }}
+        local_path: './benana_frontend/dist/*' 
+        remote_path: '/client/' 
+        sftp_only_newer: true
+
+    - name: Restart Pterodactyl Server
+      uses: sinisterick/pterodactyl-action@master
+      with:
+        server_id: ${{ secrets.PTERO_SERVER_ID }}
+        api_key: ${{ secrets.PTERO_API_KEY }}
+        host_url: https://${{ secrets.PTERO_HOST }}
+        action: 'restart'
