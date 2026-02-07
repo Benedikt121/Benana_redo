@@ -32,7 +32,7 @@ jobs:
           cd benana_frontend
           npm ci
           npm run build
-          mv build client
+          mv dist client
           zip -r frontend.zip client
 
       # 3. Upload: Backend Code (dist + package.json) via API
