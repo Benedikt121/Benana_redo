@@ -40,7 +40,6 @@ jobs:
           password: ${{ secrets.PTERO_PASSWORD }}
           local_path: "./benana_backend/dist/*"
           remote_path: "/dist/"
-          sftp_only_newer: true
 
       - name: Upload Node Modules (Backend)
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
