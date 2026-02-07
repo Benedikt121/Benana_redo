@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # 1. Backend: Installieren & Bauen
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -18,51 +19,54 @@ jobs:
           cache: "npm"
           cache-dependency-path: benana_backend/package-lock.json
 
-      - name: Install & Build Backend
+      - name: Build Backend
         run: |
           cd benana_backend
           npm ci
           npm run build
-          npm prune --production
+          # Wir erstellen kein node_modules für den Upload, das macht der Server!
 
-      - name: Install & Build Frontend
+      # 2. Frontend: Installieren & Bauen
+      - name: Build Frontend
         run: |
           cd benana_frontend
           npm ci
           npm run build
 
-      - name: SFTP Upload
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      # 3. Upload: Backend Code (dist + package.json) via API
+      # Wir laden 'dist' Ordner hoch. Ziel ist /dist auf dem Server.
+      - name: Upload Backend Dist
+        uses: rexlManu/pterodactyl-upload-action@v2.5
         with:
-          username: ${{ secrets.PTERO_USERNAME }}
-          server: ${{ secrets.PTERO_HOST }}
-          port: 2022
-          password: ${{ secrets.PTERO_PASSWORD }}
-          local_path: "./benana_backend/dist/*"
-          remote_path: "/dist/"
+          panel-host: https://${{ secrets.PTERO_HOST }}
+          api-key: ${{ secrets.PTERO_API_KEY }}
+          server-id: ${{ secrets.PTERO_SERVER_ID }}
+          source: "benana_backend/dist"
+          target: "/dist"
 
-      - name: Upload Node Modules (Backend)
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      - name: Upload Backend Configs
+        uses: rexlManu/pterodactyl-upload-action@v2.5
         with:
-          username: ${{ secrets.PTERO_USERNAME }}
-          server: ${{ secrets.PTERO_HOST }}
-          port: 2022
-          password: ${{ secrets.PTERO_PASSWORD }}
-          local_path: "./benana_backend/node_modules/*"
-          remote_path: "/node_modules/"
-          sftp_only_newer: true
+          panel-host: https://${{ secrets.PTERO_HOST }}
+          api-key: ${{ secrets.PTERO_API_KEY }}
+          server-id: ${{ secrets.PTERO_SERVER_ID }}
+          sources: |
+            benana_backend/package.json
+            benana_backend/package-lock.json
+          target: "/" # Lädt die Dateien ins Hauptverzeichnis
 
-      - name: Upload Frontend Build (in public folder vom backend)
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+      # 4. Upload: Frontend Build (in den Ordner /client)
+      - name: Upload Frontend Client
+        uses: rexlManu/pterodactyl-upload-action@v2.5
         with:
-          username: ${{ secrets.PTERO_USERNAME }}
-          server: ${{ secrets.PTERO_HOST }}
-          port: 2022
-          password: ${{ secrets.PTERO_PASSWORD }}
-          local_path: "./benana_frontend/dist/*"
-          remote_path: "/client/"
-          sftp_only_newer: true
+          panel-host: https://${{ secrets.PTERO_HOST }}
+          api-key: ${{ secrets.PTERO_API_KEY }}
+          server-id: ${{ secrets.PTERO_SERVER_ID }}
+          source: "benana_frontend/build"
+          target: "/client"
 
+      # 5. Restart & Install Dependencies
+      # Damit node_modules installiert werden, passen wir den Startup-Command leicht an oder verlassen uns auf das Egg.
       - name: Restart Pterodactyl Server
         run: |
           curl -X POST \
