@@ -11,7 +11,7 @@ app.get("/hello", (req, res) => {
   res.json({ message: "Hello World!" });
 });
 
-const PORT = 5001;
+const PORT = process.env.SERVER_PORT || process.env.PORT || 5001;
 
 const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
