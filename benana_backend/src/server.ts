@@ -17,7 +17,7 @@ const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
 
 // 2. Catch-All Route: Alles was keine API ist, geht an React (index.html)
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));
 });
 
