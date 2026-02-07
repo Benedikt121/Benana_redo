@@ -19,12 +19,25 @@ jobs:
           cache: "npm"
           cache-dependency-path: benana_backend/package-lock.json
 
-      - name: Build Backend
+      - name: Debug & Build Backend
         run: |
           cd benana_backend
+
+          echo "=== DATEI-STRUKTUR VOR BUILD ==="
+          ls -R
+
+          echo "=== INHALT VON TSCONFIG ==="
+          cat tsconfig.json
+
+          echo "=== NPM INSTALL ==="
           npm ci
-          npm run build
-          # Wir erstellen kein node_modules für den Upload, das macht der Server!
+
+          echo "=== BUILD START ==="
+          # Wir erzwingen verbose output, um zu sehen, welche Dateien tsc ansieht
+          npm run build -- --listFiles
+
+          echo "=== DATEI-STRUKTUR NACH BUILD ==="
+          ls -R
 
       # 2. Frontend: Installieren & Bauen
       - name: Build Frontend
