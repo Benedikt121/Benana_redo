@@ -25,7 +25,7 @@ jobs:
           npm ci
           npx prisma generate
           npm run build
-          zip -r backend.zip dist prisma
+          zip -r backend.zip dist prisma prisma.config.ts
 
       # 2. Frontend: Installieren & Bauen
       - name: Build Frontend
