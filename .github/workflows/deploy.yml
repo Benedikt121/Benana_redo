@@ -24,7 +24,7 @@ jobs:
           cd benana_backend
           npm ci
           npm run build
-          zip -r backend.zip dist package.json package-lock.json
+          zip -r backend.zip dist
 
       # 2. Frontend: Installieren & Bauen
       - name: Build Frontend
