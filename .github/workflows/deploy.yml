@@ -23,6 +23,7 @@ jobs:
         run: |
           cd benana_backend
           npm ci
+          npx prisma generate
           npm run build
           zip -r backend.zip dist
 
