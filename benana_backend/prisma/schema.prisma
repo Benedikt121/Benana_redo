@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// USER(id, profilePicture, username, hasedpassword, createdAt), kniffel(id, roomid, status{creating, active, finished}, kniffelrounds,
+// currentPlayer), kniffelround(id, kniffelid, roundnumber, score, currentPlayer, rolls, usedCategory),
+// olympiade(id, roomid, currentRound, status, games, score, winner), olympiadeRound(id, olympiadeid, roundnumber, score, olyGame, winner, addedPoints)
+// room(id, players, game, status), games(id, name(kniffel, olympiade))
+
+// --- USER & SOCIAL ---
+
+model User {
+  id                String   @id @default(uuid())
+  username          String   @unique
+  passwordHash      String
+  profilePictureUrl String?  @default("/public/uploads/default.png")
+  createdAt         DateTime @default(now())
+
+  // Raum-Logik
+  hostedRooms Room[] @relation("RoomHost") // Ein User kann viele Räume erstellt haben (Historie)
+  
+  // Aktueller Raum (Wo ist der Spieler gerade?)
+  currentRoom   Room?   @relation("CurrentRoomParticipants", fields: [currentRoomId], references: [id])
+  currentRoomId String? // Kann null sein, wenn er in keinem Raum ist
+
+  // Einladungen
+  sentInvitations     Invitation[] @relation("SentInvitations")
+  receivedInvitations Invitation[] @relation("ReceivedInvitations")
+
+  // Freundschaften (Explizite Tabelle für Status 'pending'/'accepted')
+  friendsAsSender   Friendship[] @relation("FriendshipSender")
+  friendsAsReceiver Friendship[] @relation("FriendshipReceiver")
+
+  // Spiel-Statistiken
+  matchResults MatchResult[]
+  kniffelTurns KniffelTurn[]
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  status    InvitationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  sender   User   @relation("FriendshipSender", fields: [senderId], references: [id])
+  senderId String
+
+  receiver   User   @relation("FriendshipReceiver", fields: [receiverId], references: [id])
+  receiverId String
+
+  @@unique([senderId, receiverId]) // Verhindert doppelte Freundschaftsanfragen
+}
+
+model Invitation {
+  id        String           @id @default(uuid())
+  status    InvitationStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+
+  sender   User   @relation("SentInvitations", fields: [senderId], references: [id])
+  senderId String
+
+  receiver   User   @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+  receiverId String
+
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+// --- ROOMS & LOBBY ---
+
+model Room {
+  id         String     @id @default(uuid())
+  inviteCode String     @unique // z.B. "XF92A"
+  status     RoomStatus @default(CREATING)
+  createdAt  DateTime   @default(now())
+  isPublic Boolean @default(true)
+
+  // Host
+  host   User   @relation("RoomHost", fields: [hostId], references: [id])
+  hostId String
+
+  // Spieler, die gerade im Raum sind
+  participants User[] @relation("CurrentRoomParticipants")
+
+  // Einladungen für diesen Raum
+  invitations Invitation[]
+
+  // Historie der Spiele in diesem Raum
+  matches   Match[]
+  olympiades Olympiade[]
+}
+
+enum RoomStatus {
+  CREATING
+  ACTIVE
+  CLOSED // Besser als FINISHED, da der Raum geschlossen wird
+}
+
+// --- GAMES & MATCHES ---
+
+// Definition der Spiele (Katalog)
+model GameDefinition {
+  id      String   @id @default(uuid())
+  name    String   @unique // z.B. "Kniffel", "Dart"
+  type    GameType // Online oder Offline
+  matches Match[]
+}
+
+enum GameType {
+  ONLINE
+  OFFLINE
+}
+
+// Ein konkretes gespieltes Spiel
+model Match {
+  id        String      @id @default(uuid())
+  status    MatchStatus @default(ACTIVE)
+  createdAt DateTime    @default(now())
+  endedAt   DateTime?
+  orderIndex Int @default(0)
+  currentTurnUserId String?
+
+  // Verknüpfungen
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
+
+  gameDefinition   GameDefinition @relation(fields: [gameDefinitionId], references: [id])
+  gameDefinitionId String
+
+  // Optional: Teil einer Olympiade?
+  olympiade   Olympiade? @relation(fields: [olympiadeId], references: [id])
+  olympiadeId String?
+
+  // Ergebnisse & Details
+  results      MatchResult[]
+  kniffelTurns KniffelTurn[]
+}
+
+enum MatchStatus {
+  PENDING
+  ACTIVE
+  FINISHED
+  ABORTED
+}
+
+model MatchResult {
+  id      String @id @default(uuid())
+  score   Int
+  rank    Int?   // Platzierung (1., 2., 3.)
+  isWinner Boolean @default(false)
+
+  match   Match  @relation(fields: [matchId], references: [id])
+  matchId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
+
+// --- OLYMPIADE ---
+
+model Olympiade {
+  id        String    @id @default(uuid())
+  name      String    // z.B. "Weihnachtsturnier"
+  status    OlyStatus @default(ACTIVE)
+  startedAt DateTime  @default(now())
+
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
+
+  matches Match[]
+}
+
+enum OlyStatus {
+  ACTIVE
+  FINISHED
+}
+
+// --- KNIFFEL DETAILS ---
+
+model KniffelTurn {
+  id          String @id @default(uuid())
+  roundNumber Int
+  category    String // z.B. "FULL_HOUSE"
+  score       Int
+  rolls       Json   // Speichert [1, 5, 5, 2, 1]
+  rerollCount Int    @default(0)
+
+  match   Match  @relation(fields: [matchId], references: [id])
+  matchId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
