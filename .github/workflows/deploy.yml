@@ -64,14 +64,4 @@ jobs:
           server-id: ${{ secrets.PTERO_SERVER_ID }}
           source: "benana_frontend/build"
           target: "/client"
-
-      # 5. Restart & Install Dependencies
-      # Damit node_modules installiert werden, passen wir den Startup-Command leicht an oder verlassen uns auf das Egg.
-      - name: Restart Pterodactyl Server
-        run: |
-          curl -X POST \
-            "https://${{ secrets.PTERO_HOST }}/api/client/servers/${{ secrets.PTERO_SERVER_ID }}/power" \
-            -H "Authorization: Bearer ${{ secrets.PTERO_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -d '{"signal": "restart"}'
+          restart: true
