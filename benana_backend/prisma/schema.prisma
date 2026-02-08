@@ -86,7 +86,7 @@ enum InvitationStatus {
 
 model Room {
   id         String     @id @default(uuid())
-  inviteCode String     @unique // z.B. "XF92A"
+  inviteCode String     
   status     RoomStatus @default(CREATING)
   createdAt  DateTime   @default(now())
   isPublic Boolean @default(true)
@@ -133,7 +133,6 @@ model Match {
   status    MatchStatus @default(ACTIVE)
   createdAt DateTime    @default(now())
   endedAt   DateTime?
-  orderIndex Int @default(0)
   currentTurnUserId String?
 
   // Verknüpfungen
