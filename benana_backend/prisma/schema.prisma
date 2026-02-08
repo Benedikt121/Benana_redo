@@ -18,7 +18,9 @@ datasource db {
 // olympiade(id, roomid, currentRound, status, games, score, winner), olympiadeRound(id, olympiadeid, roundnumber, score, olyGame, winner, addedPoints)
 // room(id, players, game, status), games(id, name(kniffel, olympiade))
 
-// --- USER & SOCIAL ---
+// --------------------------------------------------------
+// USER & SOCIAL
+// --------------------------------------------------------
 
 model User {
   id                String   @id @default(uuid())
@@ -26,31 +28,35 @@ model User {
   passwordHash      String
   profilePictureUrl String?  @default("/public/uploads/default.png")
   createdAt         DateTime @default(now())
+  color             String   @default("#ffffff")
 
-  // Raum-Logik
-  hostedRooms Room[] @relation("RoomHost") // Ein User kann viele Räume erstellt haben (Historie)
+  // --- Raum-Logik ---
   
-  // Aktueller Raum (Wo ist der Spieler gerade?)
-  currentRoom   Room?   @relation("CurrentRoomParticipants", fields: [currentRoomId], references: [id])
-  currentRoomId String? // Kann null sein, wenn er in keinem Raum ist
+  // Räume, die der User erstellt hat (Host)
+  hostedRooms Room[] @relation("RoomHost")
 
-  // Einladungen
+  // Der Raum, in dem der User gerade "sitzt"
+  currentRoom   Room?   @relation("CurrentRoomParticipants", fields: [currentRoomId], references: [id])
+  currentRoomId String?
+
+  // --- Einladungen & Freunde ---
+  
   sentInvitations     Invitation[] @relation("SentInvitations")
   receivedInvitations Invitation[] @relation("ReceivedInvitations")
 
-  // Freundschaften (Explizite Tabelle für Status 'pending'/'accepted')
   friendsAsSender   Friendship[] @relation("FriendshipSender")
   friendsAsReceiver Friendship[] @relation("FriendshipReceiver")
 
-  // Spiel-Statistiken
-  matchResults MatchResult[]
-  kniffelTurns KniffelTurn[]
+  // --- Statistiken & Spielzüge ---
+  
+  matchResults MatchResult[] // Generische Ergebnisse (Gewonnen/Verloren/Platz)
+  kniffelTurns KniffelTurn[] // Spezifische Kniffel-Züge
 }
 
 model Friendship {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   status    InvitationStatus @default(PENDING)
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   sender   User   @relation("FriendshipSender", fields: [senderId], references: [id])
   senderId String
@@ -58,7 +64,7 @@ model Friendship {
   receiver   User   @relation("FriendshipReceiver", fields: [receiverId], references: [id])
   receiverId String
 
-  @@unique([senderId, receiverId]) // Verhindert doppelte Freundschaftsanfragen
+  @@unique([senderId, receiverId])
 }
 
 model Invitation {
@@ -82,58 +88,51 @@ enum InvitationStatus {
   REJECTED
 }
 
-// --- ROOMS & LOBBY ---
+// --------------------------------------------------------
+// ROOMS & LOBBY
+// --------------------------------------------------------
 
 model Room {
   id         String     @id @default(uuid())
-  inviteCode String     
+  inviteCode String     // Code wird vom Frontend generiert, überprüft und gespeichert
   status     RoomStatus @default(CREATING)
   createdAt  DateTime   @default(now())
-  isPublic Boolean @default(true)
+  isPublic   Boolean    @default(true)
 
-  // Host
+  // Host des Raumes
   host   User   @relation("RoomHost", fields: [hostId], references: [id])
   hostId String
 
-  // Spieler, die gerade im Raum sind
+  // Alle Spieler im Raum
   participants User[] @relation("CurrentRoomParticipants")
 
-  // Einladungen für diesen Raum
   invitations Invitation[]
-
-  // Historie der Spiele in diesem Raum
-  matches   Match[]
-  olympiades Olympiade[]
+  matches     Match[]
+  olympiades  Olympiade[]
 }
 
 enum RoomStatus {
   CREATING
   ACTIVE
-  CLOSED // Besser als FINISHED, da der Raum geschlossen wird
+  CLOSED
 }
 
-// --- GAMES & MATCHES ---
+// --------------------------------------------------------
+// GENERIC GAME LOGIC (Basis für alle Spiele)
+// --------------------------------------------------------
 
-// Definition der Spiele (Katalog)
 model GameDefinition {
   id      String   @id @default(uuid())
-  name    String   @unique // z.B. "Kniffel", "Dart"
-  type    GameType // Online oder Offline
+  name    String   @unique
   matches Match[]
 }
 
-enum GameType {
-  ONLINE
-  OFFLINE
-}
-
-// Ein konkretes gespieltes Spiel
 model Match {
-  id        String      @id @default(uuid())
-  status    MatchStatus @default(ACTIVE)
-  createdAt DateTime    @default(now())
-  endedAt   DateTime?
-  currentTurnUserId String?
+  id                String      @id @default(uuid())
+  status            MatchStatus @default(PENDING)
+  createdAt         DateTime    @default(now())
+  endedAt           DateTime?
+  currentTurnUserId String?     // Wer ist gerade dran?
 
   // Verknüpfungen
   room   Room   @relation(fields: [roomId], references: [id])
@@ -142,13 +141,16 @@ model Match {
   gameDefinition   GameDefinition @relation(fields: [gameDefinitionId], references: [id])
   gameDefinitionId String
 
-  // Optional: Teil einer Olympiade?
+  // Gehört dieses Match zu einer Olympiade? (Optional)
   olympiade   Olympiade? @relation(fields: [olympiadeId], references: [id])
   olympiadeId String?
 
-  // Ergebnisse & Details
-  results      MatchResult[]
-  kniffelTurns KniffelTurn[]
+  // Ergebnisse
+  results MatchResult[]
+
+  // --- SPIEL-SPEZIFISCHE DETAILS ---
+  // Hier wird verlinkt, wenn es sich um ein Kniffel-Match handelt
+  kniffelGame KniffelGame?
 }
 
 enum MatchStatus {
@@ -159,9 +161,9 @@ enum MatchStatus {
 }
 
 model MatchResult {
-  id      String @id @default(uuid())
-  score   Int
-  rank    Int?   // Platzierung (1., 2., 3.)
+  id       String  @id @default(uuid())
+  score    Int     // Gesamtpunktzahl im Spiel
+  rank     Int?    // Platzierung
   isWinner Boolean @default(false)
 
   match   Match  @relation(fields: [matchId], references: [id])
@@ -171,17 +173,20 @@ model MatchResult {
   userId String
 }
 
-// --- OLYMPIADE ---
+// --------------------------------------------------------
+// OLYMPIADE (Turnier-Logik)
+// --------------------------------------------------------
 
 model Olympiade {
   id        String    @id @default(uuid())
-  name      String    // z.B. "Weihnachtsturnier"
+  name      String
   status    OlyStatus @default(ACTIVE)
   startedAt DateTime  @default(now())
 
   room   Room   @relation(fields: [roomId], references: [id])
   roomId String
 
+  // Eine Olympiade besteht aus mehreren Matches
   matches Match[]
 }
 
@@ -190,18 +195,39 @@ enum OlyStatus {
   FINISHED
 }
 
-// --- KNIFFEL DETAILS ---
+// --------------------------------------------------------
+// KNIFFEL SPEZIFISCHE LOGIK
+// --------------------------------------------------------
+
+// Diese Tabelle existiert NUR, wenn das Match ein Kniffel-Spiel ist.
+model KniffelGame {
+  id       String  @id @default(uuid())
+  
+  // Die entscheidende Einstellung: Analog oder Digital?
+  isAnalog Boolean @default(false) 
+
+  // 1:1 Relation zum generischen Match
+  match   Match  @relation(fields: [matchId], references: [id])
+  matchId String @unique
+
+  turns KniffelTurn[]
+}
 
 model KniffelTurn {
   id          String @id @default(uuid())
   roundNumber Int
-  category    String // z.B. "FULL_HOUSE"
-  score       Int
-  rolls       Json   // Speichert [1, 5, 5, 2, 1]
-  rerollCount Int    @default(0)
+  category    String // "ONES", "TWOS", "FULL_HOUSE", etc.
+  score       Int    // Die eingetragenen Punkte (auch bei Analog wichtig)
+  
+  // Bei Analog: null (weil wir die Würfel nicht kennen)
+  // Bei Digital: [1, 5, 5, 2, 1]
+  rolls       Json?  
+  
+  rerollCount Int    @default(0) // Nur für Digital relevant
 
-  match   Match  @relation(fields: [matchId], references: [id])
-  matchId String
+  // Verknüpfung zum KniffelGame (nicht direkt Match, um es sauber zu halten)
+  kniffelGame   KniffelGame @relation(fields: [kniffelGameId], references: [id])
+  kniffelGameId String
 
   user   User   @relation(fields: [userId], references: [id])
   userId String
