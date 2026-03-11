@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { createUser, getUserByUsername } from "../services/userService";
-import type { authRequest, authResponse } from "../types/authTypes";
+import { createUser, getUserByUsername } from "../services/userService.js";
+import type { authRequest, authResponse } from "../types/authTypes.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 

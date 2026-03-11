@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "es2023",
-    "module": "ESnext",
-    "moduleResolution": "bundler",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "lib": ["ES2020"],
     "outDir": "./dist",
     "rootDir": "./src",
