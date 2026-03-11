@@ -49,8 +49,6 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    console.log("Headers:", req.headers); // Prüfen, ob Content-Type korrekt ankommt
-    console.log("Body:", req.body); // Prüfen, ob hier überhaupt etwas steht
     const { username, clientPasswordHash }: authRequest = req.body;
 
     if (!username || !clientPasswordHash) {
