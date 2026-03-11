@@ -24,3 +24,14 @@ export const getUserByUsername = async (username: string) => {
     throw error;
   }
 };
+
+export const deleteUser = async (username: string) => {
+  try {
+    return await prisma.user.delete({
+      where: { username },
+    });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw error;
+  }
+};

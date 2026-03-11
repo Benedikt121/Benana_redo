@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import { prisma, connectDB, disconnectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import deleteRoutes from "./routes/deleteRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = process.env.SERVER_PORT || 5001;
 
 app.use("/api/auth", authRoutes);
+app.use("/api/delete", deleteRoutes);
 app.get("/api/health", async (req, res) => res.send("OK"));
 
 const clientPath = path.join(__dirname, "../client");
