@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import { prisma, connectDB, disconnectDB } from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,15 +12,16 @@ config();
 connectDB();
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.SERVER_PORT || 5001;
 
+app.use("/api/auth", authRoutes);
+app.get("/api/health", async (req, res) => res.send("OK"));
+
 const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
-
-app.get("/hello", (req, res) => {
-  res.json({ message: "Hello, World!" });
-});
 
 app.get("*all", (req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));
@@ -51,4 +53,3 @@ process.on("SIGTERM", async () => {
     process.exit(0);
   });
 });
-
