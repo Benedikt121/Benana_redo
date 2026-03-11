@@ -1,10 +1,9 @@
 import { Router } from "express";
-import { deleteUserByUsername } from "../controllers/authController.js";
-import { validate } from "../middlewares/validate.js";
-import { deleteSchema } from "../middlewares/validators.js";
+import { deleteMe } from "../controllers/authController.js";
+import { protect } from "../middlewares/protect.js";
 
 const router = Router();
 
-router.delete("/user", validate(deleteSchema), deleteUserByUsername);
+router.delete("/user", protect, deleteMe);
 
 export default router;

@@ -19,8 +19,3 @@ export const loginSchema = z.object({
   username: z.string().min(1, "Username wird benötigt"),
   clientPasswordHash: z.string().min(1, "Passwort wird benötigt"),
 });
-
-export const deleteSchema = z.object({
-  username: z.string().min(1, "Username wird benötigt"),
-  clientPasswordHash: z.string().min(1, "Passwort zur Bestätigung benötigt"),
-});

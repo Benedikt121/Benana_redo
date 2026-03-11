@@ -25,13 +25,19 @@ export const getUserByUsername = async (username: string) => {
   }
 };
 
-export const deleteUser = async (username: string) => {
+export const getUserById = async (id: string) => {
+  return await prisma.user.findUnique({
+    where: { id },
+  });
+};
+
+export const deleteUserById = async (id: string) => {
   try {
     return await prisma.user.delete({
-      where: { username },
+      where: { id: id },
     });
   } catch (error) {
-    console.error("Error deleting user:", error);
+    console.error("Error deleting user by ID:", error);
     throw error;
   }
 };
