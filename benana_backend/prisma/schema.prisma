@@ -177,10 +177,16 @@ model MatchResult {
 // OLYMPIADE (Turnier-Logik)
 // --------------------------------------------------------
 
+enum OlyGameSelectionMode {
+  RANDOM
+  PREDEFINED
+}
+
 model Olympiade {
   id        String    @id @default(uuid())
   name      String
   status    OlyStatus @default(ACTIVE)
+  gameSelectionMode OlyGameSelectionMode @default(RANDOM)
   startedAt DateTime  @default(now())
 
   room   Room   @relation(fields: [roomId], references: [id])

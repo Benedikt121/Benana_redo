@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Olympiade` ADD COLUMN `gameSelectionMode` ENUM('RANDOM', 'PREDEFINED') NOT NULL DEFAULT 'RANDOM';
