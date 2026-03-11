@@ -4,7 +4,9 @@ import { PrismaClient } from "../generated/prisma/client.js";
 
 const adapter = new PrismaMariaDb({
   host: process.env.ADAPTER_HOST,
-  port: 3307,
+  port: process.env.ADAPTER_PORT
+    ? parseInt(process.env.ADAPTER_PORT, 10)
+    : undefined,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
