@@ -1,6 +1,7 @@
 import { get } from "node:http";
 import {
   addPlayerToRoom,
+  checkFriendship,
   createRoom,
   deleteRoom,
   getRoom,
@@ -74,11 +75,15 @@ export const joinRoom = async (req: Request, res: Response) => {
       });
     }
     if (room?.whoCanJoin === "FRIENDS_ONLY") {
-      return res.status(403).json({
-        status: "error",
-        message:
-          "This room is for friends only. You cannot join without being a friend.",
-      });
+      const isFriend = await checkFriendship(userId, room.hostId);
+
+      if (!isFriend && userId !== room.hostId) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "This room is for friends only. You cannot join without being a friend.",
+        });
+      }
     }
     if (room?.status !== "CREATING") {
       return res.status(400).json({

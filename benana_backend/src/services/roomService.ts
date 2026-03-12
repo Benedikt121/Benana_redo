@@ -1,4 +1,5 @@
 import { prisma } from "../config/db.js";
+import { RoomStatus } from "../generated/prisma/enums.js";
 
 export const createRoom = async (hostId: string) => {
   try {
@@ -124,6 +125,36 @@ export const deleteRoom = async (roomId: string) => {
     });
   } catch (error) {
     console.error("Error deleting room:", error);
+    throw error;
+  }
+};
+
+export const updateRoomStatus = async (roomId: string, status: RoomStatus) => {
+  try {
+    return await prisma.room.update({
+      where: { id: roomId },
+      data: { status },
+    });
+  } catch (error) {
+    console.error("Error updating room status:", error);
+    throw error;
+  }
+};
+
+export const checkFriendship = async (userId1: string, userId2: string) => {
+  try {
+    const friendship = await prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { senderId: userId1, receiverId: userId2 },
+          { senderId: userId2, receiverId: userId1 },
+        ],
+        status: "ACCEPTED",
+      },
+    });
+    return !!friendship;
+  } catch (error) {
+    console.error("Error checking friendship:", error);
     throw error;
   }
 };
