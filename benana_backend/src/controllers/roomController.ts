@@ -1,13 +1,13 @@
 import { get } from "node:http";
 import {
   addPlayerToRoom,
-  checkFriendship,
   createRoom,
   deleteRoom,
   getRoom,
   getRooms,
   removePlayerFromRoom,
 } from "../services/roomService.js";
+import { checkFriendship } from "../services/friendService.js";
 import { Request, Response } from "express";
 
 export const newRoom = async (req: Request, res: Response) => {
@@ -124,34 +124,5 @@ export const leaveRoom = async (req: Request, res: Response) => {
     res.status(200).json({ status: "success", data: updatedRoom });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to leave room" });
-  }
-};
-
-export const removeRoom = async (req: Request, res: Response) => {
-  try {
-    const roomId = Array.isArray(req.params.roomId)
-      ? req.params.roomId[0]
-      : req.params.roomId;
-    if (!roomId) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Room ID is required." });
-    }
-    const room = await getRoom(roomId);
-    if (!room) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Room not found." });
-    }
-    if (room.hostId !== (req as any).user.id) {
-      return res.status(403).json({
-        status: "error",
-        message: "Only the host can delete the room.",
-      });
-    }
-    const deletedRoom = await deleteRoom(roomId);
-    res.status(200).json({ status: "success", data: deletedRoom });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: "Failed to remove room" });
   }
 };
