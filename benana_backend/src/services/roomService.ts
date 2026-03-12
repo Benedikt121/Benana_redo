@@ -30,7 +30,7 @@ export const getRooms = async () => {
         },
         AND: {
           whoCanJoin: {
-            in: ["PUBLIC", "INVITE_ONLY"],
+            in: ["PUBLIC", "FRIENDS_ONLY"],
           },
         },
       },
@@ -52,7 +52,14 @@ export const getRooms = async () => {
 export const getRoom = async (roomId: string) => {
   try {
     return await prisma.room.findUnique({
-      where: { id: roomId },
+      where: {
+        id: roomId,
+        AND: {
+          whoCanJoin: {
+            in: ["PUBLIC", "FRIENDS_ONLY"],
+          },
+        },
+      },
       include: {
         participants: {
           select: { username: true, color: true },
