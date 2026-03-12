@@ -1,3 +1,4 @@
+import { get } from "node:http";
 import {
   addPlayerToRoom,
   createRoom,
@@ -58,6 +59,38 @@ export const joinRoom = async (req: Request, res: Response) => {
       : req.params.roomId;
     const userId = (req as any).user.id;
 
+    if ((req as any).user.currentRoomId === roomId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "You are already in this room." });
+    }
+
+    const room = await getRoom(roomId);
+    if (room?.whoCanJoin === "INVITE_ONLY") {
+      return res.status(403).json({
+        status: "error",
+        message:
+          "This room is invite-only. You cannot join without an invitation.",
+      });
+    }
+    if (room?.whoCanJoin === "FRIENDS_ONLY") {
+      return res.status(403).json({
+        status: "error",
+        message:
+          "This room is for friends only. You cannot join without being a friend.",
+      });
+    }
+    if (room?.status !== "CREATING") {
+      return res.status(400).json({
+        status: "error",
+        message: "This room is not available for joining.",
+      });
+    }
+
+    if ((req as any).user.currentRoomId) {
+      await removePlayerFromRoom((req as any).user.currentRoomId, userId);
+    }
+
     const updatedRoom = await addPlayerToRoom(roomId, userId);
     res.status(200).json({ status: "success", data: updatedRoom });
   } catch (error) {
@@ -94,6 +127,23 @@ export const removeRoom = async (req: Request, res: Response) => {
     const roomId = Array.isArray(req.params.roomId)
       ? req.params.roomId[0]
       : req.params.roomId;
+    if (!roomId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Room ID is required." });
+    }
+    const room = await getRoom(roomId);
+    if (!room) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Room not found." });
+    }
+    if (room.hostId !== (req as any).user.id) {
+      return res.status(403).json({
+        status: "error",
+        message: "Only the host can delete the room.",
+      });
+    }
     const deletedRoom = await deleteRoom(roomId);
     res.status(200).json({ status: "success", data: deletedRoom });
   } catch (error) {

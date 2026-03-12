@@ -24,6 +24,16 @@ export const createRoom = async (hostId: string) => {
 export const getRooms = async () => {
   try {
     return await prisma.room.findMany({
+      where: {
+        status: {
+          in: ["CREATING", "ACTIVE"],
+        },
+        AND: {
+          whoCanJoin: {
+            in: ["PUBLIC", "INVITE_ONLY"],
+          },
+        },
+      },
       include: {
         _count: {
           select: { participants: true },
