@@ -20,11 +20,11 @@ export const protect = async (
     if (!token) {
       return res
         .status(401)
-        .json({ status: "fail", message: "Unauthorized: Log in first" });
+        .json({ status: "error", message: "Unauthorized: Log in first" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-      id: number;
+      id: string;
     };
 
     const currentUser = await prisma.user.findUnique({
@@ -32,7 +32,7 @@ export const protect = async (
     });
     if (!currentUser) {
       return res.status(401).json({
-        status: "fail",
+        status: "error",
         message: "Unauthorized: User no longer exists",
       });
     }
@@ -40,6 +40,6 @@ export const protect = async (
     (req as any).user = currentUser;
     next();
   } catch (error) {
-    return res.status(401).json({ status: "fail", message: "Invalid token" });
+    return res.status(401).json({ status: "error", message: "Invalid token" });
   }
 };

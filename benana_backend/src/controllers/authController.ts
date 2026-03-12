@@ -20,7 +20,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env
   .JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"];
 
-const signToken = (id: number) => {
+const signToken = (id: string) => {
   return jwt.sign({ id }, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
   });
@@ -38,7 +38,9 @@ export const register = async (req: Request, res: Response) => {
 
     const existingUser = await getUserByUsername(username);
     if (existingUser) {
-      return res.status(409).json({ message: "Username already exists." });
+      return res
+        .status(409)
+        .json({ status: "error", message: "Username already exists." });
     }
 
     const saltRounds = 10;
@@ -49,6 +51,7 @@ export const register = async (req: Request, res: Response) => {
     const token = signToken(newUser.id);
 
     res.status(201).json({
+      status: "success",
       message: "User registered successfully.",
       token,
       user: { id: newUser.id, username: newUser.username },
@@ -64,14 +67,17 @@ export const login = async (req: Request, res: Response) => {
     const { username, clientPasswordHash }: authRequest = req.body;
 
     if (!username || !clientPasswordHash) {
-      return res
-        .status(400)
-        .json({ message: "Username and password are required." });
+      return res.status(400).json({
+        status: "error",
+        message: "Username and password are required.",
+      });
     }
 
     const user = await getUserByUsername(username);
     if (!user) {
-      return res.status(401).json({ message: "Invalid username or password." });
+      return res
+        .status(401)
+        .json({ status: "error", message: "Invalid username or password." });
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -80,19 +86,24 @@ export const login = async (req: Request, res: Response) => {
     );
 
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid username or password." });
+      return res
+        .status(401)
+        .json({ status: "error", message: "Invalid username or password." });
     }
 
     const token = signToken(user.id);
 
     res.status(200).json({
+      status: "success",
       message: "Login successful.",
       token,
       user: { id: user.id, username: user.username },
     });
   } catch (error) {
     console.error("Error during login:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res
+      .status(500)
+      .json({ status: "error", message: "Internal server error." });
   }
 };
 
@@ -101,14 +112,20 @@ export const deleteMe = async (req: Request, res: Response) => {
     const user = (req as any).user;
 
     if (!user || !user.id) {
-      return res.status(404).json({ message: "User not found." });
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found." });
     }
     await deleteUserById(user.id);
 
-    res.status(200).json({ message: "User deleted successfully." });
+    res
+      .status(200)
+      .json({ status: "success", message: "User deleted successfully." });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res
+      .status(500)
+      .json({ status: "error", message: "Internal server error." });
   }
 };
 

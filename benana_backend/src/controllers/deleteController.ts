@@ -9,19 +9,27 @@ export const deleteUserByUsername = async (req: Request, res: Response) => {
     const user = await getUserByUsername(username);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res
+        .status(404)
+        .json({ status: "error", message: "User not found." });
     }
     const isPasswordValid = await bcrypt.compare(
       clientPasswordHash,
       user.passwordHash,
     );
     if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid username or password." });
+      return res
+        .status(401)
+        .json({ status: "error", message: "Invalid username or password." });
     }
     await deleteUserById(user.id);
-    res.status(200).json({ message: "User deleted successfully." });
+    res
+      .status(200)
+      .json({ status: "success", message: "User deleted successfully." });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ message: "Internal server error." });
+    res
+      .status(500)
+      .json({ status: "error", message: "Internal server error." });
   }
 };

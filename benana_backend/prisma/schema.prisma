@@ -94,10 +94,10 @@ enum InvitationStatus {
 
 model Room {
   id         String     @id @default(uuid())
-  inviteCode String     // Code wird vom Frontend generiert, überprüft und gespeichert
+  inviteCode String?     // Code wird vom Frontend generiert, überprüft und gespeichert
   status     RoomStatus @default(CREATING)
   createdAt  DateTime   @default(now())
-  isPublic   Boolean    @default(true)
+  whoCanJoin WhoCanJoin @default(PUBLIC)
 
   // Host des Raumes
   host   User   @relation("RoomHost", fields: [hostId], references: [id])
@@ -115,6 +115,12 @@ enum RoomStatus {
   CREATING
   ACTIVE
   CLOSED
+}
+
+enum WhoCanJoin {
+  PUBLIC
+  INVITE_ONLY
+  FRIENDS_ONLY
 }
 
 // --------------------------------------------------------

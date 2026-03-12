@@ -2,9 +2,10 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
-import { prisma, connectDB, disconnectDB } from "./config/db.js";
+import { connectDB, disconnectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import deleteRoutes from "./routes/deleteRoutes.js";
+import roomRoutes from "./routes/roomRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,7 @@ const PORT = process.env.SERVER_PORT || 5001;
 
 app.use("/api/auth", authRoutes);
 app.use("/api/delete", deleteRoutes);
+app.use("/api/rooms", roomRoutes);
 app.get("/api/health", async (req, res) => res.send("OK"));
 
 const clientPath = path.join(__dirname, "../client");
