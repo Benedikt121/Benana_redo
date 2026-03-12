@@ -22,7 +22,11 @@ export const newRoom = async (req: Request, res: Response) => {
 export const getAllRooms = async (req: Request, res: Response) => {
   try {
     const rooms = await getRooms();
-
+    if (rooms.length === 0) {
+      return res
+        .status(200)
+        .json({ status: "success", message: "No rooms available.", data: [] });
+    }
     res.status(200).json({ status: "success", data: rooms });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to fetch rooms" });
@@ -36,6 +40,11 @@ export const getRoomById = async (req: Request, res: Response) => {
       : req.params.roomId;
 
     const room = await getRoom(roomId);
+    if (!room) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Room not found." });
+    }
     res.status(200).json({ status: "success", data: room });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to fetch room" });
@@ -69,12 +78,10 @@ export const leaveRoom = async (req: Request, res: Response) => {
 
     if (shouldDeleteRoom) {
       await deleteRoom(roomId);
-      return res
-        .status(200)
-        .json({
-          status: "success",
-          message: "Room deleted as it has no participants or host left.",
-        });
+      return res.status(200).json({
+        status: "success",
+        message: "Room deleted as it has no participants or host left.",
+      });
     }
     res.status(200).json({ status: "success", data: updatedRoom });
   } catch (error) {
