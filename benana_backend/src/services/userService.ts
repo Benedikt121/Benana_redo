@@ -1,5 +1,13 @@
 import { prisma } from "../config/db.js";
 
+const safeUserSelect = {
+  id: true,
+  username: true,
+  color: true,
+  profilePictureUrl: true,
+  createdAt: true,
+};
+
 export const createUser = async (username: string, passwordHash: string) => {
   try {
     return await prisma.user.create({
@@ -14,27 +22,97 @@ export const createUser = async (username: string, passwordHash: string) => {
   }
 };
 
-export const getUserByUsername = async (username: string) => {
+export function getUserByUsername(
+  username: string,
+  withPassword: true,
+): Promise<{
+  id: string;
+  username: string;
+  color: string;
+  profilePictureUrl: string | null;
+  createdAt: Date;
+  passwordHash: string;
+} | null>;
+
+export function getUserByUsername(
+  username: string,
+  withPassword?: false,
+): Promise<{
+  id: string;
+  username: string;
+  color: string;
+  profilePictureUrl: string | null;
+  createdAt: Date;
+} | null>;
+
+export async function getUserByUsername(
+  username: string,
+  withPassword: boolean = false,
+) {
   try {
+    if (withPassword === false) {
+      return await prisma.user.findUnique({
+        where: { username },
+        select: safeUserSelect,
+      });
+    }
+
     return await prisma.user.findUnique({
       where: { username },
+      select: {
+        ...safeUserSelect,
+        passwordHash: true,
+      },
     });
   } catch (error) {
     console.error("Error fetching user:", error);
     throw error;
   }
-};
+}
 
-export const getUserById = async (id: string) => {
+export function getUserById(
+  id: string,
+  withPassword: true,
+): Promise<{
+  id: string;
+  username: string;
+  color: string;
+  profilePictureUrl: string | null;
+  createdAt: Date;
+  passwordHash: string;
+} | null>;
+
+export function getUserById(
+  id: string,
+  withPassword?: false,
+): Promise<{
+  id: string;
+  username: string;
+  color: string;
+  profilePictureUrl: string | null;
+  createdAt: Date;
+} | null>;
+
+export async function getUserById(id: string, withPassword: boolean = false) {
   try {
+    if (withPassword === false) {
+      return await prisma.user.findUnique({
+        where: { id },
+        select: safeUserSelect,
+      });
+    }
     return await prisma.user.findUnique({
       where: { id },
+      select: {
+        ...safeUserSelect,
+        passwordHash: true,
+      },
     });
   } catch (error) {
     console.error("Error fetching user by ID:", error);
     throw error;
   }
-};
+}
 
 export const deleteUserById = async (id: string) => {
   try {
@@ -59,6 +137,7 @@ export const updateUserColorOrAvatar = async (
         color,
         profilePictureUrl: avatar,
       },
+      select: safeUserSelect,
     });
   } catch (error) {
     console.error("Error updating user color or avatar:", error);
@@ -81,12 +160,7 @@ export const getUsersByUsernameQuery = async (
         },
       },
       take: 10,
-      select: {
-        id: true,
-        username: true,
-        color: true,
-        profilePictureUrl: true,
-      },
+      select: safeUserSelect,
     });
   } catch (error) {
     console.error("Error searching users by username query:", error);

@@ -14,8 +14,8 @@ router.use(protect);
 
 router.get("/me", getMyUserProfile);
 router.patch("/me", updateUserProfile);
-router.get("/user/:userId", getUserProfile);
-router.get("/user/:username", getUserProfile);
+router.get("/id/:userId", getUserProfile);
+router.get("/name/:username", getUserProfile);
 router.get("/names", searchUsersAutoComplete);
 router.get("/search", searchUsers);
 

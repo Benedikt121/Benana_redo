@@ -7,7 +7,7 @@ import { deleteRoom, getRoom } from "../services/roomService.js";
 export const deleteUserByUsername = async (req: Request, res: Response) => {
   try {
     const { username, clientPasswordHash }: authRequest = req.body;
-    const user = await getUserByUsername(username);
+    const user = await getUserByUsername(username, true);
 
     if (!user) {
       return res

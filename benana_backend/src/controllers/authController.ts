@@ -73,7 +73,7 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    const user = await getUserByUsername(username);
+    const user = await getUserByUsername(username, true);
     if (!user) {
       return res
         .status(401)

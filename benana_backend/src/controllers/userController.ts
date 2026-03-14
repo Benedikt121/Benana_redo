@@ -10,7 +10,15 @@ import {
 export const getMyUserProfile = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
-    res.status(200).json({ status: "success", data: user });
+    const safeUser = {
+      id: user.id,
+      username: user.username,
+      color: user.color,
+      profilePictureUrl: user.profilePictureUrl,
+      createdAt: user.createdAt,
+      currentRoomId: user.currentRoomId,
+    };
+    res.status(200).json({ status: "success", data: safeUser });
   } catch (error) {
     res
       .status(500)
