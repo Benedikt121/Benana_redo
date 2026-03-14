@@ -6,6 +6,7 @@ import {
   getRoom,
   getRooms,
   removePlayerFromRoom,
+  updateRoomStatus,
 } from "../services/roomService.js";
 import { checkFriendship } from "../services/friendService.js";
 import { Request, Response } from "express";
@@ -143,5 +144,38 @@ export const getRoomInvites = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: "error", message: "Failed to fetch invitations." });
+  }
+};
+
+export const startRoom = async (req: Request, res: Response) => {
+  try {
+    const roomId = (req as any).user.currentRoomId;
+    const userId = (req as any).user.id;
+
+    const room = await getRoom(roomId);
+    if (!room) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Failed to find room" });
+    }
+
+    if (room.hostId !== userId) {
+      return res.status(403).json({
+        status: "error",
+        message: "Only the host can start the game.",
+      });
+    }
+
+    if (room.status !== "CREATING") {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Room was already started." });
+    }
+
+    const startedRoom = await updateRoomStatus(roomId, "ACTIVE");
+
+    res.status(200).json({ status: "success", data: startedRoom });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: "Failed to start room" });
   }
 };
