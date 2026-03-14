@@ -1,8 +1,8 @@
-import { get } from "node:http";
 import {
   addPlayerToRoom,
   createRoom,
   deleteRoom,
+  findInvitationsForRoom,
   getRoom,
   getRooms,
   removePlayerFromRoom,
@@ -124,5 +124,20 @@ export const leaveRoom = async (req: Request, res: Response) => {
     res.status(200).json({ status: "success", data: updatedRoom });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to leave room" });
+  }
+};
+
+export const getRoomInvites = async (req: Request, res: Response) => {
+  try {
+    const roomId = Array.isArray(req.params.roomId)
+      ? req.params.roomId[0]
+      : req.params.roomId;
+
+    const invites = await findInvitationsForRoom(roomId);
+    res.status(200).json({ status: "success", data: invites });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to fetch invitations." });
   }
 };

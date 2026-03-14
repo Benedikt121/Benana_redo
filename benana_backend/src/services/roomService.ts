@@ -140,3 +140,18 @@ export const updateRoomStatus = async (roomId: string, status: RoomStatus) => {
     throw error;
   }
 };
+
+export const findInvitationsForRoom = async (roomId: string) => {
+  try {
+    return await prisma.invitation.findMany({
+      where: { roomId },
+      include: {
+        sender: { select: { id: true, username: true, color: true } },
+        receiver: { select: { id: true, username: true, color: true } },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching invitations for room:", error);
+    throw error;
+  }
+};

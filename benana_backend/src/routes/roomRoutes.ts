@@ -6,6 +6,7 @@ import {
   joinRoom,
   leaveRoom,
   newRoom,
+  getRoomInvites,
 } from "../controllers/roomController.js";
 
 const router = Router();
@@ -17,5 +18,6 @@ router.get("/all", getAllRooms);
 router.get("/:roomId", getRoomById);
 router.patch("/join/:roomId", joinRoom);
 router.patch("/leave/:roomId", leaveRoom);
+router.get("/invites/:roomId", getRoomInvites);
 
 export default router;

@@ -1,4 +1,3 @@
-import { tr } from "zod/locales";
 import { prisma } from "../config/db.js";
 
 export const checkFriendship = async (userId1: string, userId2: string) => {
