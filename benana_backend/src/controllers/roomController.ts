@@ -16,6 +16,23 @@ export const newRoom = async (req: Request, res: Response) => {
     const hostId = (req as any).user.id;
 
     const createdRoom = await createRoom(hostId);
+    await addPlayerToRoom(createdRoom.id, hostId);
+    if ((req as any).user.currentRoomId) {
+      const updatedRoom = await removePlayerFromRoom(
+        (req as any).user.currentRoomId,
+        hostId,
+      );
+      const shouldDeleteRoom =
+        updatedRoom.participants.length === 0 || updatedRoom.hostId === hostId;
+
+      if (shouldDeleteRoom) {
+        await deleteRoom((req as any).user.current);
+        return res.status(200).json({
+          status: "success",
+          message: "Room deleted as it has no participants or host left.",
+        });
+      }
+    }
     res.status(201).json({ status: "success", data: createdRoom });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to create room" });
@@ -94,7 +111,20 @@ export const joinRoom = async (req: Request, res: Response) => {
     }
 
     if ((req as any).user.currentRoomId) {
-      await removePlayerFromRoom((req as any).user.currentRoomId, userId);
+      const updatedRoom = await removePlayerFromRoom(
+        (req as any).user.currentRoomId,
+        userId,
+      );
+      const shouldDeleteRoom =
+        updatedRoom.participants.length === 0 || updatedRoom.hostId === userId;
+
+      if (shouldDeleteRoom) {
+        await deleteRoom((req as any).user.current);
+        return res.status(200).json({
+          status: "success",
+          message: "Room deleted as it has no participants or host left.",
+        });
+      }
     }
 
     const updatedRoom = await addPlayerToRoom(roomId, userId);
@@ -151,6 +181,10 @@ export const startRoom = async (req: Request, res: Response) => {
   try {
     const roomId = (req as any).user.currentRoomId;
     const userId = (req as any).user.id;
+
+    console.log("StartRoom aufgerufen!");
+    console.log("-> Gefundene Room-ID:", roomId);
+    console.log("-> User-ID:", userId);
 
     const room = await getRoom(roomId);
     if (!room) {

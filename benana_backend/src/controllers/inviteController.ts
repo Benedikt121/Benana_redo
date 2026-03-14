@@ -7,6 +7,7 @@ import {
 } from "../services/inviteService.js";
 import {
   addPlayerToRoom,
+  deleteRoom,
   getRoom,
   removePlayerFromRoom,
 } from "../services/roomService.js";
@@ -90,7 +91,20 @@ export const acceptInvite = async (req: Request, res: Response) => {
 
     const acceptedInvite = await updateInvitation(inviteId, "ACCEPTED");
     if ((req as any).user.currentRoomId) {
-      await removePlayerFromRoom((req as any).user.currentRoomId, userId);
+      const updatedRoom = await removePlayerFromRoom(
+        (req as any).user.currentRoomId,
+        userId,
+      );
+      const shouldDeleteRoom =
+        updatedRoom.participants.length === 0 || updatedRoom.hostId === userId;
+
+      if (shouldDeleteRoom) {
+        await deleteRoom((req as any).user.current);
+        return res.status(200).json({
+          status: "success",
+          message: "Room deleted as it has no participants or host left.",
+        });
+      }
     }
 
     const updatedRoom = await addPlayerToRoom(invite.roomId, userId);

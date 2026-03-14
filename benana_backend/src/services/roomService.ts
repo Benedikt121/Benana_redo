@@ -6,9 +6,6 @@ export const createRoom = async (hostId: string) => {
     return await prisma.room.create({
       data: {
         hostId: hostId,
-        participants: {
-          connect: { id: hostId },
-        },
       },
       include: {
         participants: {
