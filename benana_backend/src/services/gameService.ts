@@ -13,11 +13,23 @@ export const getGameDefinitionByName = async (name: string) => {
   }
 };
 
+export const getMatchGameDefinitionByName = async (name: string) => {
+  try {
+    return await prisma.matchGame.findUnique({
+      where: { name },
+    });
+  } catch (error) {
+    console.error("Error fetching match game definition");
+    throw error;
+  }
+};
+
 export const createMatchForRoom = async (
   roomId: string,
   gameDefId: string,
   firstTurnUserId: string,
   isAnalog: boolean,
+  matchGameId: string,
 ) => {
   try {
     return await prisma.$transaction(async (tx) => {
@@ -37,6 +49,7 @@ export const createMatchForRoom = async (
               isAnalog: isAnalog,
             },
           },
+          matchGameId: matchGameId,
         },
         include: {
           kniffelGame: true,

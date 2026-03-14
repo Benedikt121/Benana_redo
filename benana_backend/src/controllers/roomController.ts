@@ -15,8 +15,8 @@ import {
   createMatchForRoom,
   createOlympiade,
   getGameDefinitionByName,
+  getMatchGameDefinitionByName,
 } from "../services/gameService.js";
-import { OlyGameSelectionMode } from "../generated/prisma/enums.js";
 
 export const newRoom = async (req: Request, res: Response) => {
   try {
@@ -181,7 +181,7 @@ export const startRoom = async (req: Request, res: Response) => {
     const roomId = (req as any).user.currentRoomId;
     const userId = (req as any).user.id;
 
-    const { gameType, isAnalog, olyGames, olyMode } = req.body;
+    const { gameType, isAnalog, olyGames, olyMode, matchGame } = req.body;
 
     const room = await getRoom(roomId);
     if (!room) {
@@ -215,11 +215,13 @@ export const startRoom = async (req: Request, res: Response) => {
 
     if (gameType === "KNIFFEL") {
       const gameDef = await getGameDefinitionByName("KNIFFEL");
+      const matchGameId = await getMatchGameDefinitionByName(matchGame);
       startedGameData = await createMatchForRoom(
         roomId,
         gameDef!.id,
         userId,
         isAnalog || false,
+        matchGameId!.id,
       );
     } else if (gameType === "OLYMPIADE") {
       if (!olyGames || olyGames.length === 0) {
