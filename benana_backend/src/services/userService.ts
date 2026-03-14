@@ -6,6 +6,8 @@ const safeUserSelect = {
   color: true,
   profilePictureUrl: true,
   createdAt: true,
+  currentRoomId: true,
+  isReady: true,
 };
 
 export const createUser = async (username: string, passwordHash: string) => {
@@ -31,6 +33,8 @@ export function getUserByUsername(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
+  currentRoomId: true;
+  isReady: true;
   passwordHash: string;
 } | null>;
 
@@ -43,6 +47,8 @@ export function getUserByUsername(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
+  currentRoomId: true;
+  isReady: true;
 } | null>;
 
 export async function getUserByUsername(
@@ -79,6 +85,8 @@ export function getUserById(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
+  currentRoomId: true;
+  isReady: true;
   passwordHash: string;
 } | null>;
 
@@ -91,6 +99,8 @@ export function getUserById(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
+  currentRoomId: true;
+  isReady: true;
 } | null>;
 
 export async function getUserById(id: string, withPassword: boolean = false) {
@@ -183,6 +193,23 @@ export const getAllUsernams = async (excludeUserId: string) => {
     return users.map((user) => user.username);
   } catch (error) {
     console.error("Error fetching usernames by query:", error);
+    throw error;
+  }
+};
+
+export const updateIsReady = async (userId: string, isReady: boolean) => {
+  try {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: { isReady: isReady },
+      select: {
+        id: true,
+        username: true,
+        isReady: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error changing ready status.", error);
     throw error;
   }
 };

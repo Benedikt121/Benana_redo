@@ -17,6 +17,7 @@ export const getMyUserProfile = async (req: Request, res: Response) => {
       profilePictureUrl: user.profilePictureUrl,
       createdAt: user.createdAt,
       currentRoomId: user.currentRoomId,
+      isReady: user.isReady,
     };
     res.status(200).json({ status: "success", data: safeUser });
   } catch (error) {

@@ -38,6 +38,7 @@ model User {
   // Der Raum, in dem der User gerade "sitzt"
   currentRoom   Room?   @relation("CurrentRoomParticipants", fields: [currentRoomId], references: [id])
   currentRoomId String?
+  isReady       Boolean @default(false)
 
   // --- Einladungen & Freunde ---
   
@@ -133,6 +134,12 @@ model GameDefinition {
   matches Match[]
 }
 
+model MatchGame {
+  id      String  @id @default(uuid())
+  name    String  @unique
+  matches Match[]
+}
+
 model Match {
   id                String      @id @default(uuid())
   status            MatchStatus @default(PENDING)
@@ -146,6 +153,9 @@ model Match {
 
   gameDefinition   GameDefinition @relation(fields: [gameDefinitionId], references: [id])
   gameDefinitionId String
+
+  matchGame        MatchGame @relation(fields: [matchGameId], references: [id])
+  matchGameId      String
 
   // Gehört dieses Match zu einer Olympiade? (Optional)
   olympiade   Olympiade? @relation(fields: [olympiadeId], references: [id])
@@ -200,6 +210,8 @@ model Olympiade {
 
   // Eine Olympiade besteht aus mehreren Matches
   matches Match[]
+
+  gamesPool Json
 }
 
 enum OlyStatus {

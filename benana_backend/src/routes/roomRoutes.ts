@@ -8,6 +8,7 @@ import {
   newRoom,
   getRoomInvites,
   startRoom,
+  toggleReady,
 } from "../controllers/roomController.js";
 
 const router = Router();
@@ -21,5 +22,6 @@ router.patch("/join/:roomId", joinRoom);
 router.patch("/leave", leaveRoom);
 router.get("/invites/:roomId", getRoomInvites);
 router.patch("/start", startRoom);
+router.patch("/ready", toggleReady);
 
 export default router;

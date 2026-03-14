@@ -10,6 +10,13 @@ import {
 } from "../services/roomService.js";
 import { checkFriendship } from "../services/friendService.js";
 import { Request, Response } from "express";
+import { getUserById, updateIsReady } from "../services/userService.js";
+import {
+  createMatchForRoom,
+  createOlympiade,
+  getGameDefinitionByName,
+} from "../services/gameService.js";
+import { OlyGameSelectionMode } from "../generated/prisma/enums.js";
 
 export const newRoom = async (req: Request, res: Response) => {
   try {
@@ -174,9 +181,7 @@ export const startRoom = async (req: Request, res: Response) => {
     const roomId = (req as any).user.currentRoomId;
     const userId = (req as any).user.id;
 
-    console.log("StartRoom aufgerufen!");
-    console.log("-> Gefundene Room-ID:", roomId);
-    console.log("-> User-ID:", userId);
+    const { gameType, isAnalog, olyGames, olyMode } = req.body;
 
     const room = await getRoom(roomId);
     if (!room) {
@@ -198,10 +203,65 @@ export const startRoom = async (req: Request, res: Response) => {
         .json({ status: "error", message: "Room was already started." });
     }
 
-    const startedRoom = await updateRoomStatus(roomId, "ACTIVE");
+    const unreadyPlayers = room.participants.filter((p) => !p.isReady);
+    if (unreadyPlayers.length > 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Not everyone is ready yet",
+      });
+    }
 
-    res.status(200).json({ status: "success", data: startedRoom });
+    let startedGameData;
+
+    if (gameType === "KNIFFEL") {
+      const gameDef = await getGameDefinitionByName("KNIFFEL");
+      startedGameData = await createMatchForRoom(
+        roomId,
+        gameDef!.id,
+        userId,
+        isAnalog || false,
+      );
+    } else if (gameType === "OLYMPIADE") {
+      if (!olyGames || olyGames.length === 0) {
+        return res.status(400).json({
+          status: "error",
+          message: "Olympiads need atleast one game",
+        });
+      }
+
+      await updateRoomStatus(roomId, "ACTIVE");
+
+      startedGameData = createOlympiade(roomId, olyMode, olyGames);
+    } else {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Unknown gametype" });
+    }
+
+    res.status(200).json({ status: "success", data: startedGameData });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to start room" });
+  }
+};
+
+export const toggleReady = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+
+    const user = await getUserById(userId);
+
+    if (!user || !user.currentRoomId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "You aren't in any room." });
+    }
+
+    const updatedUser = updateIsReady(userId, !user.isReady);
+
+    res.status(200).json({ status: "error", data: updatedUser });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to toggle ready status" });
   }
 };
