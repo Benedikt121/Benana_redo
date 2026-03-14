@@ -63,7 +63,7 @@ export const getRoom = async (roomId: string) => {
       },
       include: {
         participants: {
-          select: { username: true, color: true },
+          select: { id: true, username: true, color: true },
         },
         host: {
           select: { username: true },

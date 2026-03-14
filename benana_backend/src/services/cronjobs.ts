@@ -16,7 +16,7 @@ export const cronjobs = () => {
 
   // Cleanup old friendrequests every month
   cron.schedule(
-    "0 3 1 * * *",
+    "0 3 1 * *",
     async () => {
       deleteOldFriendships();
     },

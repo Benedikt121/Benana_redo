@@ -42,7 +42,10 @@ export const createInvite = async (
 export const findInvitationsForUser = async (userId: string) => {
   try {
     return await prisma.invitation.findMany({
-      where: { receiverId: userId },
+      where: { receiverId: userId, status: "PENDING" },
+      orderBy: {
+        createdAt: "desc",
+      },
       include: {
         sender: { select: { id: true, username: true, color: true } },
         room: { select: { id: true, hostId: true } },
@@ -75,21 +78,10 @@ export const updateInvitation = async (
   status: "ACCEPTED" | "REJECTED",
 ) => {
   try {
-    const invitation = await prisma.invitation.update({
+    return await prisma.invitation.update({
       where: { id: invitationId },
       data: { status },
     });
-
-    if (status === "ACCEPTED") {
-      await prisma.room.update({
-        where: { id: invitation.roomId },
-        data: {
-          participants: {
-            connect: { id: invitation.receiverId },
-          },
-        },
-      });
-    }
   } catch (error) {
     console.error("Error accepting invitation:", error);
     throw error;

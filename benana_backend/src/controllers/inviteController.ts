@@ -5,12 +5,42 @@ import {
   findInvitationsForUser,
   updateInvitation,
 } from "../services/inviteService.js";
+import {
+  addPlayerToRoom,
+  getRoom,
+  removePlayerFromRoom,
+} from "../services/roomService.js";
+import { joinRoom } from "./roomController.js";
 
 export const inviteToRoom = async (req: Request, res: Response) => {
   try {
     const senderId = (req as any).user.id;
     const { roomId, receiverUsername } = req.body;
 
+    const room = await getRoom(roomId);
+    if (!room) {
+      return res
+        .status(404)
+        .json({ status: "error", message: "Room not found" });
+    }
+
+    if (!room.participants.some((participant) => participant.id === senderId)) {
+      return res.status(403).json({
+        status: "error",
+        message: "You are not a member of this room.",
+      });
+    }
+
+    if (
+      room.participants.some(
+        (participant) => participant.username === receiverUsername,
+      )
+    ) {
+      return res.status(400).json({
+        status: "error",
+        message: "The user is already a member of this room.",
+      });
+    }
     const invitation = await createInvite(roomId, senderId, receiverUsername);
     if (!invitation) {
       return res
@@ -30,16 +60,7 @@ export const getUserInvites = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const invites = await findInvitationsForUser(userId);
 
-    if (
-      invites.map((invite) => invite.receiverId).every((id) => id === userId)
-    ) {
-      return res.status(200).json({ status: "success", data: invites });
-    } else {
-      return res.status(403).json({
-        status: "error",
-        message: "Only the invited user can view the invitation.",
-      });
-    }
+    res.status(200).json({ status: "success", data: invites });
   } catch (error) {
     res
       .status(500)
@@ -68,7 +89,15 @@ export const acceptInvite = async (req: Request, res: Response) => {
     }
 
     const acceptedInvite = await updateInvitation(inviteId, "ACCEPTED");
-    res.status(200).json({ status: "success", data: acceptedInvite });
+    if ((req as any).user.currentRoomId) {
+      await removePlayerFromRoom((req as any).user.currentRoomId, userId);
+    }
+
+    const updatedRoom = await addPlayerToRoom(invite.roomId, userId);
+    res.status(200).json({
+      status: "success",
+      data: { acceptedInvite: acceptedInvite, updatedRoom: updatedRoom },
+    });
   } catch (error) {
     res
       .status(500)
