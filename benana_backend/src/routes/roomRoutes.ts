@@ -9,6 +9,8 @@ import {
   getRoomInvites,
   startRoom,
   toggleReady,
+  addGame,
+  kickPlayer,
 } from "../controllers/roomController.js";
 
 const router = Router();
@@ -23,5 +25,7 @@ router.patch("/leave", leaveRoom);
 router.get("/invites/:roomId", getRoomInvites);
 router.patch("/start", startRoom);
 router.patch("/ready", toggleReady);
+router.post("/addGame", addGame);
+router.delete("/kick/:userId", kickPlayer);
 
 export default router;

@@ -13,6 +13,7 @@ import { Request, Response } from "express";
 import { getUserById, updateIsReady } from "../services/userService.js";
 import {
   createMatchForRoom,
+  createMatchGame,
   createOlympiade,
   getGameDefinitionByName,
   getMatchGameDefinitionByName,
@@ -161,6 +162,55 @@ export const leaveRoom = async (req: Request, res: Response) => {
   }
 };
 
+export const kickPlayer = async (req: Request, res: Response) => {
+  try {
+    const hostId = (req as any).user.id;
+    const { userId: targetUserId } = req.params;
+    const roomId = (req as any).user.currentRoomId;
+
+    if (hostId === targetUserId) {
+      return res.status(400).json({
+        status: "error",
+        message: "You can't kick yourself",
+      });
+    }
+
+    const room = await getRoom(roomId as string);
+
+    if (room?.hostId !== hostId) {
+      return res.status(403).json({
+        status: "error",
+        message: "Only the host can kick players",
+      });
+    }
+
+    if (room?.status !== "CREATING") {
+      return res.status(400).json({
+        status: "error",
+        message: "You can only kick players in the Lobby",
+      });
+    }
+
+    const isPlayerInRoom = room.participants.some((p) => p.id === targetUserId);
+    if (!isPlayerInRoom) {
+      return res.status(400).json({
+        status: "error",
+        message: "This player is not in your room",
+      });
+    }
+
+    await removePlayerFromRoom(roomId as string, targetUserId as string);
+
+    res.status(200).json({
+      status: "success",
+      message: "Player kicked successfully",
+    });
+  } catch (error) {
+    console.error("Error in kickPlayer:", error);
+    res.status(500).json({ status: "error", message: "Failed to kick player" });
+  }
+};
+
 export const getRoomInvites = async (req: Request, res: Response) => {
   try {
     const roomId = Array.isArray(req.params.roomId)
@@ -258,12 +308,22 @@ export const toggleReady = async (req: Request, res: Response) => {
         .json({ status: "error", message: "You aren't in any room." });
     }
 
-    const updatedUser = updateIsReady(userId, !user.isReady);
+    const updatedUser = await updateIsReady(userId, !user.isReady);
 
-    res.status(200).json({ status: "error", data: updatedUser });
+    res.status(200).json({ status: "success", data: updatedUser });
   } catch (error) {
     res
       .status(500)
       .json({ status: "error", message: "Failed to toggle ready status" });
+  }
+};
+
+export const addGame = async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body;
+    const newGame = await createMatchGame(name);
+    res.status(200).json({ status: "succes", message: "Game created" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: "Failed to create game" });
   }
 };

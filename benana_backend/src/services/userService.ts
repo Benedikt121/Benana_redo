@@ -33,8 +33,8 @@ export function getUserByUsername(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
-  currentRoomId: true;
-  isReady: true;
+  currentRoomId: string | null;
+  isReady: boolean;
   passwordHash: string;
 } | null>;
 
@@ -47,8 +47,8 @@ export function getUserByUsername(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
-  currentRoomId: true;
-  isReady: true;
+  currentRoomId: string | null;
+  isReady: boolean;
 } | null>;
 
 export async function getUserByUsername(
@@ -85,8 +85,8 @@ export function getUserById(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
-  currentRoomId: true;
-  isReady: true;
+  currentRoomId: string | null;
+  isReady: boolean;
   passwordHash: string;
 } | null>;
 
@@ -99,8 +99,8 @@ export function getUserById(
   color: string;
   profilePictureUrl: string | null;
   createdAt: Date;
-  currentRoomId: true;
-  isReady: true;
+  currentRoomId: string | null;
+  isReady: boolean;
 } | null>;
 
 export async function getUserById(id: string, withPassword: boolean = false) {

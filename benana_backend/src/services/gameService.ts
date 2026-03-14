@@ -84,3 +84,11 @@ export const createOlympiade = async (
     throw error;
   }
 };
+
+export const createMatchGame = async (name: string) => {
+  return await prisma.matchGame.create({
+    data: {
+      name,
+    },
+  });
+};
