@@ -26,11 +26,7 @@ export const newRoom = async (req: Request, res: Response) => {
         updatedRoom.participants.length === 0 || updatedRoom.hostId === hostId;
 
       if (shouldDeleteRoom) {
-        await deleteRoom((req as any).user.current);
-        return res.status(200).json({
-          status: "success",
-          message: "Room deleted as it has no participants or host left.",
-        });
+        await deleteRoom((req as any).user.currentRoomId);
       }
     }
     res.status(201).json({ status: "success", data: createdRoom });
@@ -119,11 +115,7 @@ export const joinRoom = async (req: Request, res: Response) => {
         updatedRoom.participants.length === 0 || updatedRoom.hostId === userId;
 
       if (shouldDeleteRoom) {
-        await deleteRoom((req as any).user.current);
-        return res.status(200).json({
-          status: "success",
-          message: "Room deleted as it has no participants or host left.",
-        });
+        await deleteRoom((req as any).user.currentRoomId);
       }
     }
 
