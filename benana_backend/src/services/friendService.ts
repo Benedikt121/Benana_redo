@@ -131,3 +131,19 @@ export const deleteFriendship = async (
 
   return await prisma.friendship.delete({ where: { id: friendshipId } });
 };
+
+export const deleteOldFriendships = async () => {
+  const monthago = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  try {
+    await prisma.friendship.deleteMany({
+      where: {
+        status: "PENDING",
+        createdAt: { lt: monthago },
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting old friendships:", error);
+    throw error;
+  }
+};

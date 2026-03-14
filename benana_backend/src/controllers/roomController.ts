@@ -105,10 +105,14 @@ export const joinRoom = async (req: Request, res: Response) => {
 
 export const leaveRoom = async (req: Request, res: Response) => {
   try {
-    const roomId = Array.isArray(req.params.roomId)
-      ? req.params.roomId[0]
-      : req.params.roomId;
     const userId = (req as any).user.id;
+    const roomId = (req as any).user.currentRoomId;
+
+    if (!roomId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "You are not currently in a room." });
+    }
 
     const updatedRoom = await removePlayerFromRoom(roomId, userId);
     const shouldDeleteRoom =

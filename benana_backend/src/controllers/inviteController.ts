@@ -6,7 +6,7 @@ import {
   updateInvitation,
 } from "../services/inviteService.js";
 
-export const inviteToRoom = async (res: Response, req: Request) => {
+export const inviteToRoom = async (req: Request, res: Response) => {
   try {
     const senderId = (req as any).user.id;
     const { roomId, receiverUsername } = req.body;
@@ -49,7 +49,9 @@ export const getUserInvites = async (req: Request, res: Response) => {
 
 export const acceptInvite = async (req: Request, res: Response) => {
   try {
-    const inviteId = req.body.inviteId;
+    const inviteId = Array.isArray(req.params.inviteId)
+      ? req.params.inviteId[0]
+      : req.params.inviteId;
     const userId = (req as any).user.id;
 
     const invite = await findInvitationById(inviteId);
@@ -76,7 +78,9 @@ export const acceptInvite = async (req: Request, res: Response) => {
 
 export const rejectInvite = async (req: Request, res: Response) => {
   try {
-    const inviteId = req.body.inviteId;
+    const inviteId = Array.isArray(req.params.inviteId)
+      ? req.params.inviteId[0]
+      : req.params.inviteId;
     const userId = (req as any).user.id;
 
     const invite = await findInvitationById(inviteId);

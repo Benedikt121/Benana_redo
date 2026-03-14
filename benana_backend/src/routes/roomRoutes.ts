@@ -17,7 +17,7 @@ router.post("/create", newRoom);
 router.get("/all", getAllRooms);
 router.get("/:roomId", getRoomById);
 router.patch("/join/:roomId", joinRoom);
-router.patch("/leave/:roomId", leaveRoom);
+router.patch("/leave", leaveRoom);
 router.get("/invites/:roomId", getRoomInvites);
 
 export default router;
