@@ -317,13 +317,3 @@ export const toggleReady = async (req: Request, res: Response) => {
       .json({ status: "error", message: "Failed to toggle ready status" });
   }
 };
-
-export const addGame = async (req: Request, res: Response) => {
-  try {
-    const { name } = req.body;
-    const newGame = await createMatchGame(name);
-    res.status(200).json({ status: "succes", message: "Game created" });
-  } catch (error) {
-    res.status(500).json({ status: "error", message: "Failed to create game" });
-  }
-};

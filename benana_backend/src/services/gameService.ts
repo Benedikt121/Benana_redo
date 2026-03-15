@@ -86,9 +86,24 @@ export const createOlympiade = async (
 };
 
 export const createMatchGame = async (name: string) => {
-  return await prisma.matchGame.create({
-    data: {
-      name,
-    },
-  });
+  try {
+    return await prisma.matchGame.create({
+      data: {
+        name,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to create MatchGame");
+    throw error;
+  }
+};
+
+export const getAllGamesAndGameDefs = async () => {
+  try {
+    const matchGames = await prisma.matchGame.findMany();
+    const gameDefs = await prisma.gameDefinition.findMany();
+    return { matchGames, gameDefs };
+  } catch (error) {
+    console.error("Failed to fetch games");
+  }
 };
