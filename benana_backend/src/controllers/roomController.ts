@@ -3,6 +3,7 @@ import {
   createRoom,
   deleteRoom,
   findInvitationsForRoom,
+  getActiveMatchForRoom,
   getRoom,
   getRooms,
   removePlayerFromRoom,
@@ -315,5 +316,30 @@ export const toggleReady = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: "error", message: "Failed to toggle ready status" });
+  }
+};
+
+export const getCurrentMatch = async (req: Request, res: Response) => {
+  try {
+    const roomId = Array.isArray(req.params.roomId)
+      ? req.params.roomId[0]
+      : req.params.roomId;
+
+    const activeMatch = await getActiveMatchForRoom(roomId);
+
+    if (!activeMatch) {
+      return res.status(404).json({
+        status: "error",
+        message: "Kein aktives Match in diesem Raum gefunden.",
+      });
+    }
+
+    res.status(200).json({ status: "success", data: activeMatch });
+  } catch (error) {
+    console.error("Error in getCurrentMatch:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Fehler beim Laden des aktiven Matches.",
+    });
   }
 };

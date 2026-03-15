@@ -152,3 +152,51 @@ export const findInvitationsForRoom = async (roomId: string) => {
     throw error;
   }
 };
+
+export const getActiveMatchForRoom = async (roomId: string) => {
+  try {
+    return prisma.match.findFirst({
+      where: {
+        roomId: roomId,
+        status: "ACTIVE",
+      },
+      include: {
+        gameDefinition: true,
+        matchGame: true,
+        olympiade: true,
+        kniffelGame: {
+          include: {
+            turns: {
+              orderBy: { roundNumber: "asc" },
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    color: true,
+                    profilePictureUrl: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        results: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                color: true,
+                profilePictureUrl: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching active match:", error);
+    throw error;
+  }
+};
