@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { registerRoomHandlers } from "./roomHandler.js";
 import { registerChatHandlers } from "./chatHandler.js";
+import { registerGameHandlers } from "./gameHandler.js";
 
 export const connectedUsers = new Map<string, string>();
 
@@ -15,6 +16,7 @@ export const setupSockets = (io: Server) => {
 
     registerRoomHandlers(io, socket);
     registerChatHandlers(io, socket);
+    registerGameHandlers(io, socket);
 
     socket.on("disconnect", () => {
       console.log(`🔌 Client getrennt: ${socket.id}`);
