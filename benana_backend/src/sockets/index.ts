@@ -1,4 +1,6 @@
 import { Server, Socket } from "socket.io";
+import { registerRoomHandlers } from "./roomHandler.js";
+import { registerChatHandlers } from "./chatHandler.js";
 
 export const connectedUsers = new Map<string, string>();
 
@@ -11,14 +13,8 @@ export const setupSockets = (io: Server) => {
       console.log(`👤 User ${userId} registriert mit Socket ${socket.id}`);
     });
 
-    socket.on("join_room", (roomId: string) => {
-      socket.join(roomId);
-      console.log(`🏠 Socket ${socket.id} lauscht nun auf Raum: ${roomId}`);
-    });
-
-    socket.on("leave_room", (roomId: string) => {
-      socket.leave(roomId);
-    });
+    registerRoomHandlers(io, socket);
+    registerChatHandlers(io, socket);
 
     socket.on("disconnect", () => {
       console.log(`🔌 Client getrennt: ${socket.id}`);
