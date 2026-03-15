@@ -1,8 +1,13 @@
 import express from "express";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import { connectDB, disconnectDB } from "./config/db.js";
+import { setupSockets } from "./sockets/index.js";
+
 import authRoutes from "./routes/authRoutes.js";
 import deleteRoutes from "./routes/deleteRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
@@ -17,9 +22,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 config();
-connectDB();
 
 const app = express();
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+  },
+});
+
+app.set("io", io);
+
+setupSockets(io);
+
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -42,8 +60,9 @@ app.get("*all", (req, res) => {
   res.sendFile(path.join(clientPath, "index.html"));
 });
 
-const server = app.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
+  await connectDB();
 });
 
 cronjobs();
@@ -51,7 +70,7 @@ cronjobs();
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
   console.error("Unhandled Rejection:", err);
-  server.close(async () => {
+  httpServer.close(async () => {
     await disconnectDB();
     process.exit(1);
   });
@@ -65,7 +84,7 @@ process.on("uncaughtException", async (err) => {
 
 process.on("SIGTERM", async () => {
   console.log("SIGTERM received. Shutting down gracefully...");
-  server.close(async () => {
+  httpServer.close(async () => {
     await disconnectDB();
     process.exit(0);
   });
