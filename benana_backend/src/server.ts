@@ -10,6 +10,7 @@ import friendRoutes from "./routes/friendRoutes.js";
 import { cronjobs } from "./services/cronjobs.js";
 import inviteRoutes from "./routes/inviteRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import statRoutes from "./routes/statRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +30,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/invites", inviteRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/stats", statRoutes);
 app.get("/api/health", async (req, res) => res.send("OK"));
 
 const clientPath = path.join(__dirname, "../client");
