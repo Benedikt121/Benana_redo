@@ -82,6 +82,7 @@ export const joinRoom = async (req: Request, res: Response) => {
       ? req.params.roomId[0]
       : req.params.roomId;
     const userId = (req as any).user.id;
+    const io = req.app.get("io");
 
     if ((req as any).user.currentRoomId === roomId) {
       return res
@@ -115,20 +116,24 @@ export const joinRoom = async (req: Request, res: Response) => {
       });
     }
 
-    if ((req as any).user.currentRoomId) {
-      const updatedRoom = await removePlayerFromRoom(
-        (req as any).user.currentRoomId,
-        userId,
-      );
+    const oldRoomId = (req as any).user.currentRoomId;
+    if (oldRoomId) {
+      const updatedOldRoom = await removePlayerFromRoom(oldRoomId, userId);
       const shouldDeleteRoom =
-        updatedRoom.participants.length === 0 || updatedRoom.hostId === userId;
+        updatedOldRoom.participants.length === 0 ||
+        updatedOldRoom.hostId === userId;
 
       if (shouldDeleteRoom) {
-        await deleteRoom((req as any).user.currentRoomId);
+        await deleteRoom(oldRoomId);
+      } else {
+        io.to(oldRoomId).emit("player_left", { userId });
       }
     }
 
     const updatedRoom = await addPlayerToRoom(roomId, userId);
+
+    io.to(roomId).emit("player_joined", { room: updatedRoom });
+
     res.status(200).json({ status: "success", data: updatedRoom });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to join room" });
@@ -139,6 +144,7 @@ export const leaveRoom = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const roomId = (req as any).user.currentRoomId;
+    const io = req.app.get("io");
 
     if (!roomId) {
       return res
@@ -157,6 +163,9 @@ export const leaveRoom = async (req: Request, res: Response) => {
         message: "Room deleted as it has no participants or host left.",
       });
     }
+
+    io.to(roomId).emit("player_left", { userId });
+
     res.status(200).json({ status: "success", data: updatedRoom });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to leave room" });
@@ -168,6 +177,7 @@ export const kickPlayer = async (req: Request, res: Response) => {
     const hostId = (req as any).user.id;
     const { userId: targetUserId } = req.params;
     const roomId = (req as any).user.currentRoomId;
+    const io = req.app.get("io");
 
     if (hostId === targetUserId) {
       return res.status(400).json({
@@ -202,6 +212,8 @@ export const kickPlayer = async (req: Request, res: Response) => {
 
     await removePlayerFromRoom(roomId as string, targetUserId as string);
 
+    io.to(roomId).emit("player_kicked", { userId: targetUserId });
+
     res.status(200).json({
       status: "success",
       message: "Player kicked successfully",
@@ -231,6 +243,7 @@ export const startRoom = async (req: Request, res: Response) => {
   try {
     const roomId = (req as any).user.currentRoomId;
     const userId = (req as any).user.id;
+    const io = req.app.get("io");
 
     const { gameType, isAnalog, olyGames, olyMode, matchGame } = req.body;
 
@@ -291,6 +304,10 @@ export const startRoom = async (req: Request, res: Response) => {
         .json({ status: "error", message: "Unknown gametype" });
     }
 
+    io.to(roomId).emit("game_started", {
+      matchData: startedGameData,
+    });
+
     res.status(200).json({ status: "success", data: startedGameData });
   } catch (error) {
     res.status(500).json({ status: "error", message: "Failed to start room" });
@@ -300,6 +317,7 @@ export const startRoom = async (req: Request, res: Response) => {
 export const toggleReady = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
+    const io = req.app.get("io");
 
     const user = await getUserById(userId);
 
@@ -310,6 +328,11 @@ export const toggleReady = async (req: Request, res: Response) => {
     }
 
     const updatedUser = await updateIsReady(userId, !user.isReady);
+
+    io.to(user.currentRoomId).emit("player_ready_changed", {
+      userId: updatedUser.id,
+      isReady: updatedUser.isReady,
+    });
 
     res.status(200).json({ status: "success", data: updatedUser });
   } catch (error) {
