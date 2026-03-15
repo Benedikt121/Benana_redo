@@ -1,4 +1,3 @@
-import { timeStamp } from "node:console";
 import { Server, Socket } from "socket.io";
 
 export const registerChatHandlers = (io: Server, socket: Socket) => {
@@ -9,15 +8,24 @@ export const registerChatHandlers = (io: Server, socket: Socket) => {
       username: string;
       text: string;
       color: string;
-      profilePictureURL: string;
     }) => {
-      const { roomId, username, text, color, profilePictureURL } = data;
+      const { roomId, username, text, color } = data;
+
+      if (!text || text.trim().length === 0) return;
+      if (text.length > 250) return;
+
+      if (!socket.rooms.has(roomId)) {
+        console.warn(
+          `Socket ${socket.id} hat versucht, in Raum ${roomId} zu schreiben, ohne Mitglied zu sein.`,
+        );
+        return;
+      }
+
       io.to(roomId).emit("receive_chat_message", {
         username,
-        text,
+        text: text.trim(),
         color,
-        profilePictureURL,
-        timeStamp: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
       });
     },
   );
