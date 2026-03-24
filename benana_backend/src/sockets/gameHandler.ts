@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { connectedUsers } from "./index.js";
 import { prisma } from "../config/db.js";
 import { Prisma } from "../generated/prisma/client.js";
+import { checkCorrectScore } from "./utility/checkCorrectScore.js";
 
 interface KniffelState {
   diceHistory: number[][];
@@ -105,6 +106,7 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         const gameState = activeMatches.get(matchId);
         let diceHistory = null;
         let finalRollCount = 0;
+        let calculatedScore = null;
 
         if (!match.kniffelGame?.isAnalog) {
           if (!gameState) {
@@ -114,7 +116,7 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
           diceHistory = gameState.diceHistory;
           finalRollCount = gameState.rollCount;
 
-          
+          calculatedScore = checkCorrectScore(category, diceHistory);
         }
 
         const previousTurns = await prisma.kniffelTurn.count({
@@ -127,7 +129,7 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
           data: {
             roundNumber,
             category,
-            score,
+            score: calculatedScore ? calculatedScore : score,
             rolls: diceHistory ?? Prisma.DbNull,
             rerollCount: finalRollCount,
             kniffelGameId,
