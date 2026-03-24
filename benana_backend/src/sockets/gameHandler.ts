@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { connectedUsers } from "./index.js";
 import { prisma } from "../config/db.js";
-import { Prisma } from "../generated/prisma/client.js";
+import { Prisma, User } from "../generated/prisma/client.js";
 import { checkCorrectScore } from "./utility/checkCorrectScore.js";
 
 interface KniffelState {
@@ -136,7 +136,36 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
             userId,
           },
         });
-      } catch (error) {}
+
+        activeMatches.delete(matchId);
+
+        const participants = match.room.participants;
+        const currentIndex = participants.findIndex((p: User) => p.userId === userId);
+        const nextPlayer = participants[(currentIndex + 1) % participants.length];
+
+        await prisma.match.update({
+          where: { id: matchId },
+          data: { currentTurnUserId: nextPlayer.id }
+        })
+
+        io.to(roomId).emit("turn_submitted", {
+        turn,
+        nextUserId: nextPlayer.id,
+        roundNumber
+      });
+
+      if (roundNumber === 13 && currentIndex === participants.length - 1) {
+        io.to(roomId).emit("game_finished", { matchId });
+        
+        await prisma.match.update({
+          where: { id: matchId },
+          data: { status: "FINISHED" }
+        });
+      }
+      } catch (error) {
+        console.error("Error submitting turn:", error);
+        socket.emit("game_error", { message: "An error occurred while submitting your turn." });
+      }
     },
   );
 };

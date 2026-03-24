@@ -1305,6 +1305,20 @@ Broadcast to all members in the room after a turn was submited.
 
 ---
 
+#### Server → Client: `game_finished`
+
+Sent to every member in a room when a game has finished
+
+**Payload:**
+
+```json
+{
+  "matchId": "string"
+}
+```
+
+---
+
 #### Server → Client: `game_error`
 
 Sent only to the emitting client when a game action is invalid.
