@@ -99,7 +99,10 @@ const check4OAK = (diceDistribution: number[]) => {
 const checkFullHouse = (diceDistribution: number[]) => {
   const hasThreeOfAKind = diceDistribution.some((count) => count === 3);
   const hasPair = diceDistribution.some((count) => count === 2);
-  if (hasThreeOfAKind && hasPair) {
+
+  const isKniffel = diceDistribution.some((count) => count === 5);
+
+  if ((hasThreeOfAKind && hasPair || isKniffel)) {
     return 25; // Full house score
   }
   return 0;

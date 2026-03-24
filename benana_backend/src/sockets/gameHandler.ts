@@ -129,7 +129,7 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
           data: {
             roundNumber,
             category,
-            score: calculatedScore ? calculatedScore : score,
+            score: calculatedScore ?? score,
             rolls: diceHistory ?? Prisma.DbNull,
             rerollCount: finalRollCount,
             kniffelGameId,
@@ -140,7 +140,7 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         activeMatches.delete(matchId);
 
         const participants = match.room.participants;
-        const currentIndex = participants.findIndex((p: User) => p.userId === userId);
+        const currentIndex = participants.findIndex((p: User) => p.id === userId);
         const nextPlayer = participants[(currentIndex + 1) % participants.length];
 
         await prisma.match.update({
@@ -169,3 +169,4 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
     },
   );
 };
+

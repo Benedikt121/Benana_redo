@@ -15,10 +15,11 @@ import { getUserById, updateIsReady } from "../services/userService.js";
 import {
   createMatchForRoom,
   createMatchGame,
-  createOlympiade,
   getGameDefinitionByName,
   getMatchGameDefinitionByName,
 } from "../services/gameService.js";
+
+import { createOlympiade } from "../services/olympiadeService.js";
 
 export const newRoom = async (req: Request, res: Response) => {
   try {

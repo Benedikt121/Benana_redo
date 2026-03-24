@@ -64,27 +64,6 @@ export const createMatchForRoom = async (
   }
 };
 
-export const createOlympiade = async (
-  roomId: string,
-  gameSelectionMode: OlyGameSelectionMode,
-  gamesPool: JsonArray,
-) => {
-  try {
-    return await prisma.olympiade.create({
-      data: {
-        roomId: roomId,
-        name: "Olympiade " + new Date().toLocaleDateString(),
-        gameSelectionMode: gameSelectionMode || "RANDOM",
-        gamesPool: gamesPool,
-        status: "ACTIVE",
-      },
-    });
-  } catch (error) {
-    console.error("Failed to create Olympiade");
-    throw error;
-  }
-};
-
 export const createMatchGame = async (name: string) => {
   try {
     return await prisma.matchGame.create({
