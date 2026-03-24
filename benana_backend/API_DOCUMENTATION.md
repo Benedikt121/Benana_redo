@@ -69,11 +69,11 @@ Register a new user account.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | Username and password are required. |
-| 409 | Username already exists. |
-| 500 | Internal server error. |
+| Status | Message                             |
+| ------ | ----------------------------------- |
+| 400    | Username and password are required. |
+| 409    | Username already exists.            |
+| 500    | Internal server error.              |
 
 ---
 
@@ -109,11 +109,11 @@ Log in with existing credentials.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | Username and password are required. |
-| 401 | Invalid username or password. |
-| 500 | Internal server error. |
+| Status | Message                             |
+| ------ | ----------------------------------- |
+| 400    | Username and password are required. |
+| 401    | Invalid username or password.       |
+| 500    | Internal server error.              |
 
 ---
 
@@ -195,8 +195,8 @@ Get a user's profile by their ID.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | userId | string (uuid) | The user's ID |
 
 **Success Response (`200`):**
@@ -210,9 +210,9 @@ Get a user's profile by their ID.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | User not found |
+| Status | Message        |
+| ------ | -------------- |
+| 404    | User not found |
 
 ---
 
@@ -222,8 +222,8 @@ Get a user's profile by their username.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param    | Type   | Description         |
+| -------- | ------ | ------------------- |
 | username | string | The user's username |
 
 **Success Response (`200`):**
@@ -237,9 +237,9 @@ Get a user's profile by their username.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | User not found |
+| Status | Message        |
+| ------ | -------------- |
+| 404    | User not found |
 
 ---
 
@@ -264,9 +264,9 @@ Search users by username.
 
 **Query Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
-| q | string | Search query (required) |
+| Param | Type   | Description             |
+| ----- | ------ | ----------------------- |
+| q     | string | Search query (required) |
 
 **Success Response (`200`):**
 
@@ -279,9 +279,9 @@ Search users by username.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | Invalid search query |
+| Status | Message              |
+| ------ | -------------------- |
+| 400    | Invalid search query |
 
 ---
 
@@ -329,8 +329,8 @@ Get a specific room by ID.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | roomId | string (uuid) | The room's ID |
 
 **Success Response (`200`):**
@@ -344,9 +344,9 @@ Get a specific room by ID.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | Room not found. |
+| Status | Message         |
+| ------ | --------------- |
+| 404    | Room not found. |
 
 ---
 
@@ -356,8 +356,8 @@ Join an existing room. Leaves the current room if in one.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description      |
+| ------ | ------------- | ---------------- |
 | roomId | string (uuid) | The room to join |
 
 **Success Response (`200`):**
@@ -371,12 +371,12 @@ Join an existing room. Leaves the current room if in one.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | You are already in this room. |
-| 400 | This room is not available for joining. (status ≠ CREATING) |
-| 403 | This room is invite-only. |
-| 403 | This room is for friends only. |
+| Status | Message                                                     |
+| ------ | ----------------------------------------------------------- |
+| 400    | You are already in this room.                               |
+| 400    | This room is not available for joining. (status ≠ CREATING) |
+| 403    | This room is invite-only.                                   |
+| 403    | This room is for friends only.                              |
 
 **Socket Side Effects:** Emits `player_joined` to the room. Emits `player_left` to the old room if applicable.
 
@@ -408,9 +408,9 @@ or (if room was deleted):
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | You are not currently in a room. |
+| Status | Message                          |
+| ------ | -------------------------------- |
+| 400    | You are not currently in a room. |
 
 **Socket Side Effects:** Emits `player_left` to the room.
 
@@ -433,9 +433,9 @@ Toggle the authenticated user's ready status.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | You aren't in any room. |
+| Status | Message                 |
+| ------ | ----------------------- |
+| 400    | You aren't in any room. |
 
 **Socket Side Effects:** Emits `player_ready_changed` to the room with `{ userId, isReady }`.
 
@@ -457,13 +457,13 @@ Start the game in the current room. Only the host can start. All players must be
 }
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| gameType | Yes | `"KNIFFEL"` or `"OLYMPIADE"` |
-| isAnalog | No | Whether the Kniffel game is analog (default: `false`) |
-| matchGame | For KNIFFEL | Name of the match game variant |
-| olyGames | For OLYMPIADE | Array of game names for the olympiade |
-| olyMode | For OLYMPIADE | `"RANDOM"` or `"PREDEFINED"` game selection mode |
+| Field     | Required      | Description                                           |
+| --------- | ------------- | ----------------------------------------------------- |
+| gameType  | Yes           | `"KNIFFEL"` or `"OLYMPIADE"`                          |
+| isAnalog  | No            | Whether the Kniffel game is analog (default: `false`) |
+| matchGame | For KNIFFEL   | Name of the match game variant                        |
+| olyGames  | For OLYMPIADE | Array of game names for the olympiade                 |
+| olyMode   | For OLYMPIADE | `"RANDOM"` or `"PREDEFINED"` game selection mode      |
 
 **Success Response (`200`):**
 
@@ -476,14 +476,14 @@ Start the game in the current room. Only the host can start. All players must be
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | Room was already started. |
-| 400 | Not everyone is ready yet |
-| 400 | Olympiads need at least one game |
-| 400 | Unknown gametype |
-| 403 | Only the host can start the game. |
-| 404 | Failed to find room |
+| Status | Message                           |
+| ------ | --------------------------------- |
+| 400    | Room was already started.         |
+| 400    | Not everyone is ready yet         |
+| 400    | Olympiads need at least one game  |
+| 400    | Unknown gametype                  |
+| 403    | Only the host can start the game. |
+| 404    | Failed to find room               |
 
 **Socket Side Effects:** Emits `game_started` to the room with `{ matchData }`.
 
@@ -495,8 +495,8 @@ Kick a player from the room. Only the host can kick, and only during CREATING st
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description      |
+| ------ | ------------- | ---------------- |
 | userId | string (uuid) | The user to kick |
 
 **Success Response (`200`):**
@@ -510,12 +510,12 @@ Kick a player from the room. Only the host can kick, and only during CREATING st
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | You can't kick yourself |
-| 400 | You can only kick players in the Lobby |
-| 400 | This player is not in your room |
-| 403 | Only the host can kick players |
+| Status | Message                                |
+| ------ | -------------------------------------- |
+| 400    | You can't kick yourself                |
+| 400    | You can only kick players in the Lobby |
+| 400    | This player is not in your room        |
+| 403    | Only the host can kick players         |
 
 **Socket Side Effects:** Emits `player_kicked` to the room with `{ userId }`.
 
@@ -527,8 +527,8 @@ Get all invitations for a specific room.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | roomId | string (uuid) | The room's ID |
 
 **Success Response (`200`):**
@@ -548,8 +548,8 @@ Get the currently active match for a room.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | roomId | string (uuid) | The room's ID |
 
 **Success Response (`200`):**
@@ -563,9 +563,9 @@ Get the currently active match for a room.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | Kein aktives Match in diesem Raum gefunden. |
+| Status | Message                                     |
+| ------ | ------------------------------------------- |
+| 404    | Kein aktives Match in diesem Raum gefunden. |
 
 ---
 
@@ -596,12 +596,12 @@ Send a friend request to another user.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | Username is required. |
-| 400 | You cannot send a friend request to yourself. |
-| 400 | You are already friends with this user. |
-| 404 | User not found. |
+| Status | Message                                       |
+| ------ | --------------------------------------------- |
+| 400    | Username is required.                         |
+| 400    | You cannot send a friend request to yourself. |
+| 400    | You are already friends with this user.       |
+| 404    | User not found.                               |
 
 ---
 
@@ -641,9 +641,9 @@ Accept a pending friend request.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
-| id | string (uuid) | The friendship ID |
+| Param | Type          | Description       |
+| ----- | ------------- | ----------------- |
+| id    | string (uuid) | The friendship ID |
 
 **Success Response (`200`):**
 
@@ -656,9 +656,9 @@ Accept a pending friend request.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | Friend request not found. |
+| Status | Message                   |
+| ------ | ------------------------- |
+| 404    | Friend request not found. |
 
 ---
 
@@ -668,9 +668,9 @@ Remove a friend or decline a friend request.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
-| id | string (uuid) | The friendship ID |
+| Param | Type          | Description       |
+| ----- | ------------- | ----------------- |
+| id    | string (uuid) | The friendship ID |
 
 **Success Response (`200`):**
 
@@ -683,9 +683,9 @@ Remove a friend or decline a friend request.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 403 | You are not authorized to delete this friendship. |
+| Status | Message                                           |
+| ------ | ------------------------------------------------- |
+| 403    | You are not authorized to delete this friendship. |
 
 ---
 
@@ -732,12 +732,12 @@ Invite a user to a room.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | The user is already a member of this room. |
-| 400 | Failed to send invitation. |
-| 403 | You are not a member of this room. |
-| 404 | Room not found |
+| Status | Message                                    |
+| ------ | ------------------------------------------ |
+| 400    | The user is already a member of this room. |
+| 400    | Failed to send invitation.                 |
+| 403    | You are not a member of this room.         |
+| 404    | Room not found                             |
 
 ---
 
@@ -747,8 +747,8 @@ Accept a room invitation. If the user is in another room, they leave it first.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param    | Type          | Description       |
+| -------- | ------------- | ----------------- |
 | inviteId | string (uuid) | The invitation ID |
 
 **Success Response (`200`):**
@@ -765,10 +765,10 @@ Accept a room invitation. If the user is in another room, they leave it first.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 403 | You are not authorized to accept this invitation. |
-| 404 | Invitation not found. |
+| Status | Message                                           |
+| ------ | ------------------------------------------------- |
+| 403    | You are not authorized to accept this invitation. |
+| 404    | Invitation not found.                             |
 
 ---
 
@@ -778,8 +778,8 @@ Decline a room invitation.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param    | Type          | Description       |
+| -------- | ------------- | ----------------- |
 | inviteId | string (uuid) | The invitation ID |
 
 **Success Response (`200`):**
@@ -793,10 +793,10 @@ Decline a room invitation.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 403 | You are not authorized to reject this invitation. |
-| 404 | Invitation not found. |
+| Status | Message                                           |
+| ------ | ------------------------------------------------- |
+| 403    | You are not authorized to reject this invitation. |
+| 404    | Invitation not found.                             |
 
 ---
 
@@ -855,8 +855,8 @@ Get stats overview for a user.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | userId | string (uuid) | The user's ID |
 
 **Success Response (`200`):**
@@ -876,14 +876,14 @@ Get match history for a user. Optionally filter by game type.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | userId | string (uuid) | The user's ID |
 
 **Query Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type              | Description                            |
+| ------ | ----------------- | -------------------------------------- |
 | filter | string (optional) | `"KNIFFEL"`, `"OLYMPIADE"`, or `"ALL"` |
 
 **Success Response (`200`):**
@@ -903,8 +903,8 @@ Get detailed information about a specific match.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param   | Type          | Description  |
+| ------- | ------------- | ------------ |
 | matchId | string (uuid) | The match ID |
 
 **Success Response (`200`):**
@@ -918,9 +918,9 @@ Get detailed information about a specific match.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | Match not found. |
+| Status | Message          |
+| ------ | ---------------- |
+| 404    | Match not found. |
 
 ---
 
@@ -930,8 +930,8 @@ Get detailed information about a specific olympiade.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param       | Type          | Description      |
+| ----------- | ------------- | ---------------- |
 | olympiadeId | string (uuid) | The olympiade ID |
 
 **Success Response (`200`):**
@@ -945,9 +945,9 @@ Get detailed information about a specific olympiade.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | Olympiade not found. |
+| Status | Message              |
+| ------ | -------------------- |
+| 404    | Olympiade not found. |
 
 ---
 
@@ -972,9 +972,9 @@ Delete the authenticated user's account.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 404 | User not found. |
+| Status | Message         |
+| ------ | --------------- |
+| 404    | User not found. |
 
 ---
 
@@ -984,8 +984,8 @@ Delete a room. Only the room's host can delete it.
 
 **URL Params:**
 
-| Param | Type | Description |
-|-------|------|-------------|
+| Param  | Type          | Description   |
+| ------ | ------------- | ------------- |
 | roomId | string (uuid) | The room's ID |
 
 **Success Response (`200`):**
@@ -999,11 +999,11 @@ Delete a room. Only the room's host can delete it.
 
 **Error Responses:**
 
-| Status | Message |
-|--------|---------|
-| 400 | Room ID is required. |
-| 403 | Only the host can delete the room. |
-| 404 | Room not found. |
+| Status | Message                            |
+| ------ | ---------------------------------- |
+| 400    | Room ID is required.               |
+| 403    | Only the host can delete the room. |
+| 404    | Room not found.                    |
 
 ---
 
@@ -1086,6 +1086,7 @@ message: string
 ```
 
 Examples:
+
 - `"A new player has joined the Room."`
 - `"A player has left the Room."`
 
@@ -1214,10 +1215,10 @@ Roll the dice in a Kniffel game. Maximum of 3 rolls per turn. On the first roll,
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| roomId | string | The room ID |
-| matchId | string | The match ID |
+| Field       | Type     | Description                                                                        |
+| ----------- | -------- | ---------------------------------------------------------------------------------- |
+| roomId      | string   | The room ID                                                                        |
+| matchId     | string   | The match ID                                                                       |
 | keptIndices | number[] | Array of dice indices (0–4) to keep from the previous roll. Ignored on first roll. |
 
 ---
@@ -1237,12 +1238,70 @@ Broadcast to all members in the room after a dice roll.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| userId | string | Who rolled |
-| dice | number[] | The 5 dice values after the roll |
-| rollCount | number | How many times the player has rolled this turn (1–3) |
-| keptIndices | number[] | Which dice were kept |
+| Field       | Type     | Description                                          |
+| ----------- | -------- | ---------------------------------------------------- |
+| userId      | string   | Who rolled                                           |
+| dice        | number[] | The 5 dice values after the roll                     |
+| rollCount   | number   | How many times the player has rolled this turn (1–3) |
+| keptIndices | number[] | Which dice were kept                                 |
+
+---
+
+#### Client → Server: `submit_turn`
+
+Submit a turn in a Kniffel-game.
+
+**Payload:**
+
+```json
+{
+  "roomId": "string",
+  "matchId": "string",
+  "kniffelGameId": "string",
+  "category": "string",
+  "score": 123
+}
+```
+
+| Field         | Type   | Description                                            |
+| ------------- | ------ | ------------------------------------------------------ |
+| roomId        | string | The room ID                                            |
+| matchId       | string | The match ID                                           |
+| kniffelGameId | string | The Kniffelgame ID                                     |
+| category      | string | The submited category                                  |
+| score         | number | The amount of points scored (is checked if not analog) |
+
+**Side Effects:** Other members in the room receive a `turn_submitted` event.
+
+---
+
+#### Server → Client: `turn_submitted`
+
+Broadcast to all members in the room after a turn was submited.
+
+**Payload:**
+
+```json
+{
+  "turn": {
+    "roundNumber": 123,
+    "category": "string",
+    "score": 123,
+    "rolls": "Roll history",
+    "rerollCount": 3,
+    "kniffelGameId": "string",
+    "userId": "string"
+  },
+  "nextUserId": "string",
+  "roundNumber": 123
+}
+```
+
+| Field       | Type   | Description               |
+| ----------- | ------ | ------------------------- |
+| turn        | Object | The created turn          |
+| nextUserId  | string | UserId of the next player |
+| roundNumber | number | Round number              |
 
 ---
 
