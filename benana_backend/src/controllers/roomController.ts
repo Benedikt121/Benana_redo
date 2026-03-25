@@ -298,7 +298,7 @@ export const startRoom = async (req: Request, res: Response) => {
 
       await updateRoomStatus(roomId, "ACTIVE");
 
-      startedGameData = createOlympiade(roomId, olyMode, olyGames);
+      startedGameData = await createOlympiade(roomId, olyMode, olyGames);
     } else {
       return res
         .status(400)

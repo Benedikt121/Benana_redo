@@ -11,6 +11,7 @@
   - [Invites (`/api/invites`)](#invites-apiinvites)
   - [Games (`/api/games`)](#games-apigames)
   - [Stats (`/api/stats`)](#stats-apistats)
+  - [Olympiade (`/api/olympiade`)](#olympiade-apiolympiade)
   - [Delete (`/api/delete`)](#delete-apidelete)
   - [Health (`/api/health`)](#health-apihealth)
 - [Socket Events](#socket-events)
@@ -951,6 +952,99 @@ Get detailed information about a specific olympiade.
 
 ---
 
+### Olympiade (`/api/olympiade`)
+
+> All routes require authentication.
+
+#### `POST /api/olympiade/:id/next-game`
+
+Start the next game in an active Olympiade. Only the room host can call this. If all games have been played, the Olympiade is marked as finished and an `olympiade_finished` socket event is emitted to the room.
+
+**URL Params:**
+
+| Param | Type          | Description      |
+| ----- | ------------- | ---------------- |
+| id    | string (uuid) | The Olympiade ID |
+
+**Request Body:** None
+
+**Success Response (`200`):**
+
+```json
+{
+  "message": "New Olympiade game started"
+}
+```
+
+Also emits a `next_oly_game` socket event to the room with:
+
+```json
+{
+  "roomId": "uuid",
+  "kniffelGame": "object | null",
+  "game": "string"
+}
+```
+
+**Error Responses:**
+
+| Status | Message                              |
+| ------ | ------------------------------------ |
+| 400    | Olympiade finished                   |
+| 403    | Only the host can start the next game |
+| 404    | Olympiade not found                  |
+| 500    | Failed to start new Olympiade game   |
+
+---
+
+#### `PATCH /api/olympiade/match/:matchId/winner`
+
+Submit the winner of a manual (non-Kniffel) match within an Olympiade. Only the room host can call this. Creates match results for all participants — the winner receives a score based on the number of matches in the Olympiade (rank 1), and other participants receive 0. The match is marked as finished.
+
+**URL Params:**
+
+| Param   | Type          | Description  |
+| ------- | ------------- | ------------ |
+| matchId | string (uuid) | The match ID |
+
+**Request Body:**
+
+```json
+{
+  "winnerId": "uuid"
+}
+```
+
+**Success Response (`200`):**
+
+```json
+{
+  "message": "Winner submitted successfully"
+}
+```
+
+Also emits a `winner_submitted` socket event to the room with:
+
+```json
+{
+  "matchId": "uuid",
+  "winnerId": "uuid"
+}
+```
+
+**Error Responses:**
+
+| Status | Message                                      |
+| ------ | -------------------------------------------- |
+| 400    | Match is already finished                    |
+| 400    | Winner must be a participant in the room     |
+| 403    | Only the host can submit the winner          |
+| 404    | Match or Olympiade not found                 |
+| 404    | Olympiade not found                          |
+| 500    | Failed to submit winner                      |
+
+---
+
 ### Delete (`/api/delete`)
 
 > All routes require authentication.
@@ -1385,6 +1479,51 @@ Broadcast to all members in the room when the final turn of the match is submitt
 ```json
 {
   "matchId": "string"
+}
+```
+
+---
+
+#### Server → Client: `next_oly_game`
+
+Broadcast to all members in the room when the next Olympiade game has been started.
+
+**Payload:**
+
+```json
+{
+  "roomId": "string",
+  "kniffelGame": "object | null",
+  "game": "string"
+}
+```
+
+---
+
+#### Server → Client: `winner_submitted`
+
+Broadcast to all members in the room when a manual match winner is submitted.
+
+**Payload:**
+
+```json
+{
+  "matchId": "string",
+  "winnerId": "string"
+}
+```
+
+---
+
+#### Server → Client: `olympiade_finished`
+
+Broadcast to all members in the room when the last game is finished.
+
+**Payload:**
+
+```json
+{
+  "message": "Olympiade has finished"
 }
 ```
 

@@ -48,21 +48,35 @@ export const getOlympiadeById = async (olympiadeId: string) => {
 
 export const submitManualMatchResult = async (
   matchId: string,
-  winnerUserId: string,
+  userId: string,
   score: number,
+  isWinner: boolean,
+  rank: number,
 ) => {
   try {
     return await prisma.matchResult.create({
       data: {
         matchId,
-        userId: winnerUserId,
-        score: score,
-        isWinner: true,
-        rank: 1,
+        userId,
+        score,
+        isWinner,
+        rank,
       },
     });
   } catch (error) {
     console.error("Failed to submit match result");
+    throw error;
+  }
+};
+
+export const finishMatch = async (matchId: string) => {
+  try {
+    return await prisma.match.update({
+      where: { id: matchId },
+      data: { status: "FINISHED" },
+    });
+  } catch (error) {
+    console.error("Failed to finish match");
     throw error;
   }
 };
@@ -79,10 +93,7 @@ export const finishOlympiade = async (olympiadeId: string) => {
   }
 };
 
-export const startNewOlyGame = async (
-  olympiadeId: string,
-  matchGameId: string,
-) => {
+export const startNewOlyGame = async (olympiadeId: string) => {
   try {
     const oly = await getOlympiadeById(olympiadeId);
 
@@ -95,7 +106,7 @@ export const startNewOlyGame = async (
 
     if (playedGamesCount >= gamesPool.length) {
       await finishOlympiade(olympiadeId);
-      return { status: "FINISHED" };
+      return { status: "FINISHED", roomId: oly.roomId };
     }
 
     let nextGame: string;
@@ -118,16 +129,15 @@ export const startNewOlyGame = async (
       throw new Error("Match game definition not found for " + nextGame);
     }
 
-    await createMatchForRoom(
+    const createdGame = await createMatchForRoom(
       oly.roomId,
       matchGame!.id,
       oly.room.participants[0].id,
       false,
-      matchGameId,
+      matchGame!.id,
       olympiadeId,
     );
-
-
+    return createdGame;
   } catch (error) {
     console.error("Failed to start new Olympiade game");
     throw error;

@@ -17,6 +17,7 @@ import inviteRoutes from "./routes/inviteRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import statRoutes from "./routes/statRoutes.js";
 import gameRoutes from "./routes/gameRoutes.js";
+import olympiadeRoutes from "./routes/olympiadeRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,6 +52,7 @@ app.use("/api/invites", inviteRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/stats", statRoutes);
 app.use("/api/games", gameRoutes);
+app.use("/api/olympiade", olympiadeRoutes);
 app.get("/api/health", async (req, res) => res.send("OK"));
 
 const clientPath = path.join(__dirname, "../client");
