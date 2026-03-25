@@ -29,6 +29,9 @@ model User {
   profilePictureUrl String?  @default("/public/uploads/default.png")
   createdAt         DateTime @default(now())
   color             String   @default("#ffffff")
+  spotifyId           String?   @unique
+  spotifyRefreshToken String?
+  appleMusicUserToken String?
 
   // --- Raum-Logik ---
   

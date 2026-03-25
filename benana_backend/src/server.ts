@@ -19,6 +19,7 @@ import userRoutes from "./routes/userRoutes.js";
 import statRoutes from "./routes/statRoutes.js";
 import gameRoutes from "./routes/gameRoutes.js";
 import olympiadeRoutes from "./routes/olympiadeRoutes.js";
+import { connectRedis, redisClient } from "./config/redis.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,6 +68,7 @@ httpServer.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   await connectDB();
   await seed();
+  await connectRedis();
 });
 
 cronjobs();
@@ -76,6 +78,7 @@ process.on("unhandledRejection", (err) => {
   console.error("Unhandled Rejection:", err);
   httpServer.close(async () => {
     await disconnectDB();
+    await redisClient.quit();
     process.exit(1);
   });
 });
@@ -83,6 +86,7 @@ process.on("unhandledRejection", (err) => {
 process.on("uncaughtException", async (err) => {
   console.error("Uncaught Exception:", err);
   await disconnectDB();
+  await redisClient.quit();
   process.exit(1);
 });
 
@@ -90,6 +94,7 @@ process.on("SIGTERM", async () => {
   console.log("SIGTERM received. Shutting down gracefully...");
   httpServer.close(async () => {
     await disconnectDB();
+    await redisClient.quit();
     process.exit(0);
   });
 });

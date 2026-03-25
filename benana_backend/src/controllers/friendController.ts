@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as friendService from "../services/friendService.js";
+import { getMusicState } from "../sockets/utility/userMusicState.js";
 
 export const requestFriend = async (req: Request, res: Response) => {
   try {
@@ -58,7 +59,17 @@ export const getFriendsList = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const friends = await friendService.getFriends(userId);
-    res.status(200).json({ status: "success", data: friends });
+
+    const friendsWithMusicState = await Promise.all(
+      friends.map(async (friend) => {
+        const liveMusicState = await getMusicState(friend.friend.id);
+        return {
+          ...friend,
+          musicState: liveMusicState,
+        }
+      })
+    )
+    res.status(200).json({ status: "success", data: friendsWithMusicState });
   } catch (error) {
     res
       .status(500)
