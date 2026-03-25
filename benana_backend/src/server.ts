@@ -13,6 +13,7 @@ import deleteRoutes from "./routes/deleteRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import friendRoutes from "./routes/friendRoutes.js";
 import { cronjobs } from "./services/cronjobs.js";
+import { seed } from "./services/seed.js";
 import inviteRoutes from "./routes/inviteRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import statRoutes from "./routes/statRoutes.js";
@@ -65,6 +66,7 @@ app.get("*all", (req, res) => {
 httpServer.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   await connectDB();
+  await seed();
 });
 
 cronjobs();

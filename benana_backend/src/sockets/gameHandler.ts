@@ -140,33 +140,66 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
         activeMatches.delete(matchId);
 
         const participants = match.room.participants;
-        const currentIndex = participants.findIndex((p: User) => p.id === userId);
-        const nextPlayer = participants[(currentIndex + 1) % participants.length];
+        const currentIndex = participants.findIndex(
+          (p: User) => p.id === userId,
+        );
+        const nextPlayer =
+          participants[(currentIndex + 1) % participants.length];
 
         await prisma.match.update({
           where: { id: matchId },
-          data: { currentTurnUserId: nextPlayer.id }
-        })
+          data: { currentTurnUserId: nextPlayer.id },
+        });
 
         io.to(roomId).emit("turn_submitted", {
-        turn,
-        nextUserId: nextPlayer.id,
-        roundNumber
-      });
-
-      if (roundNumber === 13 && currentIndex === participants.length - 1) {
-        io.to(roomId).emit("game_finished", { matchId });
-        
-        await prisma.match.update({
-          where: { id: matchId },
-          data: { status: "FINISHED" }
+          turn,
+          nextUserId: nextPlayer.id,
+          roundNumber,
         });
-      }
+
+        if (roundNumber === 13 && currentIndex === participants.length - 1) {
+          await prisma.match.update({
+            where: { id: matchId },
+            data: { status: "FINISHED" },
+          });
+
+          const allTurns = await prisma.kniffelTurn.findMany({
+            where: { kniffelGameId },
+          });
+
+          const userScores: Record<string, number> = {};
+          for (const t of allTurns) {
+            userScores[t.userId] = (userScores[t.userId] || 0) + t.score;
+          }
+
+          const sortedUserIds = Object.keys(userScores).sort(
+            (a, b) => userScores[b] - userScores[a],
+          );
+
+          for (let i = 0; i < sortedUserIds.length; i++) {
+            const uid = sortedUserIds[i];
+            await prisma.matchResult.create({
+              data: {
+                matchId,
+                userId: uid,
+                score: userScores[uid] || 0,
+                isWinner: i === 0,
+                rank: i + 1,
+              },
+            });
+          }
+
+          io.to(roomId).emit("game_finished", {
+            matchId,
+            winnerId: sortedUserIds[0],
+          });
+        }
       } catch (error) {
         console.error("Error submitting turn:", error);
-        socket.emit("game_error", { message: "An error occurred while submitting your turn." });
+        socket.emit("game_error", {
+          message: "An error occurred while submitting your turn.",
+        });
       }
     },
   );
 };
-

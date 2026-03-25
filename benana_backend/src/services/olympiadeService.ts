@@ -129,9 +129,17 @@ export const startNewOlyGame = async (olympiadeId: string) => {
       throw new Error("Match game definition not found for " + nextGame);
     }
 
+    const gameDefName = nextGame === "KNIFFEL" ? "KNIFFEL" : "MINIGAME";
+    const gameDef = await prisma.gameDefinition.findUnique({
+      where: { name: gameDefName },
+    });
+
+    if (!gameDef) {
+      throw new Error("Game definition not found for " + gameDefName);
+    }
     const createdGame = await createMatchForRoom(
       oly.roomId,
-      matchGame!.id,
+      gameDef!.id,
       oly.room.participants[0].id,
       false,
       matchGame!.id,
