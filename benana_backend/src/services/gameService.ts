@@ -30,6 +30,7 @@ export const createMatchForRoom = async (
   firstTurnUserId: string,
   isAnalog: boolean,
   matchGameId: string,
+  olympiadeId?: string,
 ) => {
   try {
     return await prisma.$transaction(async (tx) => {
@@ -50,6 +51,7 @@ export const createMatchForRoom = async (
             },
           },
           matchGameId: matchGameId,
+          olympiadeId: olympiadeId,
         },
         include: {
           kniffelGame: true,
@@ -84,5 +86,6 @@ export const getAllGamesAndGameDefs = async () => {
     return { matchGames, gameDefs };
   } catch (error) {
     console.error("Failed to fetch games");
+    throw error;
   }
 };

@@ -1319,6 +1319,77 @@ Sent to every member in a room when a game has finished
 
 ---
 
+#### Client → Server: `submit_turn`
+
+Submit a Kniffel turn after rolling. The server validates the score for digital games using the dice history. For analog games, the client-provided score is trusted. Advances the turn to the next player, and ends the match after round 13.
+
+**Payload:**
+
+```json
+{
+  "roomId": "string",
+  "matchId": "string",
+  "kniffelGameId": "string",
+  "category": "string",
+  "score": 0
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| roomId | string | The room ID |
+| matchId | string | The match ID |
+| kniffelGameId | string | The Kniffel game ID |
+| category | string | Scoring category (e.g. `"ones"`, `"twos"`, `"threes"`, `"fours"`, `"fives"`, `"sixs"`, `"threeOfAKind"`, `"fourOfAKind"`, `"fullHouse"`, `"smallStraight"`, `"largeStraight"`, `"kniffel"`, `"chance"`) |
+| score | number | The score to record (used as-is for analog; server-calculated for digital) |
+
+---
+
+#### Server → Client: `turn_submitted`
+
+Broadcast to all members in the room after a turn is successfully submitted.
+
+**Payload:**
+
+```json
+{
+  "turn": {
+    "id": "uuid",
+    "roundNumber": 1,
+    "category": "string",
+    "score": 0,
+    "rolls": [[1, 2, 3, 4, 5]] | null,
+    "rerollCount": 0,
+    "kniffelGameId": "string",
+    "userId": "uuid"
+  },
+  "nextUserId": "uuid",
+  "roundNumber": 1
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| turn | object | The created KniffelTurn record |
+| nextUserId | string | The user ID of the next player's turn |
+| roundNumber | number | The round number that was just completed |
+
+---
+
+#### Server → Client: `game_finished`
+
+Broadcast to all members in the room when the final turn of the match is submitted (round 13, last player).
+
+**Payload:**
+
+```json
+{
+  "matchId": "string"
+}
+```
+
+---
+
 #### Server → Client: `game_error`
 
 Sent only to the emitting client when a game action is invalid.
@@ -1331,4 +1402,8 @@ Sent only to the emitting client when a game action is invalid.
 }
 ```
 
-Example: `"You already rolled 3-times."`
+Examples:
+- `"You already rolled 3-times."`
+- `"It is not your turn!"`
+- `"You have to roll first!"`
+- `"An error occurred while submitting your turn."`
