@@ -20,6 +20,7 @@ import {
 } from "../services/gameService.js";
 
 import { createOlympiade } from "../services/olympiadeService.js";
+import { cleanupRoomMatches } from "../sockets/gameHandler.js";
 
 export const newRoom = async (req: Request, res: Response) => {
   try {
@@ -36,6 +37,7 @@ export const newRoom = async (req: Request, res: Response) => {
         updatedRoom.participants.length === 0 || updatedRoom.hostId === hostId;
 
       if (shouldDeleteRoom) {
+        cleanupRoomMatches((req as any).user.currentRoomId);
         await deleteRoom((req as any).user.currentRoomId);
       }
     }
@@ -125,6 +127,7 @@ export const joinRoom = async (req: Request, res: Response) => {
         updatedOldRoom.hostId === userId;
 
       if (shouldDeleteRoom) {
+        cleanupRoomMatches(oldRoomId);
         await deleteRoom(oldRoomId);
       } else {
         io.to(oldRoomId).emit("player_left", { userId });
@@ -158,6 +161,7 @@ export const leaveRoom = async (req: Request, res: Response) => {
       updatedRoom.participants.length === 0 || updatedRoom.hostId === userId;
 
     if (shouldDeleteRoom) {
+      cleanupRoomMatches(roomId);
       await deleteRoom(roomId);
       return res.status(200).json({
         status: "success",

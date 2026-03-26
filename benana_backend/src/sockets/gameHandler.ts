@@ -7,11 +7,21 @@ import { checkCorrectScore } from "./utility/checkCorrectScore.js";
 interface KniffelState {
   diceHistory: number[][];
   rollCount: rollCount;
+  roomId: string;
 }
 
 type rollCount = 0 | 1 | 2 | 3;
 
 export const activeMatches = new Map<string, KniffelState>();
+
+export const cleanupRoomMatches = (roomId: string) => {
+  for (const [matchId, state] of activeMatches.entries()) {
+    if (state.roomId === roomId) {
+      activeMatches.delete(matchId);
+      console.log(`Cleaned up match ${matchId} for room ${roomId}`);
+    }
+  }
+};
 
 export const registerGameHandlers = (io: Server, socket: Socket) => {
   socket.on(
@@ -30,7 +40,7 @@ export const registerGameHandlers = (io: Server, socket: Socket) => {
 
       let gameState = activeMatches.get(matchId);
       if (!gameState) {
-        gameState = { diceHistory: [], rollCount: 0 };
+        gameState = { diceHistory: [], rollCount: 0, roomId };
       }
 
       if (gameState.rollCount >= 3) {
