@@ -39,7 +39,7 @@ model User {
   hostedRooms Room[] @relation("RoomHost")
 
   // Der Raum, in dem der User gerade "sitzt"
-  currentRoom   Room?   @relation("CurrentRoomParticipants", fields: [currentRoomId], references: [id])
+  currentRoom   Room?   @relation("CurrentRoomParticipants", fields: [currentRoomId], references: [id], onDelete: SetNull)
   currentRoomId String?
   isReady       Boolean @default(false)
 
@@ -62,10 +62,10 @@ model Friendship {
   status    InvitationStatus @default(PENDING)
   createdAt DateTime         @default(now())
 
-  sender   User   @relation("FriendshipSender", fields: [senderId], references: [id])
+  sender   User   @relation("FriendshipSender", fields: [senderId], references: [id], onDelete: Cascade)
   senderId String
 
-  receiver   User   @relation("FriendshipReceiver", fields: [receiverId], references: [id])
+  receiver   User   @relation("FriendshipReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
   receiverId String
 
   @@unique([senderId, receiverId])
@@ -76,13 +76,13 @@ model Invitation {
   status    InvitationStatus @default(PENDING)
   createdAt DateTime         @default(now())
 
-  sender   User   @relation("SentInvitations", fields: [senderId], references: [id])
+  sender   User   @relation("SentInvitations", fields: [senderId], references: [id], onDelete: Cascade)
   senderId String
 
-  receiver   User   @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+  receiver   User   @relation("ReceivedInvitations", fields: [receiverId], references: [id], onDelete: Cascade)
   receiverId String
 
-  room   Room   @relation(fields: [roomId], references: [id])
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId String
 }
 
@@ -104,7 +104,7 @@ model Room {
   whoCanJoin WhoCanJoin @default(PUBLIC)
 
   // Host des Raumes
-  host   User   @relation("RoomHost", fields: [hostId], references: [id])
+  host   User   @relation("RoomHost", fields: [hostId], references: [id], onDelete: Cascade)
   hostId String
 
   // Alle Spieler im Raum
@@ -151,7 +151,7 @@ model Match {
   currentTurnUserId String?     // Wer ist gerade dran?
 
   // Verknüpfungen
-  room   Room   @relation(fields: [roomId], references: [id])
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId String
 
   gameDefinition   GameDefinition @relation(fields: [gameDefinitionId], references: [id])
@@ -161,7 +161,7 @@ model Match {
   matchGameId      String
 
   // Gehört dieses Match zu einer Olympiade? (Optional)
-  olympiade   Olympiade? @relation(fields: [olympiadeId], references: [id])
+  olympiade   Olympiade? @relation(fields: [olympiadeId], references: [id], onDelete: Cascade)
   olympiadeId String?
 
   // Ergebnisse
@@ -185,10 +185,10 @@ model MatchResult {
   rank     Int?    // Platzierung
   isWinner Boolean @default(false)
 
-  match   Match  @relation(fields: [matchId], references: [id])
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
   matchId String
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 }
 
@@ -208,7 +208,7 @@ model Olympiade {
   gameSelectionMode OlyGameSelectionMode @default(RANDOM)
   startedAt DateTime  @default(now())
 
-  room   Room   @relation(fields: [roomId], references: [id])
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId String
 
   // Eine Olympiade besteht aus mehreren Matches
@@ -234,7 +234,7 @@ model KniffelGame {
   isAnalog Boolean @default(false) 
 
   // 1:1 Relation zum generischen Match
-  match   Match  @relation(fields: [matchId], references: [id])
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
   matchId String @unique
 
   turns KniffelTurn[]
@@ -253,9 +253,9 @@ model KniffelTurn {
   rerollCount Int    @default(0) // Nur für Digital relevant
 
   // Verknüpfung zum KniffelGame (nicht direkt Match, um es sauber zu halten)
-  kniffelGame   KniffelGame @relation(fields: [kniffelGameId], references: [id])
+  kniffelGame   KniffelGame @relation(fields: [kniffelGameId], references: [id], onDelete: Cascade)
   kniffelGameId String
 
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 }
