@@ -6,6 +6,7 @@ export interface UserMusicState {
   artist: string;
   playbackState: "PLAYING" | "PAUSED";
   timestamp: number;
+  platform: "SPOTIFY" | "APPLE_MUSIC";
   updatedAt: number;
 }
 
@@ -34,6 +35,6 @@ export const getMusicState = async (
   return data ? (JSON.parse(data) as UserMusicState) : null;
 };
 
-export const removeMusicPresence = async (userId: string): Promise<void> => {
+export const removeMusicState = async (userId: string): Promise<void> => {
   await redisClient.del(`${USER_MUSIC_STATE_PREFIX}${userId}`);
 };

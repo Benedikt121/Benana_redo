@@ -12,6 +12,7 @@
   - [Games (`/api/games`)](#games-apigames)
   - [Stats (`/api/stats`)](#stats-apistats)
   - [Olympiade (`/api/olympiade`)](#olympiade-apiolympiade)
+  - [Music (`(/api/music)`)](#music-apimusic)
   - [Delete (`/api/delete`)](#delete-apidelete)
   - [Health (`/api/health`)](#health-apihealth)
 - [Socket Events](#socket-events)
@@ -19,6 +20,7 @@
   - [Room Events](#room-events)
   - [Chat Events](#chat-events)
   - [Game Events](#game-events)
+  - [Music Events](#music-events)
 
 ---
 
@@ -988,12 +990,12 @@ Also emits a `next_oly_game` socket event to the room with:
 
 **Error Responses:**
 
-| Status | Message                              |
-| ------ | ------------------------------------ |
-| 400    | Olympiade finished                   |
+| Status | Message                               |
+| ------ | ------------------------------------- |
+| 400    | Olympiade finished                    |
 | 403    | Only the host can start the next game |
-| 404    | Olympiade not found                  |
-| 500    | Failed to start new Olympiade game   |
+| 404    | Olympiade not found                   |
+| 500    | Failed to start new Olympiade game    |
 
 ---
 
@@ -1034,14 +1036,40 @@ Also emits a `winner_submitted` socket event to the room with:
 
 **Error Responses:**
 
-| Status | Message                                      |
-| ------ | -------------------------------------------- |
-| 400    | Match is already finished                    |
-| 400    | Winner must be a participant in the room     |
-| 403    | Only the host can submit the winner          |
-| 404    | Match or Olympiade not found                 |
-| 404    | Olympiade not found                          |
-| 500    | Failed to submit winner                      |
+| Status | Message                                  |
+| ------ | ---------------------------------------- |
+| 400    | Match is already finished                |
+| 400    | Winner must be a participant in the room |
+| 403    | Only the host can submit the winner      |
+| 404    | Match or Olympiade not found             |
+| 404    | Olympiade not found                      |
+| 500    | Failed to submit winner                  |
+
+---
+
+### Music (`/api/music`)
+
+> All routes require authentication.
+
+#### `GET /api/music/apple-token`
+
+Generate an Apple Developer token (ES256 JWT) for Apple Music API requests. The token is valid for 30 days.
+
+**Request Body:** None
+
+**Success Response (`200`):**
+
+```json
+{
+  "token": "eyJhbGciOiJFUzI1NiIs..."
+}
+```
+
+**Error Responses:**
+
+| Status | Message                                |
+| ------ | -------------------------------------- |
+| 500    | Could not generate Apple token.        |
 
 ---
 
@@ -1429,13 +1457,13 @@ Submit a Kniffel turn after rolling. The server validates the score for digital 
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| roomId | string | The room ID |
-| matchId | string | The match ID |
-| kniffelGameId | string | The Kniffel game ID |
-| category | string | Scoring category (e.g. `"ones"`, `"twos"`, `"threes"`, `"fours"`, `"fives"`, `"sixs"`, `"threeOfAKind"`, `"fourOfAKind"`, `"fullHouse"`, `"smallStraight"`, `"largeStraight"`, `"kniffel"`, `"chance"`) |
-| score | number | The score to record (used as-is for analog; server-calculated for digital) |
+| Field         | Type   | Description                                                                                                                                                                                             |
+| ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| roomId        | string | The room ID                                                                                                                                                                                             |
+| matchId       | string | The match ID                                                                                                                                                                                            |
+| kniffelGameId | string | The Kniffel game ID                                                                                                                                                                                     |
+| category      | string | Scoring category (e.g. `"ones"`, `"twos"`, `"threes"`, `"fours"`, `"fives"`, `"sixs"`, `"threeOfAKind"`, `"fourOfAKind"`, `"fullHouse"`, `"smallStraight"`, `"largeStraight"`, `"kniffel"`, `"chance"`) |
+| score         | number | The score to record (used as-is for analog; server-calculated for digital)                                                                                                                              |
 
 ---
 
@@ -1462,10 +1490,10 @@ Broadcast to all members in the room after a turn is successfully submitted.
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| turn | object | The created KniffelTurn record |
-| nextUserId | string | The user ID of the next player's turn |
+| Field       | Type   | Description                              |
+| ----------- | ------ | ---------------------------------------- |
+| turn        | object | The created KniffelTurn record           |
+| nextUserId  | string | The user ID of the next player's turn    |
 | roundNumber | number | The round number that was just completed |
 
 ---
@@ -1542,7 +1570,127 @@ Sent only to the emitting client when a game action is invalid.
 ```
 
 Examples:
+
 - `"You already rolled 3-times."`
 - `"It is not your turn!"`
 - `"You have to roll first!"`
 - `"An error occurred while submitting your turn."`
+
+---
+
+### Music Events
+
+Music state is stored in Redis with a 1-hour TTL. When a user disconnects, their music state is removed and friends are notified.
+
+#### Client → Server: `music_status_update`
+
+Broadcast the current user's music playback status to all online friends and any active listening party subscribers.
+
+**Payload:**
+
+```json
+{
+  "trackId": "string",
+  "trackName": "string",
+  "artist": "string",
+  "playbackState": "PLAYING" | "PAUSED",
+  "timestamp": 1234567890,
+  "platform": "SPOTIFY" | "APPLE_MUSIC"
+}
+```
+
+| Field         | Type   | Description                                  |
+| ------------- | ------ | -------------------------------------------- |
+| trackId       | string | Platform-specific track identifier           |
+| trackName     | string | Name of the track                            |
+| artist        | string | Artist name                                  |
+| playbackState | string | `"PLAYING"` or `"PAUSED"`                     |
+| timestamp     | number | Unix timestamp of the playback position      |
+| platform      | string | `"SPOTIFY"` or `"APPLE_MUSIC"`               |
+
+**Side Effects:**
+
+- All online friends receive a `friend_music_update` event.
+- All users in the sender's listening party room receive a `HOST_MUSIC_SYNC` event.
+
+---
+
+#### Server → Client: `friend_music_update`
+
+Sent to all online friends when a user updates their music status.
+
+**Payload:**
+
+```json
+{
+  "friendId": "uuid",
+  "musicStatus": {
+    "trackId": "string",
+    "trackName": "string",
+    "artist": "string",
+    "playbackState": "PLAYING" | "PAUSED",
+    "timestamp": 1234567890,
+    "platform": "SPOTIFY" | "APPLE_MUSIC"
+  }
+}
+```
+
+---
+
+#### Client → Server: `JOIN_LISTENING_PARTY`
+
+Join a friend's listening party to receive real-time music sync updates. If the host has an active music state, the current state is immediately sent back.
+
+**Payload:**
+
+```
+hostUserId: string
+```
+
+**Side Effects:** The client receives a `HOST_MUSIC_SYNC` event with the host's current music state (if available).
+
+---
+
+#### Client → Server: `LEAVE_LISTENING_PARTY`
+
+Leave a friend's listening party.
+
+**Payload:**
+
+```
+hostUserId: string
+```
+
+---
+
+#### Server → Client: `HOST_MUSIC_SYNC`
+
+Sent to all listeners in a listening party when the host's music status changes, or immediately upon joining a party.
+
+**Payload:**
+
+```json
+{
+  "trackId": "string",
+  "trackName": "string",
+  "artist": "string",
+  "playbackState": "PLAYING" | "PAUSED",
+  "timestamp": 1234567890,
+  "platform": "SPOTIFY" | "APPLE_MUSIC",
+  "updatedAt": 1234567890
+}
+```
+
+---
+
+#### Server → Client: `FRIEND_MUSIC_STOPPED`
+
+Sent to all online friends when a user disconnects and their music state is cleared.
+
+**Payload:**
+
+```json
+{
+  "friendId": "uuid"
+}
+```
