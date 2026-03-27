@@ -1073,6 +1073,38 @@ Generate an Apple Developer token (ES256 JWT) for Apple Music API requests. The 
 
 ---
 
+#### `POST /api/music/apple-token/save`
+
+Store the authenticated user's Apple Music user token (obtained from MusicKit on the frontend).
+
+- **Auth Required:** Yes
+
+**Request Body:**
+
+```json
+{
+  "appleMusicToken": "string"
+}
+```
+
+**Success Response (`200`):**
+
+```json
+{
+  "status": "success",
+  "message": "Apple Music token saved"
+}
+```
+
+**Error Responses:**
+
+| Status | Message                              |
+| ------ | ------------------------------------ |
+| 400    | Apple Music token is required        |
+| 500    | Failed to save Apple Music token     |
+
+---
+
 #### `GET /api/music/spotify/login`
 
 Initiates the Spotify OAuth flow. Redirects the user to Spotify's authorization page where they grant permission for playback, streaming, and profile access.

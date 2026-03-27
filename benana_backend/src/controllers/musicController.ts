@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { getAppleDeveloperToken } from "../services/musicService.js";
 import { prisma } from "../config/db.js";
-import { getUserById } from "../services/userService.js";
+import crypto from "crypto";
+import { redisClient } from "../config/redis.js";
 
 interface SpotifyTokenResponse {
   access_token?: string;
@@ -30,10 +31,41 @@ export const getAppleToken = (req: Request, res: Response) => {
   }
 };
 
-export const spotifyLogin = (req: Request, res: Response) => {
+export const saveAppleMusicToken = async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user.id;
+    const { appleMusicToken } = req.body;
+
+    if (!appleMusicToken) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Apple Music token is required" });
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { appleMusicUserToken: appleMusicToken },
+    });
+
+    res
+      .status(200)
+      .json({ status: "success", message: "Apple Music token saved" });
+  } catch (error) {
+    console.error("Error saving Apple Music token:", error);
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to save Apple Music token" });
+  }
+};
+
+export const spotifyLogin = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
     const scope =
       "user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private";
+
+    const state = crypto.randomBytes(16).toString("hex");
+    await redisClient.set(`spotify_state:${state}`, userId, { EX: 600 });
 
     const authUrl = new URL("https://accounts.spotify.com/authorize");
     authUrl.searchParams.append("response_type", "code");
@@ -55,7 +87,7 @@ export const spotifyLogin = (req: Request, res: Response) => {
 
 export const spotifyCallback = async (req: Request, res: Response) => {
   const code = req.query.code as string;
-  const userId = (req as any).user.id;
+  const state = req.query.state as string;
 
   if (!code) {
     return res
@@ -63,6 +95,14 @@ export const spotifyCallback = async (req: Request, res: Response) => {
       .json({ status: "error", message: "Authorization code is missing" });
   }
   try {
+    const userId = await redisClient.get(`spotify_state:${state}`);
+    if (!userId) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Invalid or expired state" });
+    }
+    await redisClient.del(`spotify_state:${state}`);
+
     const tokenResponse = await fetch(
       "https://accounts.spotify.com/api/token",
       {
@@ -129,12 +169,10 @@ export const refreshSpotifyToken = async (req: Request, res: Response) => {
     });
 
     if (!user || !user.spotifyRefreshToken) {
-      return res
-        .status(400)
-        .json({
-          status: "error",
-          message: "No Spotify refresh token found for user",
-        });
+      return res.status(400).json({
+        status: "error",
+        message: "No Spotify refresh token found for user",
+      });
     }
 
     const tokenResponse = await fetch(
