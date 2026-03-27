@@ -566,9 +566,9 @@ Get the currently active match for a room.
 
 **Error Responses:**
 
-| Status | Message                                     |
-| ------ | ------------------------------------------- |
-| 404    | Kein aktives Match in diesem Raum gefunden. |
+| Status | Message                                        |
+| ------ | ---------------------------------------------- |
+| 404    | No active match found in this room.             |
 
 ---
 
@@ -823,7 +823,7 @@ Create a new match game definition.
 
 ```json
 {
-  "status": "succes",
+  "status": "success",
   "message": "Game created"
 }
 ```
@@ -1534,86 +1534,21 @@ Broadcast to all members in the room after a turn was submited.
 
 #### Server → Client: `game_finished`
 
-Sent to every member in a room when a game has finished
-
-**Payload:**
-
-```json
-{
-  "matchId": "string"
-}
-```
-
----
-
-#### Client → Server: `submit_turn`
-
-Submit a Kniffel turn after rolling. The server validates the score for digital games using the dice history. For analog games, the client-provided score is trusted. Advances the turn to the next player, and ends the match after round 13.
-
-**Payload:**
-
-```json
-{
-  "roomId": "string",
-  "matchId": "string",
-  "kniffelGameId": "string",
-  "category": "string",
-  "score": 0
-}
-```
-
-| Field         | Type   | Description                                                                                                                                                                                             |
-| ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| roomId        | string | The room ID                                                                                                                                                                                             |
-| matchId       | string | The match ID                                                                                                                                                                                            |
-| kniffelGameId | string | The Kniffel game ID                                                                                                                                                                                     |
-| category      | string | Scoring category (e.g. `"ones"`, `"twos"`, `"threes"`, `"fours"`, `"fives"`, `"sixs"`, `"threeOfAKind"`, `"fourOfAKind"`, `"fullHouse"`, `"smallStraight"`, `"largeStraight"`, `"kniffel"`, `"chance"`) |
-| score         | number | The score to record (used as-is for analog; server-calculated for digital)                                                                                                                              |
-
----
-
-#### Server → Client: `turn_submitted`
-
-Broadcast to all members in the room after a turn is successfully submitted.
-
-**Payload:**
-
-```json
-{
-  "turn": {
-    "id": "uuid",
-    "roundNumber": 1,
-    "category": "string",
-    "score": 0,
-    "rolls": [[1, 2, 3, 4, 5]] | null,
-    "rerollCount": 0,
-    "kniffelGameId": "string",
-    "userId": "uuid"
-  },
-  "nextUserId": "uuid",
-  "roundNumber": 1
-}
-```
-
-| Field       | Type   | Description                              |
-| ----------- | ------ | ---------------------------------------- |
-| turn        | object | The created KniffelTurn record           |
-| nextUserId  | string | The user ID of the next player's turn    |
-| roundNumber | number | The round number that was just completed |
-
----
-
-#### Server → Client: `game_finished`
-
 Broadcast to all members in the room when the final turn of the match is submitted (round 13, last player).
 
 **Payload:**
 
 ```json
 {
-  "matchId": "string"
+  "matchId": "string",
+  "winnerId": "uuid"
 }
 ```
+
+| Field    | Type   | Description                                  |
+| -------- | ------ | -------------------------------------------- |
+| matchId  | string | The match ID                                 |
+| winnerId | string | The user ID of the player with the top score |
 
 ---
 
@@ -1722,7 +1657,7 @@ Broadcast the current user's music playback status to all online friends and any
 
 #### Server → Client: `friend_music_update`
 
-Sent to all online friends when a user updates their music status.
+Sent to all online friends when a user updates their music status. The server enriches the payload with cross-platform track IDs.
 
 **Payload:**
 
@@ -1735,7 +1670,10 @@ Sent to all online friends when a user updates their music status.
     "artist": "string",
     "playbackState": "PLAYING" | "PAUSED",
     "timestamp": 1234567890,
-    "platform": "SPOTIFY" | "APPLE_MUSIC"
+    "platform": "SPOTIFY" | "APPLE_MUSIC",
+    "appleTrackId": "string | null",
+    "spotifyTrackId": "string | null",
+    "updatedAt": 1234567890
   }
 }
 ```
@@ -1770,7 +1708,7 @@ hostUserId: string
 
 #### Server → Client: `HOST_MUSIC_SYNC`
 
-Sent to all listeners in a listening party when the host's music status changes, or immediately upon joining a party.
+Sent to all listeners in a listening party when the host's music status changes, or immediately upon joining a party. Includes cross-platform track IDs.
 
 **Payload:**
 
@@ -1782,6 +1720,8 @@ Sent to all listeners in a listening party when the host's music status changes,
   "playbackState": "PLAYING" | "PAUSED",
   "timestamp": 1234567890,
   "platform": "SPOTIFY" | "APPLE_MUSIC",
+  "appleTrackId": "string | null",
+  "spotifyTrackId": "string | null",
   "updatedAt": 1234567890
 }
 ```

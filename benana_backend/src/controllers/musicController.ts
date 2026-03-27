@@ -150,9 +150,7 @@ export const spotifyCallback = async (req: Request, res: Response) => {
         },
       });
     }
-    res.redirect(
-      `http://localhost:5173/music?spotify_success=true&access_token=${tokenData.access_token}`,
-    );
+    res.redirect(`http://localhost:5173/music?spotify_success=true`);
   } catch (error) {
     console.error("Spotify OAuth Error:", error);
     res.redirect(`http://localhost:5173/music?spotify_success=false`);

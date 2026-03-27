@@ -296,7 +296,7 @@ export const startRoom = async (req: Request, res: Response) => {
       if (!olyGames || olyGames.length === 0) {
         return res.status(400).json({
           status: "error",
-          message: "Olympiads need atleast one game",
+          message: "Olympiads need at least one game",
         });
       }
 

@@ -14,13 +14,13 @@ export const setupSockets = (io: Server) => {
       connectedUsers.set(userId, socket.id);
       socket.data.userId = userId;
       socket.join(`user_${userId}`);
-      registerMusicHandlers(io, socket);
       console.log(`👤 User ${userId} registered with Socket ${socket.id}`);
     });
 
     registerRoomHandlers(io, socket);
     registerChatHandlers(io, socket);
     registerGameHandlers(io, socket);
+    registerMusicHandlers(io, socket);
 
     socket.on("disconnect", () => {
       console.log(`🔌 Client disconnected: ${socket.id}`);

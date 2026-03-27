@@ -11,16 +11,17 @@ import {
   matchSpotifyToApple,
 } from "../services/songMatchingService.js";
 export const registerMusicHandlers = (io: Server, socket: Socket) => {
-  const userId = socket.data.userId;
-
-  if (!userId) {
-    console.error("User ID not found in socket data");
-    return;
-  }
-
   socket.on("music_status_update", async (statusData: UserMusicState) => {
     let appleId = null;
     let spotifyId = null;
+
+    const userId = socket.data.userId;
+    const previousStatus = await getMusicState(userId);
+
+    if (!userId) {
+      console.error("User ID not found in socket data");
+      return;
+    }
 
     if (statusData.platform === "SPOTIFY") {
       const cleanSpotifyId = statusData.spotifyTrackId?.replace(
@@ -42,13 +43,20 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
     };
     await setMusicState(userId, updatedStatusData);
 
-    const friends = await getFriends(userId);
-    friends.forEach((friend) => {
-      io.to(`user_${friend.friend.id}`).emit("friend_music_update", {
-        friendId: userId,
-        musicStatus: updatedStatusData,
+    const songChanged = previousStatus?.trackId !== updatedStatusData.trackId;
+    const playStateChanged =
+      previousStatus?.playbackState !== updatedStatusData.playbackState;
+
+    if (songChanged || playStateChanged) {
+      const friends = await getFriends(userId);
+      friends.forEach((friend) => {
+        io.to(`user_${friend.friend.id}`).emit("friend_music_update", {
+          friendId: userId,
+          musicStatus: updatedStatusData,
+        });
       });
-    });
+    }
+
     io.to(`music_stream_${userId}`).emit("HOST_MUSIC_SYNC", updatedStatusData);
   });
 
@@ -66,6 +74,9 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
   });
 
   socket.on("disconnect", async () => {
+    const userId = socket.data.userId;
+    if (!userId) return;
+
     await removeMusicState(userId);
     const friends = await getFriends(userId);
     friends.forEach((friend) => {
