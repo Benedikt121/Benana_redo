@@ -1073,6 +1073,79 @@ Generate an Apple Developer token (ES256 JWT) for Apple Music API requests. The 
 
 ---
 
+#### `GET /api/music/spotify/login`
+
+Initiates the Spotify OAuth flow. Redirects the user to Spotify's authorization page where they grant permission for playback, streaming, and profile access.
+
+- **Auth Required:** Yes
+
+**Request Body:** None
+
+**Behavior:** Redirects (`302`) to `https://accounts.spotify.com/authorize` with the following scopes:
+- `user-read-playback-state`
+- `user-modify-playback-state`
+- `streaming`
+- `user-read-email`
+- `user-read-private`
+
+**Error Responses:**
+
+| Status | Message                             |
+| ------ | ----------------------------------- |
+| 500    | Could not initiate Spotify login    |
+
+---
+
+#### `GET /api/music/spotify/callback`
+
+Handles the Spotify OAuth callback. Exchanges the authorization code for access and refresh tokens, fetches the Spotify user profile, stores the Spotify ID and refresh token on the user record, then redirects to the frontend.
+
+- **Auth Required:** Yes
+
+**Query Params:**
+
+| Param | Type   | Description                              |
+| ----- | ------ | ---------------------------------------- |
+| code  | string | Authorization code returned by Spotify   |
+
+**Behavior:**
+- On success: redirects to `<FRONTEND_URL>/music?spotify_success=true&access_token=<token>`
+- On failure: redirects to `<FRONTEND_URL>/music?spotify_success=false`
+
+**Error Responses:**
+
+| Status | Message                          |
+| ------ | -------------------------------- |
+| 400    | Authorization code is missing    |
+
+---
+
+#### `GET /api/music/spotify/refresh`
+
+Get a fresh Spotify access token using the stored refresh token. If Spotify rotates the refresh token, the new one is automatically saved.
+
+- **Auth Required:** Yes
+
+**Request Body:** None
+
+**Success Response (`200`):**
+
+```json
+{
+  "access_token": "BQDj...",
+  "expires_in": 3600
+}
+```
+
+**Error Responses:**
+
+| Status | Message                                    |
+| ------ | ------------------------------------------ |
+| 400    | No Spotify refresh token found for user    |
+| 500    | Failed to refresh Spotify token            |
+
+---
+
 ### Delete (`/api/delete`)
 
 > All routes require authentication.
