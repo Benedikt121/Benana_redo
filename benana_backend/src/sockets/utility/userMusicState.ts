@@ -8,6 +8,8 @@ export interface UserMusicState {
   timestamp: number;
   platform: "SPOTIFY" | "APPLE_MUSIC";
   updatedAt: number;
+  appleTrackId?: string | null;
+  spotifyTrackId?: string | null;
 }
 
 const USER_MUSIC_STATE_PREFIX = "user_music_state:";

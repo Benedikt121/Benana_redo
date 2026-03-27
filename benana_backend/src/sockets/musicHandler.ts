@@ -6,6 +6,10 @@ import {
   UserMusicState,
 } from "./utility/userMusicState.js";
 import { getFriends } from "../services/friendService.js";
+import {
+  matchAppleToSpotify,
+  matchSpotifyToApple,
+} from "../services/songMatchingService.js";
 export const registerMusicHandlers = (io: Server, socket: Socket) => {
   const userId = socket.data.userId;
 
@@ -15,16 +19,37 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
   }
 
   socket.on("music_status_update", async (statusData: UserMusicState) => {
-    await setMusicState(userId, { ...statusData, updatedAt: Date.now() });
+    let appleId = null;
+    let spotifyId = null;
+
+    if (statusData.platform === "SPOTIFY") {
+      const cleanSpotifyId = statusData.spotifyTrackId?.replace(
+        "spotify:track:",
+        "",
+      );
+      spotifyId = cleanSpotifyId;
+      appleId = await matchSpotifyToApple(cleanSpotifyId!);
+    } else if (statusData.platform === "APPLE_MUSIC") {
+      appleId = statusData.trackId;
+      spotifyId = await matchAppleToSpotify(appleId);
+    }
+
+    const updatedStatusData: UserMusicState = {
+      ...statusData,
+      appleTrackId: appleId,
+      spotifyTrackId: spotifyId,
+      updatedAt: Date.now(),
+    };
+    await setMusicState(userId, updatedStatusData);
 
     const friends = await getFriends(userId);
     friends.forEach((friend) => {
       io.to(`user_${friend.friend.id}`).emit("friend_music_update", {
         friendId: userId,
-        musicStatus: statusData,
+        musicStatus: updatedStatusData,
       });
     });
-    io.to(`music_stream_${userId}`).emit("HOST_MUSIC_SYNC", statusData);
+    io.to(`music_stream_${userId}`).emit("HOST_MUSIC_SYNC", updatedStatusData);
   });
 
   socket.on("JOIN_LISTENING_PARTY", async (hostUserId: string) => {
