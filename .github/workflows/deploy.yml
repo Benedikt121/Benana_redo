@@ -23,6 +23,7 @@ jobs:
         run: |
           cd benana-backend
           npm ci
+          export DATABASE_URL="postgresql://johndoe:randompassword@localhost:5432/mydb"
           npx prisma generate
           npm run build
           zip -r backend.zip dist prisma prisma.config.ts package.json package-lock.json
