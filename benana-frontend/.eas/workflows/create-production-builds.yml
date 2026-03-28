@@ -6,7 +6,7 @@ on:
 jobs:
   build_ios:
     name: iOS Development Build
-    runs_on: ubuntu-latest
+    runs_on: linux-medium
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
