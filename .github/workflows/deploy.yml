@@ -21,7 +21,7 @@ jobs:
 
       - name: Build Backend
         run: |
-          cd benana_backend
+          cd benana-backend
           npm ci
           npx prisma generate
           npm run build
@@ -30,7 +30,7 @@ jobs:
       # 2. Frontend: Installieren & Bauen
       - name: Build Frontend
         run: |
-          cd benana_frontend
+          cd benana-frontend
           npm install --legacy-peer-deps
           npx expo export -p web
           mv dist client
@@ -44,7 +44,7 @@ jobs:
           panel-host: https://${{ secrets.PTERO_HOST }}
           api-key: ${{ secrets.PTERO_API_KEY }}
           server-id: ${{ secrets.PTERO_SERVER_ID }}
-          source: "benana_backend/backend.zip"
+          source: "benana-backend/backend.zip"
           target: "/"
           decompress-target: true
 
@@ -55,7 +55,7 @@ jobs:
           panel-host: https://${{ secrets.PTERO_HOST }}
           api-key: ${{ secrets.PTERO_API_KEY }}
           server-id: ${{ secrets.PTERO_SERVER_ID }}
-          source: "benana_frontend/frontend.zip"
+          source: "benana-frontend/frontend.zip"
           target: "/frontend.zip"
           decompress-target: true
           restart: true
