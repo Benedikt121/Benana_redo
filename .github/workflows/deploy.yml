@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # 1. Backend: Installieren & Bauen
       - name: Setup Node.js
@@ -25,14 +25,14 @@ jobs:
           npm ci
           npx prisma generate
           npm run build
-          zip -r backend.zip dist prisma prisma.config.ts
+          zip -r backend.zip dist prisma prisma.config.ts package.json package-lock.json
 
       # 2. Frontend: Installieren & Bauen
       - name: Build Frontend
         run: |
           cd benana_frontend
-          npm ci
-          npm run build
+          npm install --legacy-peer-deps
+          npx expo export -p web
           mv dist client
           zip -r frontend.zip client
 
@@ -45,19 +45,8 @@ jobs:
           api-key: ${{ secrets.PTERO_API_KEY }}
           server-id: ${{ secrets.PTERO_SERVER_ID }}
           source: "benana_backend/backend.zip"
-          target: "/backend.zip"
-          decompress-target: true
-
-      - name: Upload Backend Configs
-        uses: rexlManu/pterodactyl-upload-action@v2.5
-        with:
-          panel-host: https://${{ secrets.PTERO_HOST }}
-          api-key: ${{ secrets.PTERO_API_KEY }}
-          server-id: ${{ secrets.PTERO_SERVER_ID }}
-          sources: |
-            benana_backend/package.json
-            benana_backend/package-lock.json
           target: "/"
+          decompress-target: true
 
       # 4. Upload: Frontend Build (in den Ordner /client)
       - name: Upload Frontend Client

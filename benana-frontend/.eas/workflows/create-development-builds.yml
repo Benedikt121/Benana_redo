@@ -4,15 +4,16 @@ on:
     branches: ["main"]
 
 jobs:
-  build_job:
+  ios_build_job:
     name: iOS Development Build
     type: build
     params:
       platform: ios
       profile: development
 
-  build_job:
+  android_build_job:
     name: Android Development Build
+    needs: [ios_build_job]
     type: build
     params:
       platform: android

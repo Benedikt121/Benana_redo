@@ -7,7 +7,6 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { connectDB, disconnectDB } from "./config/db.js";
 import { setupSockets } from "./sockets/index.js";
-
 import authRoutes from "./routes/authRoutes.js";
 import deleteRoutes from "./routes/deleteRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
@@ -63,7 +62,9 @@ const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
 
 app.get("*all", (req, res) => {
-  res.sendFile(path.join(clientPath, "index.html"));
+  if (!req.path.startsWith("/api/")) {
+    res.sendFile(path.join(clientPath, "index.html"));
+  }
 });
 
 httpServer.listen(PORT, async () => {
