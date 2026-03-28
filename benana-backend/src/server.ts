@@ -20,6 +20,7 @@ import gameRoutes from "./routes/gameRoutes.js";
 import olympiadeRoutes from "./routes/olympiadeRoutes.js";
 import { connectRedis, redisClient } from "./config/redis.js";
 import musicRoutes from "./routes/musicRoutes.js";
+import compression from "compression";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,7 @@ const io = new Server(httpServer, {
 });
 
 app.set("io", io);
+app.use(compression())
 
 setupSockets(io);
 
