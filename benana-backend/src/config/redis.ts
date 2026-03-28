@@ -7,12 +7,7 @@ export const redisClient = createClient({
   socket: {
     connectTimeout: 20000,
     reconnectStrategy: (retries) => {
-      if (retries > 5) {
-        return new Error(
-          "Redis-Verbindungsfehler: Maximale Anzahl von Verbindungsversuchen erreicht",
-        );
-      }
-      return Math.min(retries * 1000, 30000); // Exponentielles Backoff: 1s, 2s, 3s, ..., max 30s
+      return Math.min(retries * 100, 3000);
     },
   },
 });
