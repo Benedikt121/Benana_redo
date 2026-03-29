@@ -1,15 +1,21 @@
 import { createClient } from "redis";
 
-const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+const redisPassword = process.env.REDIS_PASSWORD || "";
+const redisHost = process.env.REDIS_HOST || "localhost";
+const redisPort = process.env.REDIS_PORT
+  ? parseInt(process.env.REDIS_PORT)
+  : 6379;
 
 export const redisClient = createClient({
-  url: redisUrl,
   socket: {
+    host: redisHost,
+    port: redisPort,
     connectTimeout: 20000,
     reconnectStrategy: (retries) => {
       return Math.min(retries * 100, 3000);
     },
   },
+  password: redisPassword,
 });
 
 redisClient.on("error", (err) => console.log("Redis Client Error", err));
