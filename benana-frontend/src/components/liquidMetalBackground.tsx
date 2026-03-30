@@ -37,7 +37,7 @@ function LiquidMetalPlane() {
   return (
     <mesh ref={meshRef} geometry={geometry} rotation={[-Math.PI / 2, 0, 0]}>
       <meshPhysicalMaterial
-        color="000000"
+        color="#000000"
         metalness={1.0}
         roughness={0.15}
         clearcoat={1.0}
