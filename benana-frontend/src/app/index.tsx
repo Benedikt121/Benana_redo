@@ -4,11 +4,11 @@ import { Text, View, StyleSheet } from "react-native";
 
 export default function Index() {
   return (
-    <View className="flex-1">
+    <>
       <RainyWaterBackground
-        albumCoverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
+        albumCoverUrl="../../assets/endlich_Wieder_sommer.png"
         palette={["#ff0055", "#0066ff", "#00ffff"]}
       />
-    </View>
+    </>
   );
 }
