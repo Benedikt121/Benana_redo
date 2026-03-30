@@ -1,6 +1,5 @@
-import React, { useRef, useMemo } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
-import { useTexture, Environment, Float } from "@react-three/drei";
+import React, { useMemo, useRef, useState, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface RainyWaterBackgroundProps {
@@ -8,61 +7,90 @@ interface RainyWaterBackgroundProps {
   palette?: string[];
 }
 
-function WaterSurface({ albumCoverUrl }: RainyWaterBackgroundProps) {
+function RainyPlane({ albumCoverUrl }: { albumCoverUrl?: string }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
 
-  const texture = albumCoverUrl ? useTexture(albumCoverUrl) : null;
+  // 1. Textur sicher & asynchron laden (verhindert Abstürze durch CORS oder Suspense)
+  useEffect(() => {
+    if (albumCoverUrl) {
+      const loader = new THREE.TextureLoader();
+      loader.setCrossOrigin("anonymous"); // Zwingend notwendig für Spotify/externe URLs!
+      loader.load(
+        albumCoverUrl,
+        (tex) => setTexture(tex),
+        undefined,
+        (err) => console.error("Cover konnte nicht geladen werden:", err),
+      );
+    }
+  }, [albumCoverUrl]);
 
-  const geometry = useMemo(() => new THREE.PlaneGeometry(30, 30, 128, 128), []);
+  // 2. Geometrie EXAKT wie in deiner funktionierenden liquidMetalBackground.tsx
+  const geometry = useMemo(
+    () => new THREE.PlaneGeometry(100, 100, 128, 128),
+    [],
+  );
   const positionAttribute = geometry.attributes.position;
   const originalPositions = useMemo(
     () => new Float32Array(positionAttribute.array),
     [positionAttribute],
   );
+
   const drops = useRef<{ x: number; y: number; time: number }[]>([]);
 
   useFrame((state) => {
     const time = state.clock.getElapsedTime();
 
-    if (Math.random() < 0.04) {
+    // Regentropfen generieren (angepasst auf die 100x100 Ebene)
+    if (Math.random() < 0.08) {
       drops.current.push({
-        x: (Math.random() - 0.5) * 25,
-        y: (Math.random() - 0.5) * 25,
+        x: (Math.random() - 0.5) * 80,
+        y: (Math.random() - 0.5) * 80,
         time,
       });
-      if (drops.current.length > 8) drops.current.shift();
+      if (drops.current.length > 15) drops.current.shift();
     }
 
+    // Wellen & Regen auf die Eckpunkte anwenden
     for (let i = 0; i < positionAttribute.count; i++) {
       const x = originalPositions[i * 3];
       const y = originalPositions[i * 3 + 1];
-      let z = Math.sin(x * 0.5 + time * 1.2) * 0.1;
-      z += Math.cos(y * 0.4 + time) * 0.08;
 
+      // Wind-Wellen (Sanft fließend, aber hoch genug, um Licht zu brechen)
+      let z =
+        Math.sin(x * 0.1 + time * 0.8) * Math.cos(y * 0.1 - time * 0.8) * 0.8;
+      z += Math.sin(x * 0.2 - time * 0.5) * 0.3;
+
+      // Ripple-Effekt der aufschlagenden Regentropfen
       for (let drop of drops.current) {
         const dist = Math.sqrt((x - drop.x) ** 2 + (y - drop.y) ** 2);
         const age = time - drop.time;
-        if (age < 2.5 && dist < age * 6) {
-          z += Math.sin((dist - age * 6) * 10) * (2.5 - age) * 0.04;
+
+        // Die Welle breitet sich aus und verschwindet
+        if (age < 3.0 && dist < age * 12) {
+          z += Math.sin((dist - age * 12) * 2) * (3.0 - age) * 0.4;
         }
       }
+
       positionAttribute.setZ(i, z);
     }
+
     positionAttribute.needsUpdate = true;
     geometry.computeVertexNormals();
   });
 
   return (
-    <mesh ref={meshRef} geometry={geometry}>
+    // Plane gekippt hinlegen, wie in der Test-Datei!
+    <mesh ref={meshRef} geometry={geometry} rotation={[-Math.PI / 2, 0, 0]}>
       <meshPhysicalMaterial
-        color="#050505"
-        metalness={1}
-        roughness={0.05}
-        clearcoat={1}
+        color="#000000"
+        metalness={1.0}
+        roughness={0.15} // Etwas rauer als ein Spiegel, damit das Licht weich streut
+        clearcoat={1.0}
+        clearcoatRoughness={0.1}
         emissive={new THREE.Color("#ffffff")}
-        emissiveIntensity={texture ? 0.4 : 0}
-        emissiveMap={texture}
-        transparent={true}
+        emissiveIntensity={texture ? 0.25 : 0}
+        emissiveMap={texture} // Hier spiegelt sich das Albumcover aus der Tiefe
       />
     </mesh>
   );
@@ -72,9 +100,15 @@ export default function RainyWaterBackground({
   albumCoverUrl,
   palette,
 }: RainyWaterBackgroundProps) {
+  // Fallback-Farben, falls das Array mal leer ist
+  const c1 = palette?.[0] || "#ff0055";
+  const c2 = palette?.[1] || "#00aaff";
+  const c3 = palette?.[2] || "#8800ff";
+
   return (
     <Canvas
-      camera={{ position: [0, 0, 12], fov: 45 }}
+      // Kamera leicht erhöht, damit wir von oben in die "Pfütze" herabschauen
+      camera={{ position: [0, 25, 15], fov: 60 }}
       style={{
         position: "absolute",
         top: 0,
@@ -85,42 +119,15 @@ export default function RainyWaterBackground({
         backgroundColor: "#000",
       }}
     >
-      <fog attach="fog" args={["#000", 8, 20]} />
-      <ambientLight intensity={0.1} />
+      <fog attach="fog" args={["#000000", 15, 60]} />
+      <ambientLight intensity={0.2} />
 
-      <spotLight
-        position={[10, 10, 10]}
-        color={palette ? palette[0] : "#ffffff"}
-        intensity={150}
-        angle={0.5}
-        penumbra={1}
-      />
+      {/* Exakt dieselben Lichtpositionen wie in der funktionierenden Datei */}
+      <directionalLight position={[20, 30, 20]} color={c1} intensity={6} />
+      <directionalLight position={[-20, 15, -20]} color={c2} intensity={3} />
+      <directionalLight position={[0, 5, 30]} color={c3} intensity={1.5} />
 
-      <pointLight
-        position={[-10, 5, 5]}
-        color={palette ? palette[1] : "#ff0000"}
-        intensity={80}
-      />
-
-      <pointLight
-        position={[0, -10, 2]}
-        color={palette ? palette[2] || palette[0] : "#830094"}
-        intensity={50}
-      />
-
-      {albumCoverUrl && (
-        <Environment frames={Infinity} resolution={256}>
-          <mesh scale={20} position={[0, 0, -10]} rotation={[0, 0, Math.PI]}>
-            <planeGeometry />
-            <meshBasicMaterial
-              map={useTexture(albumCoverUrl)}
-              side={THREE.BackSide}
-            />
-          </mesh>
-        </Environment>
-      )}
-
-      <WaterSurface albumCoverUrl={albumCoverUrl} />
+      <RainyPlane albumCoverUrl={albumCoverUrl} />
     </Canvas>
   );
 }

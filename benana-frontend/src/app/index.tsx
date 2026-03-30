@@ -6,7 +6,7 @@ export default function Index() {
   return (
     <>
       <RainyWaterBackground
-        albumCoverUrl="../../assets/endlich_Wieder_sommer.png"
+        albumCoverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
         palette={["#ff0055", "#0066ff", "#00ffff"]}
       />
     </>
