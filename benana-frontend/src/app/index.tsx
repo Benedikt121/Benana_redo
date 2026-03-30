@@ -4,11 +4,11 @@ import { Text, View, StyleSheet } from "react-native";
 
 export default function Index() {
   return (
-    <>
-      <RainyWaterBackground
-        albumCoverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
-        palette={["#ff0055", "#0066ff", "#00ffff"]}
-      />
-    </>
+    <View className="flex-1 items-center justify-center bg-white">
+      <Text className="text-xl font-bold text-blue-500">
+        Edit src/app/index.tsx to edit this screen. Nativewind is working! 🎉
+        test
+      </Text>
+    </View>
   );
 }
