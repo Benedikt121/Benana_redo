@@ -11,7 +11,7 @@ const vertexShader = `
   varying vec2 vUv;
   void main() {
     vUv = uv;
-    gl_Position = vec4(position.xy, 0.0, 1.0);
+    gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);
   }
 `;
 
@@ -118,7 +118,7 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
   // Erstelle zwei Framebuffer (FBOs) für Ping-Pong.
   // Wichtig: HalfFloatType, damit wir physikalische Werte <0 und >1 speichern können!
   const fboOptions = {
-    type: THREE.HalfFloatType,
+    type: THREE.FloatType,
     format: THREE.RGBAFormat,
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
@@ -164,24 +164,33 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
     bufferScene.add(mesh);
   }, [bufferScene, bufferMaterial]);
 
-  useFrame(() => {
-    // 1. Uniforms für die Physik-Berechnung aktualisieren
+  useFrame((state) => {
+    // 1. Hole die absolute Maus-/Touch-Position vom Bildschirm (-1 bis +1)
+    // und rechne sie für den Shader in Pixel um (0 bis Width/Height)
+    // Three.js hat Y=0 in der Mitte, Y=+1 oben und Y=-1 unten.
+    const pointerX = (state.pointer.x * 0.5 + 0.5) * size.width;
+    const pointerY = (state.pointer.y * 0.5 + 0.5) * size.height;
+
+    pointer.current.x = pointerX;
+    pointer.current.y = pointerY;
+
+    // 2. Uniforms für die Physik-Berechnung aktualisieren
     bufferMaterial.uniforms.iChannel0.value = fboRef.current.read.texture;
     bufferMaterial.uniforms.iFrame.value = frameCount.current;
     bufferMaterial.uniforms.iMouse.value = pointer.current;
 
-    // 2. Physik auf den "Write"-Buffer rendern
+    // 3. Physik auf den "Write"-Buffer rendern
     gl.setRenderTarget(fboRef.current.write);
     gl.render(bufferScene, bufferCamera);
 
-    // 3. Renderziel wieder auf den Bildschirm setzen
+    // 4. Renderziel wieder auf den Bildschirm setzen
     gl.setRenderTarget(null);
 
-    // 4. Das fertige Ergebnis an unser sichtbares Material übergeben
+    // 5. Das fertige Ergebnis an unser sichtbares Material übergeben
     imageMaterial.uniforms.iChannel0.value = fboRef.current.write.texture;
     imageMaterial.uniforms.u_albumColor.value.set(albumColor);
 
-    // 5. Ping-Pong! Lese- und Schreib-Buffer für den nächsten Frame tauschen
+    // 6. Ping-Pong! Lese- und Schreib-Buffer für den nächsten Frame tauschen
     const temp = fboRef.current.read;
     fboRef.current.read = fboRef.current.write;
     fboRef.current.write = temp;
@@ -189,15 +198,8 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
     frameCount.current += 1;
   });
 
-  // Touch- / Mouse-Events verarbeiten
-  const handlePointerMove = (e: any) => {
-    // uv-Koordinaten (0 bis 1) in Pixel-Koordinaten (0 bis Width/Height) umrechnen
-    pointer.current.x = e.uv.x * size.width;
-    pointer.current.y = e.uv.y * size.height;
-  };
-
-  const handlePointerDown = (e: any) => {
-    handlePointerMove(e);
+  // Touch- / Mouse-Events verarbeiten (Nur für Klick-Erkennung)
+  const handlePointerDown = () => {
     pointer.current.z = 1.0; // Markiere als "Gedrückt"
   };
 
@@ -207,12 +209,12 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
 
   return (
     <mesh
-      onPointerMove={handlePointerMove}
+      // Wir brauchen onPointerMove hier nicht mehr, da useFrame das nun absolut berechnet!
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      onPointerOut={handlePointerUp} // Falls man den Bildschirmrand verlässt
+      onPointerOut={handlePointerUp}
     >
-      <planeGeometry args={[2, 2]} />
+      <planeGeometry args={[10, 10]} />
       <primitive object={imageMaterial} attach="material" />
     </mesh>
   );
