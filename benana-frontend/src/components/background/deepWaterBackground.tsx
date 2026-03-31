@@ -28,7 +28,7 @@ const bufferAShader = `
 
   void main() {
     vec2 uv = vUv;
-    vec2 pixel = 1.0 / iResolution; // Pixel-Größe für Nachbar-Abfrage
+    vec2 pixel = 1.0 / iResolution;
     vec2 fragCoord = uv * iResolution;
 
     // Im ersten Frame ist alles ruhig
@@ -86,35 +86,36 @@ const imageShader = `
 
   void main() {
     vec4 data = texture2D(iChannel0, vUv);
+    float pressure = data.x;
 
-    vec2 distortion = vec2(-data.z, -data.w) * 0.4;
+    vec2 distortion = vec2(-data.z, -data.w) * 0.5;
 
     float screenAspect = u_resolution.x / u_resolution.y;
     vec2 ratio = vec2(
       max(screenAspect, 1.0),
       max(1.0 / screenAspect, 1.0)
     );
-
+    
     vec2 coverUv = (vUv - 0.5) * ratio * 0.8 + 0.5;
-
     vec2 distortedUV = clamp(coverUv + distortion, 0.0, 1.0);
 
     vec4 coverColor = texture2D(u_coverTex, distortedUV, 8.0);
 
     vec3 normal = normalize(vec3(-data.z, 0.2, -data.w));
-    float glint = pow(max(0.0, dot(normal, normalize(vec3(-3.0, 10.0, 3.0)))), 60.0);
+    float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 40.0);
 
     float distToCenter = distance(vUv, vec2(0.5));
-    float vignette = smoothstep(1.0, 0.2, distToCenter);
+    float vignette = smoothstep(1.1, 0.2, distToCenter);
 
-    // 5. FARBEN MISCHEN
-    vec3 puddleBase = u_albumColor * 0.05; 
-    float waterDepth = (data.x + 1.0) / 2.0;
+    vec3 puddleBase = u_albumColor * 0.03;
 
-    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.4);
-    vec3 finalColor = mix(puddleBase, detailColor, waterDepth) * vignette;
+    float lightMask = smoothstep(-0.2, 0.5, pressure);
 
-    finalColor += vec3(glint) * (coverColor.rgb + 0.2);
+    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.35 * lightMask);
+    
+    vec3 finalColor = detailColor * vignette;
+
+    finalColor += vec3(spec) * (coverColor.rgb * 1.5 + 0.2);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
