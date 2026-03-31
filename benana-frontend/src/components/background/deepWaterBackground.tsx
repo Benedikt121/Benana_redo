@@ -1,8 +1,9 @@
-import React, { useRef, useMemo, useState } from "react";
+import React, { useRef, useMemo, useState, Suspense } from "react";
 import { View, StyleSheet } from "react-native";
-import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
+import { useTexture } from "@react-three/drei/native";
 
 // --- SHADERS ---
 
@@ -115,7 +116,7 @@ const WaterShaderPlane = ({
   albumColor: string;
   coverUrl: string;
 }) => {
-  const coverTexture = useLoader(THREE.TextureLoader, coverUrl);
+  const coverTexture = useTexture(coverUrl);
   const { gl, size, camera } = useThree();
 
   // Referenzen für Maus/Touch-Eingabe (x, y, isDown, 0)
@@ -206,6 +207,8 @@ const WaterShaderPlane = ({
     imageMaterial.uniforms.iChannel0.value = fboRef.current.write.texture;
     imageMaterial.uniforms.u_albumColor.value.set(albumColor);
 
+    imageMaterial.uniforms.u_coverTex.value = coverTexture;
+
     // 6. Ping-Pong! Lese- und Schreib-Buffer für den nächsten Frame tauschen
     const temp = fboRef.current.read;
     fboRef.current.read = fboRef.current.write;
@@ -223,13 +226,17 @@ const WaterShaderPlane = ({
 };
 
 export default function DeepWaterBackground({ albumColor = "#001133" }) {
+  const testImage = require("../../../assets/endlich_Wieder_sommer.png");
   return (
     <View style={StyleSheet.absoluteFillObject}>
       <Canvas style={{ flex: 1 }}>
-        <WaterShaderPlane
-          albumColor={albumColor}
-          coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
-        />
+        {/* Suspense sorgt dafür, dass gewartet wird, bis das Cover geladen ist */}
+        <Suspense fallback={null}>
+          <WaterShaderPlane
+            albumColor={albumColor}
+            coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
+          />
+        </Suspense>
       </Canvas>
     </View>
   );
