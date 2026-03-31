@@ -5,6 +5,16 @@ import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
 import { useTexture } from "@react-three/drei/native";
 
+interface WaterProps {
+  albumColor?: string;
+  coverUrl?: string;
+  dropSize?: number; // Radius der Tropfen (Standard: 15.0)
+  dropIntensity?: number; // Stärke der Tropfen (0.0 bis 1.0, Standard: 0.5)
+  dropInterval?: number; // Wahrscheinlichkeit pro Frame (0.0 bis 1.0, Standard: 0.05)
+  damping?: number; // Wie schnell Wellen stoppen (0.9 bis 0.999, Standard: 0.99)
+  attenuation?: number; // Geschwindigkeits-Dämpfung (Standard: 0.002)
+}
+
 // --- SHADERS ---
 
 // Einfacher Vertex-Shader, der die Fläche über den ganzen Bildschirm spannt
@@ -22,6 +32,11 @@ const bufferAShader = `
   uniform vec2 iResolution;
   uniform vec3 u_newDrop;
   uniform int iFrame;
+
+  uniform float u_dropSize;
+  uniform float u_damping;
+  uniform float u_attenuation;
+  uniform float u_dropIntensity;
 
   varying vec2 vUv;
   const float delta = 1.0;
@@ -59,14 +74,14 @@ const bufferAShader = `
     
     pressure += delta * pVel;
     pVel -= 0.005 * delta * pressure;
-    pVel *= 1.0 - 0.002 * delta; // Geschwindigkeits-Dämpfung
-    pressure *= 0.999; // Druck-Dämpfung
+
+    pVel *= 1.0 - u_attenuation; // Geschwindigkeits-Dämpfung
+    pressure *= u_damping; // Druck-Dämpfung
 
     if (u_newDrop.z > 0.0) {
       float dist = distance(fragCoord, u_newDrop.xy);
-      float dropRadius = 15.0;
-      if (dist <= dropRadius) {
-        pressure += (1.0 - dist / dropRadius) * u_newDrop.z;
+      if (dist <= u_dropSize) {
+        pressure += (1.0 - dist / u_dropSize) * u_newDrop.z * u_dropIntensity;
       }
     }
 
@@ -99,7 +114,7 @@ const imageShader = `
     vec2 coverUv = (vUv - 0.5) * ratio * 0.8 + 0.5;
     vec2 distortedUV = clamp(coverUv + distortion, 0.0, 1.0);
 
-    vec4 coverColor = texture2D(u_coverTex, distortedUV, 8.0);
+    vec4 coverColor = texture2D(u_coverTex, distortedUV, 9.0);
 
     vec3 normal = normalize(vec3(-data.z, 0.2, -data.w));
     float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 40.0);
@@ -126,18 +141,18 @@ const imageShader = `
 const WaterShaderPlane = ({
   albumColor,
   coverUrl,
-}: {
-  albumColor: string;
-  coverUrl: string;
-}) => {
-  const coverTexture = useTexture(coverUrl);
-  const { gl, size, camera } = useThree();
+  dropSize = 15.0,
+  dropInterval = 0.05,
+  damping = 0.999,
+  attenuation = 0.002,
+  dropIntensity = 0.5,
+}: WaterProps) => {
+  const coverTexture = useTexture(coverUrl!);
+  const { gl, size } = useThree();
 
-  // Referenzen für Maus/Touch-Eingabe (x, y, isDown, 0)
   const newDrop = useRef(new THREE.Vector3(0, 0, 0));
   const frameCount = useRef(0);
 
-  // Wir brauchen eine separate Szene und Kamera für die Physik-Berechnung (Off-Screen rendering)
   const bufferScene = useMemo(() => new THREE.Scene(), []);
   const bufferCamera = useMemo(
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1),
@@ -154,8 +169,6 @@ const WaterShaderPlane = ({
   };
   const targetA = useFBO(size.width, size.height, fboOptions);
   const targetB = useFBO(size.width, size.height, fboOptions);
-
-  // Halte fest, welcher Buffer gerade gelesen und welcher beschrieben wird
   const fboRef = useRef({ read: targetA, write: targetB });
 
   // Materialien
@@ -169,6 +182,10 @@ const WaterShaderPlane = ({
           iResolution: { value: new THREE.Vector2(size.width, size.height) },
           u_newDrop: { value: newDrop.current },
           iFrame: { value: 0 },
+          u_dropSize: { value: dropSize },
+          u_damping: { value: damping },
+          u_attenuation: { value: attenuation },
+          u_dropIntensity: { value: dropIntensity },
         },
       }),
     [size],
@@ -197,7 +214,7 @@ const WaterShaderPlane = ({
   }, [bufferScene, bufferMaterial]);
 
   useFrame(() => {
-    if (Math.random() < 0.05) {
+    if (Math.random() < dropInterval) {
       newDrop.current.set(
         Math.random() * size.width, // Zufällige X-Position
         Math.random() * size.height, // Zufällige Y-Position
@@ -211,6 +228,10 @@ const WaterShaderPlane = ({
     bufferMaterial.uniforms.iChannel0.value = fboRef.current.read.texture;
     bufferMaterial.uniforms.iFrame.value = frameCount.current;
     bufferMaterial.uniforms.u_newDrop.value = newDrop.current;
+    bufferMaterial.uniforms.u_dropSize.value = dropSize;
+    bufferMaterial.uniforms.u_damping.value = damping;
+    bufferMaterial.uniforms.u_attenuation.value = attenuation;
+    bufferMaterial.uniforms.u_dropIntensity.value = dropIntensity;
 
     // 3. Physik auf den "Write"-Buffer rendern
     gl.setRenderTarget(fboRef.current.write);
@@ -241,7 +262,15 @@ const WaterShaderPlane = ({
   );
 };
 
-export default function DeepWaterBackground({ albumColor = "#001133" }) {
+export default function DeepWaterBackground({
+  albumColor = "#001133",
+  coverUrl = "https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0",
+  dropSize = 15.0,
+  dropIntensity = 0.5,
+  dropInterval = 0.05,
+  damping = 0.999,
+  attenuation = 0.002,
+}: WaterProps) {
   const testImage = require("../../../assets/endlich_Wieder_sommer.png");
   return (
     <View style={StyleSheet.absoluteFillObject}>
@@ -250,7 +279,12 @@ export default function DeepWaterBackground({ albumColor = "#001133" }) {
         <Suspense fallback={null}>
           <WaterShaderPlane
             albumColor={albumColor}
-            coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
+            coverUrl={coverUrl || testImage}
+            dropSize={dropSize}
+            dropIntensity={dropIntensity}
+            dropInterval={dropInterval}
+            damping={damping}
+            attenuation={attenuation}
           />
         </Suspense>
       </Canvas>
