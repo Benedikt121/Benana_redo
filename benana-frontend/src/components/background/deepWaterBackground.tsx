@@ -110,8 +110,16 @@ const bufferAShader = `
 
     if (u_newDrop.z > 0.0) {
       float dist = distance(fragCoord, u_newDrop.xy);
-      if (dist <= u_dropSize) {
-        pressure += (1.0 - dist / u_dropSize) * u_newDrop.z * u_dropIntensity;
+      
+      // Wir geben der Kurve minimal mehr Platz (x 1.5), damit sie wirklich unsichtbar sanft auf 0 ausklingen kann
+      if (dist <= u_dropSize * 1.5) { 
+        
+        // Die magische Gauß-Kurve. 
+        // Die 4.0 steuert die Breite der Kurve. 
+        // Größere Zahl = spitzerer Tropfen, kleinere Zahl = breiterer Tropfen.
+        float dropShape = exp(-2.0 * pow(dist / u_dropSize, 2.0));
+        
+        pressure += dropShape * u_newDrop.z * u_dropIntensity;
       }
     }
 
@@ -148,19 +156,21 @@ const imageShader = `
     vec4 coverColor = texture2D(u_coverTex, distortedUV, 8.0);
 
     vec3 normal = normalize(vec3(-data.z, 0.15, -data.w));
+    
     float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 80.0);
 
-    float distToCenter = distance(vUv, vec2(0.5));
-    float vignette = smoothstep(1.1, 0.2, distToCenter);
+    vec3 lightDir = normalize(vec3(-1.0, 2.0, 1.0));
+    float diffuse = max(0.0, dot(normal, lightDir));
+
+    float slopeMask = smoothstep(0.0, u_lightThreshold, slope);
+    float finalMask = mix(slopeMask, diffuse, 0.2);
 
     vec3 puddleBase = u_baseWaterColor;
 
-    float lightMask = smoothstep(0.0, u_lightThreshold, slope);
-
-    float extremeSlopeMask = smoothstep(u_lightThreshold * 2.0, u_lightThreshold * 4.0, slope);
-    lightMask = lightMask * (1.0 - extremeSlopeMask * 0.9);
-
-    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.7 * lightMask);
+    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.8 * finalMask);  
+    
+    float distToCenter = distance(vUv, vec2(0.5));
+    float vignette = smoothstep(1.1, 0.2, distToCenter);
     
     vec3 finalColor = detailColor * vignette;
 
