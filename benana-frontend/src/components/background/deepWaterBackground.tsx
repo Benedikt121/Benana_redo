@@ -87,7 +87,7 @@ const imageShader = `
   void main() {
     vec4 data = texture2D(iChannel0, vUv);
 
-    vec2 distortion = vec2(-data.z, -data.w) * 0.15;
+    vec2 distortion = vec2(-data.z, -data.w) * 0.4;
 
     float screenAspect = u_resolution.x / u_resolution.y;
     vec2 ratio = vec2(
@@ -95,32 +95,26 @@ const imageShader = `
       max(1.0 / screenAspect, 1.0)
     );
 
-    vec2 coverUv = (vUv - 0.5) * ratio + 0.5;
+    vec2 coverUv = (vUv - 0.5) * ratio * 0.8 + 0.5;
 
-    vec2 distortedUV = coverUv + distortion;
+    vec2 distortedUV = clamp(coverUv + distortion, 0.0, 1.0);
 
-    vec4 coverColor = vec4(0.0);
-    if (distortedUV.x >= 0.0 && distortedUV.x <= 1.0 && distortedUV.y >= 0.0 && distortedUV.y <= 1.0) {
-       coverColor = texture2D(u_coverTex, distortedUV);
-    }
+    vec4 coverColor = texture2D(u_coverTex, distortedUV, 8.0);
 
     vec3 normal = normalize(vec3(-data.z, 0.2, -data.w));
     float glint = pow(max(0.0, dot(normal, normalize(vec3(-3.0, 10.0, 3.0)))), 60.0);
 
-    // 4. VIGNETTE (Macht die Ränder der Pfütze dunkel für mehr Tiefe)
-    // Abstand zur Mitte berechnen (0.0 in der Mitte, >0.5 an den Rändern)
     float distToCenter = distance(vUv, vec2(0.5));
-    // Weicher Übergang ins Schwarze zu den Rändern hin
-    float vignette = smoothstep(0.8, 0.2, distToCenter);
+    float vignette = smoothstep(1.0, 0.2, distToCenter);
 
     // 5. FARBEN MISCHEN
+    vec3 puddleBase = u_albumColor * 0.05; 
     float waterDepth = (data.x + 1.0) / 2.0;
-    vec3 puddleBase = u_albumColor * 0.4; // Etwas dunklere Grundstimmung
 
-    // Mix aus Wasserfarbe und Cover, multipliziert mit der Vignette
-    vec3 finalColor = mix(puddleBase, coverColor.rgb, waterDepth + 0.3) * vignette;
+    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.4);
+    vec3 finalColor = mix(puddleBase, detailColor, waterDepth) * vignette;
 
-    finalColor += vec3(glint);
+    finalColor += vec3(glint) * (coverColor.rgb + 0.2);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
