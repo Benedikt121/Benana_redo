@@ -6,13 +6,38 @@ import * as THREE from "three";
 import { useTexture } from "@react-three/drei/native";
 
 interface WaterProps {
+  /**
+   * Albumfarbe, die als Basis für die Wasserfarbe dient.
+   */
   albumColor?: string;
+  /**
+   * URL des Albumcovers
+   */
   coverUrl?: string;
+  /**
+   * Größe der tropfen
+   */
   dropSize?: number; // Radius der Tropfen (Standard: 15.0)
+  /**
+   * Intensität der Tropfen (wie stark sie die Wellen beeinflussen)
+   */
   dropIntensity?: number; // Stärke der Tropfen (0.0 bis 1.0, Standard: 0.5)
+  /**
+   * Intervall zwischen Tropfen (wie oft Tropfen fallen)
+   */
   dropInterval?: number; // Wahrscheinlichkeit pro Frame (0.0 bis 1.0, Standard: 0.05)
-  damping?: number; // Wie schnell Wellen stoppen (0.9 bis 0.999, Standard: 0.99)
-  attenuation?: number; // Geschwindigkeits-Dämpfung (Standard: 0.002)
+  /**
+   * Dämpfung der Wellen, niedrigere Werte = schnellere Beruhigung, höhere Werte = langanhaltende Wellen (Standard: 0.999)
+   */
+  damping?: number;
+  /**
+   * Dämpfung der Geschwindigkeit, höhere Werte führen zu schnellerer Geschwindigkeitsabnahme (Standard: 0.002)
+   */
+  attenuation?: number;
+  /**
+   * Geschwindigkeit der Wellen, höhere Werte führen zu schnelleren Wellenbewegungen (Standard: 1.0)
+   */
+  speed?: number;
 }
 
 // --- SHADERS ---
@@ -37,9 +62,9 @@ const bufferAShader = `
   uniform float u_damping;
   uniform float u_attenuation;
   uniform float u_dropIntensity;
+  uniform float u_speed;
 
   varying vec2 vUv;
-  const float delta = 1.0;
 
   void main() {
     vec2 uv = vUv;
@@ -69,11 +94,11 @@ const bufferAShader = `
     if (fragCoord.y >= iResolution.y - 1.0) p_up = p_down;
 
     // Wellen-Physik anwenden
-    pVel += delta * (-2.0 * pressure + p_right + p_left) / 4.0;
-    pVel += delta * (-2.0 * pressure + p_up + p_down) / 4.0;
+    pVel += u_speed * (-2.0 * pressure + p_right + p_left) / 3.8;
+    pVel += u_speed * (-2.0 * pressure + p_up + p_down) / 3.8;
     
-    pressure += delta * pVel;
-    pVel -= 0.005 * delta * pressure;
+    pressure += u_speed * pVel;
+    pVel -= 0.005 * u_speed * pressure;
 
     pVel *= 1.0 - u_attenuation; // Geschwindigkeits-Dämpfung
     pressure *= u_damping; // Druck-Dämpfung
@@ -116,21 +141,21 @@ const imageShader = `
 
     vec4 coverColor = texture2D(u_coverTex, distortedUV, 9.0);
 
-    vec3 normal = normalize(vec3(-data.z, 0.2, -data.w));
-    float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 40.0);
+    vec3 normal = normalize(vec3(-data.z, 0.1, -data.w));
+    float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 120.0);
 
     float distToCenter = distance(vUv, vec2(0.5));
     float vignette = smoothstep(1.1, 0.2, distToCenter);
 
     vec3 puddleBase = u_albumColor * 0.03;
 
-    float lightMask = smoothstep(-0.2, 0.5, pressure);
+    float lightMask = smoothstep(0.0, 0.1, abs(pressure));
 
     vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.35 * lightMask);
     
     vec3 finalColor = detailColor * vignette;
 
-    finalColor += vec3(spec) * (coverColor.rgb * 1.5 + 0.2);
+    finalColor += vec3(spec) * (coverColor.rgb * 2.0 + 0.5);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -146,6 +171,7 @@ const WaterShaderPlane = ({
   damping = 0.999,
   attenuation = 0.002,
   dropIntensity = 0.5,
+  speed = 1.0,
 }: WaterProps) => {
   const coverTexture = useTexture(coverUrl!);
   const { gl, size } = useThree();
@@ -186,6 +212,7 @@ const WaterShaderPlane = ({
           u_damping: { value: damping },
           u_attenuation: { value: attenuation },
           u_dropIntensity: { value: dropIntensity },
+          u_speed: { value: speed },
         },
       }),
     [size],
@@ -200,7 +227,6 @@ const WaterShaderPlane = ({
           iChannel0: { value: null },
           u_albumColor: { value: new THREE.Color(albumColor) },
           u_coverTex: { value: coverTexture },
-          // NEU: Bildschirmauflösung übergeben
           u_resolution: { value: new THREE.Vector2(size.width, size.height) },
         },
       }),
@@ -232,6 +258,7 @@ const WaterShaderPlane = ({
     bufferMaterial.uniforms.u_damping.value = damping;
     bufferMaterial.uniforms.u_attenuation.value = attenuation;
     bufferMaterial.uniforms.u_dropIntensity.value = dropIntensity;
+    bufferMaterial.uniforms.u_speed.value = speed;
 
     // 3. Physik auf den "Write"-Buffer rendern
     gl.setRenderTarget(fboRef.current.write);
