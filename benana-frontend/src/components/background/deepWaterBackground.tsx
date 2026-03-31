@@ -80,6 +80,7 @@ const imageShader = `
   uniform sampler2D iChannel0;
   uniform sampler2D u_coverTex;
   uniform vec3 u_albumColor;
+  uniform vec2 u_resolution;
 
   varying vec2 vUv;
 
@@ -88,20 +89,38 @@ const imageShader = `
 
     vec2 distortion = vec2(-data.z, -data.w) * 0.15;
 
-    vec2 distortedUV = clamp(vUv + distortion, 0.0, 1.0);
-    vec4 coverColor = texture2D(u_coverTex, distortedUV);
+    float screenAspect = u_resolution.x / u_resolution.y;
+    vec2 ratio = vec2(
+      max(screenAspect, 1.0),
+      max(1.0 / screenAspect, 1.0)
+    );
+
+    vec2 coverUv = (vUv - 0.5) * ratio + 0.5;
+
+    vec2 distortedUV = coverUv + distortion;
+
+    vec4 coverColor = vec4(0.0);
+    if (distortedUV.x >= 0.0 && distortedUV.x <= 1.0 && distortedUV.y >= 0.0 && distortedUV.y <= 1.0) {
+       coverColor = texture2D(u_coverTex, distortedUV);
+    }
 
     vec3 normal = normalize(vec3(-data.z, 0.2, -data.w));
     float glint = pow(max(0.0, dot(normal, normalize(vec3(-3.0, 10.0, 3.0)))), 60.0);
 
-    // Mische die extrahierte Farbpalette (Tiefe der Pfütze) mit dem Album-Cover
-    // Tiefere Stellen (data.x ist kleiner) zeigen mehr von der dunklen Wasserfarbe,
-    // höhere Stellen zeigen mehr von der Reflektion.
-    float waterDepth = (data.x + 1.0) / 2.0;
+    // 4. VIGNETTE (Macht die Ränder der Pfütze dunkel für mehr Tiefe)
+    // Abstand zur Mitte berechnen (0.0 in der Mitte, >0.5 an den Rändern)
+    float distToCenter = distance(vUv, vec2(0.5));
+    // Weicher Übergang ins Schwarze zu den Rändern hin
+    float vignette = smoothstep(0.8, 0.2, distToCenter);
 
-    // Mische: Pfützen-Grundfarbe + Album-Cover (abgedunkelt) + Glanz
-    vec3 puddleBase = u_albumColor * 0.5; // Dunkle Grundstimmung
-    vec3 finalColor = mix(puddleBase, coverColor.rgb, waterDepth + 0.3) + vec3(glint);
+    // 5. FARBEN MISCHEN
+    float waterDepth = (data.x + 1.0) / 2.0;
+    vec3 puddleBase = u_albumColor * 0.4; // Etwas dunklere Grundstimmung
+
+    // Mix aus Wasserfarbe und Cover, multipliziert mit der Vignette
+    vec3 finalColor = mix(puddleBase, coverColor.rgb, waterDepth + 0.3) * vignette;
+
+    finalColor += vec3(glint);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -168,10 +187,12 @@ const WaterShaderPlane = ({
         uniforms: {
           iChannel0: { value: null },
           u_albumColor: { value: new THREE.Color(albumColor) },
-          u_coverTex: { value: coverTexture }, // NEU: Textur an Shader übergeben
+          u_coverTex: { value: coverTexture },
+          // NEU: Bildschirmauflösung übergeben
+          u_resolution: { value: new THREE.Vector2(size.width, size.height) },
         },
       }),
-    [albumColor, coverTexture],
+    [albumColor, coverTexture, size], // Wichtig: size hier in die Dependencies packen!
   );
 
   // Geometrie für den Buffer (eine unsichtbare Plane in der Buffer-Szene)
