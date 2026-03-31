@@ -39,6 +39,10 @@ interface WaterProps {
    * Geschwindigkeit der Wellen, höhere Werte führen zu schnelleren Wellenbewegungen (Standard: 1.0)
    */
   speed?: number;
+  /**
+   * Lichtintensität, höhere Werte führen zu stärkeren Lichtreflexen (Standard: 0.001)
+   */
+  lightThreshold?: number;
 }
 
 // --- SHADERS ---
@@ -122,6 +126,7 @@ const imageShader = `
   uniform sampler2D u_coverTex;
   uniform vec3 u_baseWaterColor;
   uniform vec2 u_resolution;
+  uniform float u_lightThreshold;
 
   varying vec2 vUv;
 
@@ -150,7 +155,7 @@ const imageShader = `
 
     vec3 puddleBase = u_baseWaterColor;
 
-    float lightMask = smoothstep(0.0, 0.002, slope);
+    float lightMask = smoothstep(0.0, u_lightThreshold, slope);
 
     vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.6 * lightMask);
     
@@ -173,6 +178,7 @@ const WaterShaderPlane = ({
   attenuation = WATER_CONFIG.attenuation,
   dropIntensity = WATER_CONFIG.dropIntensity,
   speed = WATER_CONFIG.speed,
+  lightThreshold = WATER_CONFIG.lightThreshold,
 }: WaterProps) => {
   const coverTexture = useTexture(coverUrl!);
   const { gl, size } = useThree();
@@ -229,9 +235,10 @@ const WaterShaderPlane = ({
           u_baseWaterColor: { value: new THREE.Color(baseWaterColor) },
           u_coverTex: { value: coverTexture },
           u_resolution: { value: new THREE.Vector2(size.width, size.height) },
+          u_lightThreshold: { value: lightThreshold },
         },
       }),
-    [baseWaterColor, coverTexture, size],
+    [baseWaterColor, coverTexture, size, lightThreshold],
   );
 
   // Geometrie für den Buffer (eine unsichtbare Plane in der Buffer-Szene)
@@ -271,7 +278,7 @@ const WaterShaderPlane = ({
     // 5. Das fertige Ergebnis an unser sichtbares Material übergeben
     imageMaterial.uniforms.iChannel0.value = fboRef.current.write.texture;
     imageMaterial.uniforms.u_baseWaterColor.value.set(baseWaterColor);
-
+    imageMaterial.uniforms.u_lightThreshold.value = lightThreshold;
     imageMaterial.uniforms.u_coverTex.value = coverTexture;
 
     // 6. Ping-Pong! Lese- und Schreib-Buffer für den nächsten Frame tauschen
@@ -298,6 +305,8 @@ export default function DeepWaterBackground({
   dropInterval,
   damping,
   attenuation,
+  speed,
+  lightThreshold,
 }: WaterProps) {
   const defaultImage = require("../../../assets/default_background_image.png");
   return (
@@ -313,6 +322,8 @@ export default function DeepWaterBackground({
             dropInterval={dropInterval}
             damping={damping}
             attenuation={attenuation}
+            speed={speed}
+            lightThreshold={lightThreshold}
           />
         </Suspense>
       </Canvas>
