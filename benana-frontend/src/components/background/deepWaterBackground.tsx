@@ -8,9 +8,9 @@ import { WATER_CONFIG } from "./deepWaterConfigs";
 
 interface WaterProps {
   /**
-   * Albumfarbe, die als Basis für die Wasserfarbe dient.
+   * Basis der Wasserfarbe
    */
-  albumColor?: string;
+  baseWaterColor?: string;
   /**
    * URL des Albumcovers
    */
@@ -120,14 +120,14 @@ const bufferAShader = `
 const imageShader = `
   uniform sampler2D iChannel0;
   uniform sampler2D u_coverTex;
-  uniform vec3 u_albumColor;
+  uniform vec3 u_baseWaterColor;
   uniform vec2 u_resolution;
 
   varying vec2 vUv;
 
   void main() {
     vec4 data = texture2D(iChannel0, vUv);
-    float pressure = data.x;
+    float slope = length(vec2(data.z, data.w));
 
     vec2 distortion = vec2(-data.z, -data.w) * 0.5;
 
@@ -142,21 +142,21 @@ const imageShader = `
 
     vec4 coverColor = texture2D(u_coverTex, distortedUV, 9.0);
 
-    vec3 normal = normalize(vec3(-data.z, 0.1, -data.w));
-    float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 120.0);
+    vec3 normal = normalize(vec3(-data.z, 0.15, -data.w));
+    float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 80.0);
 
     float distToCenter = distance(vUv, vec2(0.5));
     float vignette = smoothstep(1.1, 0.2, distToCenter);
 
-    vec3 puddleBase = u_albumColor * 0.03;
+    vec3 puddleBase = u_baseWaterColor;
 
-    float lightMask = smoothstep(0.0, 0.1, abs(pressure));
+    float lightMask = smoothstep(0.0, 0.002, slope);
 
-    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.35 * lightMask);
+    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.6 * lightMask);
     
     vec3 finalColor = detailColor * vignette;
 
-    finalColor += vec3(spec) * (coverColor.rgb * 2.0 + 0.5);
+    finalColor += vec3(spec) * (coverColor.rgb * 1.5 + 0.3);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -165,7 +165,7 @@ const imageShader = `
 // --- KOMPONENTE ---
 
 const WaterShaderPlane = ({
-  albumColor,
+  baseWaterColor,
   coverUrl,
   dropSize = WATER_CONFIG.dropSize,
   dropInterval = WATER_CONFIG.dropInterval,
@@ -226,12 +226,12 @@ const WaterShaderPlane = ({
         fragmentShader: imageShader,
         uniforms: {
           iChannel0: { value: null },
-          u_albumColor: { value: new THREE.Color(albumColor) },
+          u_baseWaterColor: { value: new THREE.Color(baseWaterColor) },
           u_coverTex: { value: coverTexture },
           u_resolution: { value: new THREE.Vector2(size.width, size.height) },
         },
       }),
-    [albumColor, coverTexture, size],
+    [baseWaterColor, coverTexture, size],
   );
 
   // Geometrie für den Buffer (eine unsichtbare Plane in der Buffer-Szene)
@@ -270,7 +270,7 @@ const WaterShaderPlane = ({
 
     // 5. Das fertige Ergebnis an unser sichtbares Material übergeben
     imageMaterial.uniforms.iChannel0.value = fboRef.current.write.texture;
-    imageMaterial.uniforms.u_albumColor.value.set(albumColor);
+    imageMaterial.uniforms.u_baseWaterColor.value.set(baseWaterColor);
 
     imageMaterial.uniforms.u_coverTex.value = coverTexture;
 
@@ -291,7 +291,7 @@ const WaterShaderPlane = ({
 };
 
 export default function DeepWaterBackground({
-  albumColor,
+  baseWaterColor,
   coverUrl,
   dropSize,
   dropIntensity,
@@ -306,7 +306,7 @@ export default function DeepWaterBackground({
         {/* Suspense sorgt dafür, dass gewartet wird, bis das Cover geladen ist */}
         <Suspense fallback={null}>
           <WaterShaderPlane
-            albumColor={albumColor}
+            baseWaterColor={baseWaterColor}
             coverUrl={coverUrl || defaultImage}
             dropSize={dropSize}
             dropIntensity={dropIntensity}
