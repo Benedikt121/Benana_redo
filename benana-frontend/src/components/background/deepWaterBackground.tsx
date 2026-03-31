@@ -145,7 +145,7 @@ const imageShader = `
     vec2 coverUv = (vUv - 0.5) * ratio * 0.8 + 0.5;
     vec2 distortedUV = clamp(coverUv + distortion, 0.0, 1.0);
 
-    vec4 coverColor = texture2D(u_coverTex, distortedUV, 9.0);
+    vec4 coverColor = texture2D(u_coverTex, distortedUV, 8.0);
 
     vec3 normal = normalize(vec3(-data.z, 0.15, -data.w));
     float spec = pow(max(0.0, dot(normal, normalize(vec3(-2.0, 5.0, 2.0)))), 80.0);
@@ -157,7 +157,10 @@ const imageShader = `
 
     float lightMask = smoothstep(0.0, u_lightThreshold, slope);
 
-    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.6 * lightMask);
+    float extremeSlopeMask = smoothstep(u_lightThreshold * 2.0, u_lightThreshold * 4.0, slope);
+    lightMask = lightMask * (1.0 - extremeSlopeMask * 2.0);
+
+    vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.9 * lightMask);
     
     vec3 finalColor = detailColor * vignette;
 

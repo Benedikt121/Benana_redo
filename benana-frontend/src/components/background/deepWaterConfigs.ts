@@ -23,7 +23,7 @@ export const WATER_CONFIG = {
     web: {
       dropSize: 20, // Im Web (meist größere Auflösung) minimal größer, aber viel kleiner als die alten 80
       dropIntensity: 0.5,
-      dropInterval: 0.005,
+      dropInterval: 0.0025,
       damping: 0.9995, // Im Web kann die Dämpfung noch geringer sein für sehr große Bildschirme
       attenuation: 0.001,
       speed: 0.35, // Im Web oft etwas flüssiger, daher leicht langsamer
