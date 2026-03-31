@@ -133,7 +133,7 @@ const WaterShaderPlane = ({
   // Erstelle zwei Framebuffer (FBOs) für Ping-Pong.
   // Wichtig: HalfFloatType, damit wir physikalische Werte <0 und >1 speichern können!
   const fboOptions = {
-    type: THREE.FloatType,
+    type: THREE.HalfFloatType,
     format: THREE.RGBAFormat,
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
