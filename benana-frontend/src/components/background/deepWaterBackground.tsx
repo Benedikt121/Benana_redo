@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
 import { useTexture } from "@react-three/drei/native";
+import { WATER_CONFIG } from "./deepWaterConfigs";
 
 interface WaterProps {
   /**
@@ -166,12 +167,12 @@ const imageShader = `
 const WaterShaderPlane = ({
   albumColor,
   coverUrl,
-  dropSize = 15.0,
-  dropInterval = 0.05,
-  damping = 0.999,
-  attenuation = 0.002,
-  dropIntensity = 0.5,
-  speed = 1.0,
+  dropSize = WATER_CONFIG.dropSize,
+  dropInterval = WATER_CONFIG.dropInterval,
+  damping = WATER_CONFIG.damping,
+  attenuation = WATER_CONFIG.attenuation,
+  dropIntensity = WATER_CONFIG.dropIntensity,
+  speed = WATER_CONFIG.speed,
 }: WaterProps) => {
   const coverTexture = useTexture(coverUrl!);
   const { gl, size } = useThree();
@@ -215,7 +216,7 @@ const WaterShaderPlane = ({
           u_speed: { value: speed },
         },
       }),
-    [size],
+    [size, dropSize, damping, attenuation, dropIntensity, speed],
   );
 
   const imageMaterial = useMemo(
@@ -230,7 +231,7 @@ const WaterShaderPlane = ({
           u_resolution: { value: new THREE.Vector2(size.width, size.height) },
         },
       }),
-    [albumColor, coverTexture, size], // Wichtig: size hier in die Dependencies packen!
+    [albumColor, coverTexture, size],
   );
 
   // Geometrie für den Buffer (eine unsichtbare Plane in der Buffer-Szene)
@@ -290,23 +291,23 @@ const WaterShaderPlane = ({
 };
 
 export default function DeepWaterBackground({
-  albumColor = "#001133",
-  coverUrl = "https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0",
-  dropSize = 15.0,
-  dropIntensity = 0.5,
-  dropInterval = 0.05,
-  damping = 0.999,
-  attenuation = 0.002,
+  albumColor,
+  coverUrl,
+  dropSize,
+  dropIntensity,
+  dropInterval,
+  damping,
+  attenuation,
 }: WaterProps) {
-  const testImage = require("../../../assets/endlich_Wieder_sommer.png");
+  const defaultImage = require("../../../assets/default_background_image.png");
   return (
-    <View style={StyleSheet.absoluteFillObject}>
+    <View style={StyleSheet.absoluteFill}>
       <Canvas style={{ flex: 1 }}>
         {/* Suspense sorgt dafür, dass gewartet wird, bis das Cover geladen ist */}
         <Suspense fallback={null}>
           <WaterShaderPlane
             albumColor={albumColor}
-            coverUrl={coverUrl || testImage}
+            coverUrl={coverUrl || defaultImage}
             dropSize={dropSize}
             dropIntensity={dropIntensity}
             dropInterval={dropInterval}

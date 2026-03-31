@@ -7,12 +7,6 @@ export default function Index() {
       <DeepWaterBackground
         albumColor="#0059ff"
         coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
-        dropSize={20}
-        dropIntensity={1.5}
-        dropInterval={0.01}
-        damping={0.999}
-        attenuation={0.002}
-        speed={1}
       />
     </View>
   );
