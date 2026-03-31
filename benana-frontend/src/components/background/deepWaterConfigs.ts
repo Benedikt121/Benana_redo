@@ -21,13 +21,13 @@ export const WATER_CONFIG = {
       lightThreshold: 0.004,
     },
     web: {
-      dropSize: 20,
-      dropIntensity: 0.5,
+      dropSize: 30,
+      dropIntensity: 0.3,
       dropInterval: 0.0025,
       damping: 0.9995,
       attenuation: 0.001,
       speed: 0.35,
-      lightThreshold: 0.002,
+      lightThreshold: 0.0007,
     },
     default: {
       dropSize: 20,

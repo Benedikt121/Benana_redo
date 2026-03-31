@@ -158,7 +158,7 @@ const imageShader = `
     float lightMask = smoothstep(0.0, u_lightThreshold, slope);
 
     float extremeSlopeMask = smoothstep(u_lightThreshold * 2.0, u_lightThreshold * 4.0, slope);
-    lightMask = lightMask * (1.0 - extremeSlopeMask * 0.8);
+    lightMask = lightMask * (1.0 - extremeSlopeMask * 0.9);
 
     vec3 detailColor = mix(puddleBase, coverColor.rgb, 0.7 * lightMask);
     
