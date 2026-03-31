@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -19,7 +19,7 @@ const vertexShader = `
 const bufferAShader = `
   uniform sampler2D iChannel0;
   uniform vec2 iResolution;
-  uniform vec4 iMouse;
+  uniform vec3 u_newDrop;
   uniform int iFrame;
 
   varying vec2 vUv;
@@ -61,11 +61,11 @@ const bufferAShader = `
     pVel *= 1.0 - 0.002 * delta; // Geschwindigkeits-Dämpfung
     pressure *= 0.999; // Druck-Dämpfung
 
-    // Maus/Touch-Interaktion: Wenn gedrückt, füge Druck hinzu
-    if (iMouse.z > 0.0) {
-      float dist = distance(fragCoord, iMouse.xy);
-      if (dist <= 20.0) {
-        pressure += 1.0 - dist / 20.0;
+    if (u_newDrop.z > 0.0) {
+      float dist = distance(fragCoord, u_newDrop.xy);
+      float dropRadius = 15.0;
+      if (dist <= dropRadius) {
+        pressure += (1.0 - dist / dropRadius) * u_newDrop.z;
       }
     }
 
@@ -77,6 +77,7 @@ const bufferAShader = `
 // IMAGE: Die sichtbare Darstellung (Lichtbrechung & Farbe)
 const imageShader = `
   uniform sampler2D iChannel0;
+  uniform sampler2D u_coverTex;
   uniform vec3 u_albumColor;
 
   varying vec2 vUv;
@@ -84,16 +85,22 @@ const imageShader = `
   void main() {
     vec4 data = texture2D(iChannel0, vUv);
 
-    // Sonnenlicht-Reflektion (Glanz) anhand des Gefälles (data.z und data.w)
+    vec2 distortion = vec2(-data.z, -data.w) * 0.15;
+
+    vec2 distortedUV = clamp(vUv + distortion, 0.0, 1.0);
+    vec4 coverColor = texture2D(u_coverTex, distortedUV);
+
     vec3 normal = normalize(vec3(-data.z, 0.2, -data.w));
     float glint = pow(max(0.0, dot(normal, normalize(vec3(-3.0, 10.0, 3.0)))), 60.0);
 
-    // Die Album-Farbe mit der Wassertiefe (data.x) kombinieren
-    // (data.x + 1.0) / 2.0 verschiebt den Druckwert in einen sichtbaren Helligkeitsbereich
-    vec3 waterColor = u_albumColor * ((data.x + 1.0) / 1.5);
+    // Mische die extrahierte Farbpalette (Tiefe der Pfütze) mit dem Album-Cover
+    // Tiefere Stellen (data.x ist kleiner) zeigen mehr von der dunklen Wasserfarbe,
+    // höhere Stellen zeigen mehr von der Reflektion.
+    float waterDepth = (data.x + 1.0) / 2.0;
 
-    // Glanz hinzufügen
-    vec3 finalColor = waterColor + vec3(glint);
+    // Mische: Pfützen-Grundfarbe + Album-Cover (abgedunkelt) + Glanz
+    vec3 puddleBase = u_albumColor * 0.5; // Dunkle Grundstimmung
+    vec3 finalColor = mix(puddleBase, coverColor.rgb, waterDepth + 0.3) + vec3(glint);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
@@ -101,11 +108,18 @@ const imageShader = `
 
 // --- KOMPONENTE ---
 
-const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
+const WaterShaderPlane = ({
+  albumColor,
+  coverUrl,
+}: {
+  albumColor: string;
+  coverUrl: string;
+}) => {
+  const coverTexture = useLoader(THREE.TextureLoader, coverUrl);
   const { gl, size, camera } = useThree();
 
   // Referenzen für Maus/Touch-Eingabe (x, y, isDown, 0)
-  const pointer = useRef(new THREE.Vector4(0, 0, 0, 0));
+  const newDrop = useRef(new THREE.Vector3(0, 0, 0));
   const frameCount = useRef(0);
 
   // Wir brauchen eine separate Szene und Kamera für die Physik-Berechnung (Off-Screen rendering)
@@ -138,7 +152,7 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
         uniforms: {
           iChannel0: { value: null },
           iResolution: { value: new THREE.Vector2(size.width, size.height) },
-          iMouse: { value: pointer.current },
+          u_newDrop: { value: newDrop.current },
           iFrame: { value: 0 },
         },
       }),
@@ -153,9 +167,10 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
         uniforms: {
           iChannel0: { value: null },
           u_albumColor: { value: new THREE.Color(albumColor) },
+          u_coverTex: { value: coverTexture }, // NEU: Textur an Shader übergeben
         },
       }),
-    [albumColor],
+    [albumColor, coverTexture],
   );
 
   // Geometrie für den Buffer (eine unsichtbare Plane in der Buffer-Szene)
@@ -164,20 +179,21 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
     bufferScene.add(mesh);
   }, [bufferScene, bufferMaterial]);
 
-  useFrame((state) => {
-    // 1. Hole die absolute Maus-/Touch-Position vom Bildschirm (-1 bis +1)
-    // und rechne sie für den Shader in Pixel um (0 bis Width/Height)
-    // Three.js hat Y=0 in der Mitte, Y=+1 oben und Y=-1 unten.
-    const pointerX = (state.pointer.x * 0.5 + 0.5) * size.width;
-    const pointerY = (state.pointer.y * 0.5 + 0.5) * size.height;
-
-    pointer.current.x = pointerX;
-    pointer.current.y = pointerY;
+  useFrame(() => {
+    if (Math.random() < 0.05) {
+      newDrop.current.set(
+        Math.random() * size.width, // Zufällige X-Position
+        Math.random() * size.height, // Zufällige Y-Position
+        0.5 + Math.random() * 0.5, // Zufällige Intensität (0.5 bis 1.0)
+      );
+    } else {
+      newDrop.current.z = 0.0; // Kein Tropfen in diesem Frame
+    }
 
     // 2. Uniforms für die Physik-Berechnung aktualisieren
     bufferMaterial.uniforms.iChannel0.value = fboRef.current.read.texture;
     bufferMaterial.uniforms.iFrame.value = frameCount.current;
-    bufferMaterial.uniforms.iMouse.value = pointer.current;
+    bufferMaterial.uniforms.u_newDrop.value = newDrop.current;
 
     // 3. Physik auf den "Write"-Buffer rendern
     gl.setRenderTarget(fboRef.current.write);
@@ -198,22 +214,8 @@ const WaterShaderPlane = ({ albumColor }: { albumColor: string }) => {
     frameCount.current += 1;
   });
 
-  // Touch- / Mouse-Events verarbeiten (Nur für Klick-Erkennung)
-  const handlePointerDown = () => {
-    pointer.current.z = 1.0; // Markiere als "Gedrückt"
-  };
-
-  const handlePointerUp = () => {
-    pointer.current.z = 0.0; // Markiere als "Losgelassen"
-  };
-
   return (
-    <mesh
-      // Wir brauchen onPointerMove hier nicht mehr, da useFrame das nun absolut berechnet!
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerOut={handlePointerUp}
-    >
+    <mesh>
       <planeGeometry args={[10, 10]} />
       <primitive object={imageMaterial} attach="material" />
     </mesh>
@@ -224,7 +226,10 @@ export default function DeepWaterBackground({ albumColor = "#001133" }) {
   return (
     <View style={StyleSheet.absoluteFillObject}>
       <Canvas style={{ flex: 1 }}>
-        <WaterShaderPlane albumColor={albumColor} />
+        <WaterShaderPlane
+          albumColor={albumColor}
+          coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0"
+        />
       </Canvas>
     </View>
   );
