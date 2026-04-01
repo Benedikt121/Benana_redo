@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, Suspense } from "react";
+import React, { useRef, useMemo, useState, Suspense, useEffect } from "react";
 import { vertexShader, bufferAShader, imageShader } from "./deepWaterShaders";
 import { View, StyleSheet } from "react-native";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -57,8 +57,18 @@ const WaterShaderPlane = ({
   speed = WATER_CONFIG.speed,
   lightThreshold = WATER_CONFIG.lightThreshold,
 }: WaterProps) => {
-  const coverTexture = useTexture(coverUrl!);
   const { gl, size } = useThree();
+  const [textures, setTextures] = useState({ prevUrl: coverUrl, currentUrl: coverUrl })
+  const transitionProgress = useRef(1.0);
+
+  useEffect(() => {
+    if (coverUrl && coverUrl !== textures.currentUrl) {
+      setTextures(prev => ({ prevUrl: prev.currentUrl, currentUrl: coverUrl }));
+      transitionProgress.current = 0.0; // Startschuss für die Animation!
+    }
+  }, [coverUrl, textures.currentUrl]);
+
+  const [prevText, currentText] = useTexture([textures.prevUrl!, textures.currentUrl!]) 
 
   const newDrop = useRef(new THREE.Vector3(0, 0, 0));
   const frameCount = useRef(0);
@@ -107,12 +117,14 @@ const WaterShaderPlane = ({
         uniforms: {
           iChannel0: { value: null },
           u_baseWaterColor: { value: new THREE.Color(baseWaterColor) },
-          u_coverTex: { value: coverTexture },
+          u_coverTex: { value: currentText },
+          u_coverTexPrev: { value: prevText },
+          u_transition: { value: 1.0 },
           u_resolution: { value: new THREE.Vector2(size.width, size.height) },
           u_lightThreshold: { value: lightThreshold },
         },
       }),
-    [baseWaterColor, coverTexture, size, lightThreshold],
+    [baseWaterColor, size, lightThreshold],
   );
 
   useMemo(() => {
@@ -120,7 +132,13 @@ const WaterShaderPlane = ({
     bufferScene.add(mesh);
   }, [bufferScene, bufferMaterial]);
 
-  useFrame(() => {
+  useFrame((state, delta) => {
+
+    if (transitionProgress.current < 1.0) {
+      transitionProgress.current += delta * 0.5; 
+      if (transitionProgress.current > 1.0) transitionProgress.current = 1.0;
+    }
+
     if (Math.random() < dropInterval) {
       newDrop.current.set(
         Math.random() * size.width,
@@ -148,8 +166,9 @@ const WaterShaderPlane = ({
     imageMaterial.uniforms.iChannel0.value = fboRef.current.write.texture;
     imageMaterial.uniforms.u_baseWaterColor.value.set(baseWaterColor);
     imageMaterial.uniforms.u_lightThreshold.value = lightThreshold;
-    imageMaterial.uniforms.u_coverTex.value = coverTexture;
-
+    imageMaterial.uniforms.u_transition.value = transitionProgress.current;
+    imageMaterial.uniforms.u_coverTex.value = currentText;
+    imageMaterial.uniforms.u_coverTexPrev.value = prevText;
     const temp = fboRef.current.read;
     fboRef.current.read = fboRef.current.write;
     fboRef.current.write = temp;

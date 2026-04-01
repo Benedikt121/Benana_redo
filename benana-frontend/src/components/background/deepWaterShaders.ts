@@ -73,6 +73,8 @@ export const imageShader = `
   uniform vec3 u_baseWaterColor;
   uniform vec2 u_resolution;
   uniform float u_lightThreshold;
+  uniform sampler2D u_coverTexPrev;
+  uniform float u_transition;
 
   varying vec2 vUv;
 
@@ -91,7 +93,10 @@ export const imageShader = `
     vec2 coverUv = (vUv - 0.5) * ratio * 0.8 + 0.5;
     vec2 distortedUV = clamp(coverUv + distortion, 0.0, 1.0);
 
-    vec4 coverColor = texture2D(u_coverTex, distortedUV, 8.0);
+    vec4 coverColorCurrent = texture2D(u_coverTex, distortedUV, 8.0);
+    vec4 coverColorPrev = texture2D(u_coverTexPrev, distortedUV, 8.0);
+
+    vec4 coverColor = mix(coverColorPrev, coverColorCurrent, u_transition);
 
     vec3 normal = normalize(vec3(-data.z, 0.15, -data.w));
     
