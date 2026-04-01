@@ -1,8 +1,8 @@
 name: Build and Preview
 on:
   push:
-    branches: ["main"]
-
+    branches: ["disabled"] 
+    
 jobs:
   ios_build_job:
     name: iOS Development Build

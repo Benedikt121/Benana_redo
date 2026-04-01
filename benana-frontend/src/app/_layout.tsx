@@ -2,20 +2,27 @@ import { Stack } from "expo-router";
 import "../global.css";
 import { View } from "react-native";
 import DeepWaterBackground from "@/components/background/deepWaterBackground";
+import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 
 export default function RootLayout() {
+  const TransparentTheme = {
+    ...DefaultTheme,
+    background: "transparent",
+  };
   return (
-    <View className="flex-1">
-      <DeepWaterBackground
-        baseWaterColor="#001d5a"
-        coverUrl="https://cdn-images.dzcdn.net/images/cover/05c92e1a84981eff24f275bde6b5b603/500x500.jpg"
-      />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: "transparent" },
-        }}
-      />
-    </View>
+    <ThemeProvider value={TransparentTheme}>
+      <View className="flex-1">
+        <DeepWaterBackground
+          baseWaterColor="#001d5a"
+          coverUrl="https://cdn-images.dzcdn.net/images/cover/05c92e1a84981eff24f275bde6b5b603/500x500.jpg"
+        />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
+      </View>
+    </ThemeProvider>
   );
 }
