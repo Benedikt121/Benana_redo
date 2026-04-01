@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState, Suspense, useEffect } from "react";
+import React, { useRef, useMemo, useState, Suspense, useEffect, startTransition } from "react";
 import { vertexShader, bufferAShader, imageShader } from "./deepWaterShaders";
 import { View, StyleSheet } from "react-native";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -63,12 +63,17 @@ const WaterShaderPlane = ({
 
   useEffect(() => {
     if (coverUrl && coverUrl !== textures.currentUrl) {
-      setTextures(prev => ({ prevUrl: prev.currentUrl, currentUrl: coverUrl }));
-      transitionProgress.current = 0.0; // Startschuss für die Animation!
+      startTransition(() => {
+        setTextures(prev => ({ prevUrl: prev.currentUrl, currentUrl: coverUrl }));
+      });
     }
   }, [coverUrl, textures.currentUrl]);
 
   const [prevText, currentText] = useTexture([textures.prevUrl!, textures.currentUrl!]) 
+
+  useEffect(() => {
+    transitionProgress.current = 0.0;
+  }, [currentText]);
 
   const newDrop = useRef(new THREE.Vector3(0, 0, 0));
   const frameCount = useRef(0);
