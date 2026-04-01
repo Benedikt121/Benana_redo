@@ -3,3 +3,9 @@
 @import "tailwindcss/utilities.css";
 
 @import "nativewind/theme";
+
+@layer base {
+    html, body, #root, [data-expo-container] {
+        background-color: transparent !important;
+    }
+}
