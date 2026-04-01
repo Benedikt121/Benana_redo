@@ -106,6 +106,9 @@ export const imageShader = `
     float diffuse = max(0.0, dot(normal, lightDir));
 
     float slopeMask = smoothstep(0.0, u_lightThreshold, slope);
+    float slopeMax = smoothstep(u_lightThreshold, u_lightThreshold * 1.5, slope);
+    
+    slopeMask = slopeMask * (1.0 - slopeMax);
     float finalMask = mix(slopeMask, diffuse, 0.2);
 
     vec3 puddleBase = u_baseWaterColor;
@@ -117,7 +120,7 @@ export const imageShader = `
     
     vec3 finalColor = detailColor * vignette;
 
-    finalColor += vec3(spec) * (coverColor.rgb * 1.5 + 0.3);
+    finalColor += vec3(spec) * (1.0 - slopeMax * 0.5) * (coverColor.rgb * 1.5 + 0.3);
 
     gl_FragColor = vec4(finalColor, 1.0);
   }
