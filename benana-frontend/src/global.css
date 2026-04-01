@@ -5,7 +5,15 @@
 @import "nativewind/theme";
 
 @layer base {
-    html, body, #root, [data-expo-container] {
-        background-color: transparent !important;
-    }
+  div[style*="background-color: rgb(242, 242, 242)"],
+  div[style*="background-color: #f2f2f2"] {
+    background-color: transparent !important;
+  }
+
+  html,
+  body,
+  #root,
+  [data-expo-container] {
+    background-color: transparent !important;
+  }
 }
