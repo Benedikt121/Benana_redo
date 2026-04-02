@@ -128,9 +128,6 @@ vec3 getSceneColor(vec2 uv) {
     // Skalierung: Eine größere Zahl macht das Cover kleiner
     centerUV *= 1.6; 
 
-    // Schwebe-Animation: sin() sorgt für sanftes Auf und Ab basierend auf der Zeit
-    centerUV.y += sin(u_time * 1.5) * 0.05;
-
     vec2 coverUV = centerUV + 0.5; // Zurückschieben
 
     // Prüfen, ob der aktuelle Pixel innerhalb unseres kleinen Covers liegt
