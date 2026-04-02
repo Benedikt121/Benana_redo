@@ -1,4 +1,11 @@
-import React, { useRef, useMemo, useState, Suspense, useEffect, startTransition } from "react";
+import React, {
+  useRef,
+  useMemo,
+  useState,
+  Suspense,
+  useEffect,
+  startTransition,
+} from "react";
 import { vertexShader, bufferAShader, imageShader } from "./deepWaterShaders";
 import { View, StyleSheet } from "react-native";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -58,18 +65,27 @@ const WaterShaderPlane = ({
   lightThreshold = WATER_CONFIG.lightThreshold,
 }: WaterProps) => {
   const { gl, size } = useThree();
-  const [textures, setTextures] = useState({ prevUrl: coverUrl, currentUrl: coverUrl })
+  const [textures, setTextures] = useState({
+    prevUrl: coverUrl,
+    currentUrl: coverUrl,
+  });
   const transitionProgress = useRef(1.0);
 
   useEffect(() => {
     if (coverUrl && coverUrl !== textures.currentUrl) {
       startTransition(() => {
-        setTextures(prev => ({ prevUrl: prev.currentUrl, currentUrl: coverUrl }));
+        setTextures((prev) => ({
+          prevUrl: prev.currentUrl,
+          currentUrl: coverUrl,
+        }));
       });
     }
   }, [coverUrl, textures.currentUrl]);
 
-  const [prevText, currentText] = useTexture([textures.prevUrl!, textures.currentUrl!]) 
+  const [prevText, currentText] = useTexture([
+    textures.prevUrl!,
+    textures.currentUrl!,
+  ]);
 
   useEffect(() => {
     transitionProgress.current = 0.0;
@@ -138,9 +154,8 @@ const WaterShaderPlane = ({
   }, [bufferScene, bufferMaterial]);
 
   useFrame((state, delta) => {
-
     if (transitionProgress.current < 1.0) {
-      transitionProgress.current += delta * 0.5; 
+      transitionProgress.current += delta * 0.5;
       if (transitionProgress.current > 1.0) transitionProgress.current = 1.0;
     }
 

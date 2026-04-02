@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import "../global.css";
 import { View } from "react-native";
-import DeepWaterBackground from "@/components/background/deepWaterBackground";
+import DeepWaterBackground from "@/components/background/deepWaterBackground/deepWaterBackground";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
 
 export default function RootLayout() {

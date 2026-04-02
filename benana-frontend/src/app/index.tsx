@@ -1,4 +1,3 @@
-import DeepWaterBackground from "@/components/background/deepWaterBackground";
 import { View } from "react-native";
 
 export default function Index() {
