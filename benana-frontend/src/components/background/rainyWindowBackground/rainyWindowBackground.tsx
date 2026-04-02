@@ -1,16 +1,17 @@
-import { useTexture, View } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
 import { useThree, useFrame, Canvas } from "@react-three/fiber";
 import { useRef, useMemo, useEffect, Suspense } from "react";
 import { RAINY_CONFIG } from "./rainyWindowConfig";
 import { vertexShader, fragmentShader } from "./rainyWindowShaders";
 import * as THREE from "three";
+import { View } from "react-native";
 
 interface RainyWindowProps {
   coverUrl?: string | null;
 }
 
 const RainyPlane = ({ coverUrl }: RainyWindowProps) => {
-  const { viewport } = useThree();
+  const { size } = useThree();
 
   const landscapeImg = require("../../../../assets/rainyWindowBackground.jpg");
 
@@ -33,7 +34,7 @@ const RainyPlane = ({ coverUrl }: RainyWindowProps) => {
           u_time: { value: 0.0 },
           u_tex0_resolution: { value: new THREE.Vector2(1024, 1024) },
           u_resolution: {
-            value: new THREE.Vector2(viewport.width, viewport.height),
+            value: new THREE.Vector2(size.width, size.height),
           },
 
           u_intensity: { value: RAINY_CONFIG!.intensity },
@@ -47,23 +48,24 @@ const RainyPlane = ({ coverUrl }: RainyWindowProps) => {
           u_texture_fill: { value: true },
         },
       }),
-    [viewport, landscapeTex, coverTex, coverUrl],
+    [size, landscapeTex, coverTex, coverUrl],
   );
 
   useEffect(() => {
     if (materialRef.current && landscapeTex) {
-      const width = viewport.width;
-      const height = viewport.height;
+      const img = landscapeTex.image as { width?: number; height?: number };
+      const width = img.width || size.width;
+      const height = img.height || size.height;
       materialRef.current.uniforms.u_tex0_resolution.value.set(width, height);
     }
-  }, [landscapeTex]);
+  }, [landscapeTex, size]);
 
   useFrame((state) => {
     if (materialRef.current) {
       materialRef.current.uniforms.u_time.value = state.clock.getElapsedTime();
       materialRef.current.uniforms.u_resolution.value.set(
-        viewport.width,
-        viewport.height,
+        size.width,
+        size.height,
       );
     }
   });

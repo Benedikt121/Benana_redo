@@ -13,20 +13,20 @@ precision highp float;
 
 varying vec2 vUv;
 uniform sampler2D u_tex0;
-uniform samper2D u_coverTex;
+uniform sampler2D u_coverTex;
 uniform bool u_hasCover;
 
 uniform vec2 u_tex0_resolution;
 uniform float u_time;
 uniform vec2 u_resolution;
-unifrom float u_speed;
+uniform float u_speed;
 uniform float u_intensity;
 uniform float u_normal;
 uniform float u_brightness;
 uniform float u_blur_intensity;
 uniform float u_zoom;
 uniform int u_blur_iterations;
-unifrom bool u_texture_fill;
+uniform bool u_texture_fill;
 
 #define S(a, b, t) smoothstep(a, b, t)
 
