@@ -215,9 +215,9 @@ export default function DeepWaterBackground({
   speed,
   lightThreshold,
 }: WaterProps) {
-  const defaultImage = require("../../../assets/default_background_image.png");
+  const defaultImage = require("../../../../assets/default_background_image.png");
   return (
-    <View className="absolute inset-0 z-[-1]">
+    <View className="absolute inset-0 z-[-1] bg-[#050510]">
       <Canvas className="flex-1">
         <Suspense fallback={null}>
           <WaterShaderPlane
