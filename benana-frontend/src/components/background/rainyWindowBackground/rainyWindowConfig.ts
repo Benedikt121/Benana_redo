@@ -23,10 +23,10 @@ export const RAINY_CONFIG = {
     web: {
       intensity: 0.5,
       speed: 0.2,
-      brightness: 0.6,
+      brightness: 0.4,
       normal: 0.8,
       zoom: 2.2,
-      blurIntensity: 3.0,
+      blurIntensity: 5.0,
       blurIterations: 32,
     },
     default: {

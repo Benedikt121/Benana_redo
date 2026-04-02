@@ -113,45 +113,9 @@ float N21(vec2 p) {
     return fract(p.x * p.y);
 }
 
-vec3 getSceneColor(vec2 uv) {
-    // 1. Hintergrundlandschaft laden
-    vec3 bg = texture2D(u_tex0, uv).rgb;
-    
-    // Wenn kein Song spielt, zeige nur die Landschaft
-    if (!u_hasCover) return bg;
-
-    // 2. Cover-Berechnung
-    float screenAspect = u_resolution.x / u_resolution.y;
-    vec2 centerUV = uv - 0.5; // In die Mitte verschieben
-    centerUV.x *= screenAspect; // Verhindert, dass das Cover gestreckt wird
-    
-    // Skalierung: Eine größere Zahl macht das Cover kleiner
-    centerUV *= 1.6; 
-
-    vec2 coverUV = centerUV + 0.5; // Zurückschieben
-
-    // Prüfen, ob der aktuelle Pixel innerhalb unseres kleinen Covers liegt
-    if(coverUV.x > 0.0 && coverUV.x < 1.0 && coverUV.y > 0.0 && coverUV.y < 1.0) {
-        vec3 coverCol = texture2D(u_coverTex, coverUV).rgb;
-        
-        // Macht die Ränder des Covers weich, damit es besser im Nebel sitzt
-        float borderX = smoothstep(0.0, 0.02, coverUV.x) * smoothstep(1.0, 0.98, coverUV.x);
-        float borderY = smoothstep(0.0, 0.02, coverUV.y) * smoothstep(1.0, 0.98, coverUV.y);
-        float alpha = borderX * borderY;
-
-        // Cover über Landschaft legen (* 1.4 macht es künstlich heller = Leuchten)
-        return mix(bg, coverCol * 1.4, alpha * 0.95);
-    }
-    
-    return bg; // Ansonsten Landschaft zeigen
-}
-
-void main() {
-    vec2 uv = (gl_FragCoord.xy - .5 * u_resolution.xy) / u_resolution.y;
-    vec2 UV = gl_FragCoord.xy / u_resolution.xy;
-    float T = u_time;
-    
-    // Bild formatfüllend skalieren
+vec3 getSceneColor(vec2 screenUV) {
+    // 1. Hintergrund-UV berechnen (Scale to Fill für die Landschaft)
+    vec2 bgUV = screenUV;
     if(u_texture_fill) {
         float screenAspect = u_resolution.x / u_resolution.y;
         float textureAspect = u_tex0_resolution.x / u_tex0_resolution.y;
@@ -160,35 +124,74 @@ void main() {
             scaleX = screenAspect / textureAspect;
         else
             scaleY = textureAspect / screenAspect;
-        UV = vec2(scaleX, scaleY) * (UV - 0.5) + 0.5;
+        bgUV = vec2(scaleX, scaleY) * (bgUV - 0.5) + 0.5;
     }
+    
+    vec3 bg = texture2D(u_tex0, bgUV).rgb;
+    if (!u_hasCover) return bg;
 
+    // 2. Cover-UV berechnen (Mit den SAUBEREN screenUVs = immer perfekt zentriert)
+    vec2 centerUV = screenUV - 0.5; 
+    
+    // --- NEU: Aspekt-Korrektur, die auf Handy UND PC perfekt funktioniert ---
+    if (u_resolution.x < u_resolution.y) {
+        // Handy ist hochkant: Wir strecken die Y-Achse, damit das Cover quadratisch bleibt
+        centerUV.y *= u_resolution.y / u_resolution.x;
+    } else {
+        // PC/Querformat: Wir strecken die X-Achse
+        centerUV.x *= u_resolution.x / u_resolution.y;
+    }
+    
+    centerUV *= 1.6; // Größe (größerer Wert = kleineres Cover)
+
+    vec2 coverUV = centerUV + 0.5;
+
+    if(coverUV.x > 0.0 && coverUV.x < 1.0 && coverUV.y > 0.0 && coverUV.y < 1.0) {
+        vec3 coverCol = texture2D(u_coverTex, coverUV).rgb;
+        
+        float borderX = smoothstep(0.0, 0.02, coverUV.x) * smoothstep(1.0, 0.98, coverUV.x);
+        float borderY = smoothstep(0.0, 0.02, coverUV.y) * smoothstep(1.0, 0.98, coverUV.y);
+        float alpha = borderX * borderY;
+        
+        return mix(bg, coverCol * 1.4, alpha * 0.95);
+    }
+    
+    return bg;
+}
+
+void main() {
+    // --- NEU: Wir nutzen ausschließlich vUv, um Hardware-Pixel-Bugs zu vermeiden! ---
+    vec2 UV = vUv; 
+    
+    // uv = Aspekt-korrigiertes Raster für die Wassertropfen
+    vec2 uv = vUv - 0.5;
+    uv.x *= u_resolution.x / u_resolution.y;
+    
+    float T = u_time;
     float t = T * .2 * u_speed;
     uv *= (.7) * u_zoom;
     
-    // Regen-Schichten berechnen
     float staticDrops = S(-.5, 1., u_intensity) * 2.;
     float layer1 = S(.25, .75, u_intensity);
     float layer2 = S(.0, .5, u_intensity);
     vec2 c = Drops(uv, t, staticDrops, layer1, layer2);
 
-    // Lichtbrechung durch die Tropfen (Normals)
     vec2 e = vec2(.001, 0.) * u_normal;
     float cx = Drops(uv + e, t, staticDrops, layer1, layer2).x;
     float cy = Drops(uv + e.yx, t, staticDrops, layer1, layer2).x;
     vec2 n = vec2(cx - c.x, cy - c.x);
 
-    // Szene abrufen (Landschaft + Cover) MIT Tropfenverzerrung (+ n)
+    // Szene abrufen
     vec3 col = getSceneColor(UV + n); 
     vec4 texCoord = vec4(UV.x + n.x, UV.y + n.y, 0, 1.0 * 25. * 0.01 / 7.);
     
     // Nebel-Schleife (Blur)
-    // Verwackelt die Farben, um "Milchglas/Nebel" zu simulieren
     if(u_blur_iterations != 1) {
         float blur = u_blur_intensity * 0.01;
-        float a = N21(gl_FragCoord.xy) * 6.2831;
+        // WICHTIG: UV * u_resolution simuliert hier die echten Pixel für schönes Rauschen!
+        float a = N21(UV * u_resolution) * 6.2831; 
         for(int m = 0; m < 64; m++) {
-            if(m > u_blur_iterations) break; // Bricht ab, wenn Iterationen erreicht sind
+            if(m > u_blur_iterations) break;
             vec2 offs = vec2(sin(a), cos(a)) * blur;
             float d = fract(sin((float(m) + 1.) * 546.) * 5424.);
             d = sqrt(d);
@@ -200,9 +203,9 @@ void main() {
         col /= float(u_blur_iterations);
     }
 
-    // Leichte Vignette am Rand
-    col *= 1. - dot(UV -= .5, UV) * 1.; 
+    // Leichte Vignette am Rand (Zentriert durch UV - 0.5)
+    col *= 1. - dot(UV - 0.5, UV - 0.5) * 1.0; 
 
-    gl_FragColor = vec4(col * u_brightness, 1);
+    gl_FragColor = vec4(col * u_brightness, 1.0);
 }
 `;
