@@ -11,6 +11,7 @@ export default function RootLayout() {
     ...DefaultTheme,
     background: "transparent",
   };
+  // should be switchable in the future and saved in a cookie/local storage
   const [usedBackground, setUsedBackground] = useState<
     "deepWater" | "rainyWindow"
   >("rainyWindow");
