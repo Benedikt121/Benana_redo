@@ -1,12 +1,13 @@
 import { create } from "zustand/react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AuthUser } from "@/types/AuthTypes";
 
 interface AuthState {
   token: string | null;
-  user: any | null;
+  user: AuthUser | null;
   isHydrated: boolean;
 
-  login: (token: string, user: any) => Promise<void>;
+  login: (token: string, user: AuthUser) => Promise<void>;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 }

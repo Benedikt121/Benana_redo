@@ -7,13 +7,15 @@ export interface AuthResponse {
   status: string;
   message: string;
   token: string;
-  user: {
-    id: string;
-    username: string;
-  };
+  user: AuthUser;
 }
 
 export interface LogoutResponse {
   status: string;
   message: string;
+}
+
+export interface AuthUser {
+  id: string;
+  username: string;
 }

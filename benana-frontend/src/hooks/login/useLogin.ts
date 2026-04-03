@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Credentials } from "@/types/AuthTypes";
 import { loginUser } from "@/api/auth.api";
-import { error } from "three";
 
 export function useLogin() {
   const [username, setUsername] = useState("");
@@ -19,7 +18,7 @@ export function useLogin() {
     mutationFn: (credentials: Credentials) => loginUser(credentials),
     onSuccess: async (data) => {
       await login(data.token, data.user);
-      router.replace("/");
+      router.replace("/login");
     },
     onError: (error: any) => {
       console.error("Login failed:", error);
