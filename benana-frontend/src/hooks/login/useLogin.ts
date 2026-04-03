@@ -19,7 +19,7 @@ export function useLogin() {
     mutationFn: (credentials: Credentials) => loginUser(credentials),
     onSuccess: async (data) => {
       await login(data.token, data.user);
-      router.replace("/home");
+      router.replace("/");
     },
     onError: (error: any) => {
       console.error("Login failed:", error);

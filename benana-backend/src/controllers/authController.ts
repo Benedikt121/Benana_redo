@@ -131,7 +131,6 @@ export const deleteMe = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   try {
-    res.clearCookie("token");
     res.status(200).json({
       status: "success",
       message: "Erfolgreich abgemeldet.",
