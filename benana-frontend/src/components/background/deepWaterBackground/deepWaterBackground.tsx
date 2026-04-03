@@ -216,12 +216,13 @@ export default function DeepWaterBackground({
   lightThreshold,
 }: WaterProps) {
   const defaultImage = require("../../../../assets/default_background_image.png");
+  const defaultColor = "#001d5a";
   return (
     <View className="absolute inset-0 z-[-1] bg-[#050510]">
       <Canvas className="flex-1">
         <Suspense fallback={null}>
           <WaterShaderPlane
-            baseWaterColor={baseWaterColor}
+            baseWaterColor={baseWaterColor || defaultColor}
             coverUrl={coverUrl || defaultImage}
             dropSize={dropSize}
             dropIntensity={dropIntensity}
