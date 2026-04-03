@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "expo-router";
 import { useState } from "react";
