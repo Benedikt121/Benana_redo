@@ -3,8 +3,11 @@ import "../global.css";
 import { View } from "react-native";
 import DeepWaterBackground from "@/components/background/deepWaterBackground/deepWaterBackground";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RainyWindowBackground from "@/components/background/rainyWindowBackground/rainyWindowBackground";
 import { useState } from "react";
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const TransparentTheme = {
@@ -16,20 +19,22 @@ export default function RootLayout() {
     "deepWater" | "rainyWindow"
   >("rainyWindow");
   return (
-    <ThemeProvider value={TransparentTheme}>
-      <View className="flex-1 bg-transparent">
-        {usedBackground === "deepWater" ? (
-          <DeepWaterBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
-        ) : (
-          <RainyWindowBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
-        )}
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "transparent" },
-          }}
-        />
-      </View>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider value={TransparentTheme}>
+        <View className="flex-1 bg-transparent">
+          {usedBackground === "deepWater" ? (
+            <DeepWaterBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
+          ) : (
+            <RainyWindowBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
+          )}
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "transparent" },
+            }}
+          />
+        </View>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
