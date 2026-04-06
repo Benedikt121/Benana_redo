@@ -135,7 +135,11 @@ const RainyPlane = ({ coverUrl }: RainyWindowProps) => {
 export default function RainyWindowBackground({ coverUrl }: RainyWindowProps) {
   return (
     <View className="absolute inset-0 z-[-1] bg-[#050510]">
-      <Canvas camera={{ position: [0, 0, 1] }} className="flex-1">
+      <Canvas
+        camera={{ position: [0, 0, 1] }}
+        className="flex-1"
+        dpr={[1, 1.5]}
+      >
         <Suspense fallback={null}>
           <RainyPlane coverUrl={coverUrl} />
         </Suspense>
