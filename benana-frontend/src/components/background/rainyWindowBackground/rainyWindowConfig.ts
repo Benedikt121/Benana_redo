@@ -9,7 +9,7 @@ export const RAINY_CONFIG = {
       normal: 0.8,
       zoom: 2.2,
       blurIntensity: 2.5,
-      blurIterations: 16,
+      blurIterations: 8,
     },
     android: {
       intensity: 0.5,
@@ -18,7 +18,7 @@ export const RAINY_CONFIG = {
       normal: 0.8,
       zoom: 2.2,
       blurIntensity: 2.5,
-      blurIterations: 16,
+      blurIterations: 8,
     },
     web: {
       intensity: 0.5,
