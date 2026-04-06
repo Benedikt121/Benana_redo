@@ -16,7 +16,7 @@ import Animated, {
   LinearTransition,
 } from "react-native-reanimated";
 
-export default function LoginMobile() {
+export default function LoginWeb() {
   type AuthFormValues = z.infer<typeof registerSchema>;
   const {
     handleLogin,
@@ -66,7 +66,7 @@ export default function LoginMobile() {
     <View className="flex-1 justify-center items-center px-4">
       <Animated.View
         layout={LinearTransition.springify().damping(15)}
-        className="w-100 max-w-full items-center"
+        className="w-[400px] max-w-full items-center"
       >
         <View className="flex-row items-end justify-center gap-10">
           <TouchableOpacity
@@ -140,7 +140,7 @@ export default function LoginMobile() {
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
                     className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${
-                      errors.username
+                      errors.password
                         ? "border-red-500"
                         : "border-transparent focus:border-white/50"
                     }`}
@@ -150,6 +150,7 @@ export default function LoginMobile() {
                     onChangeText={onChange}
                     value={value}
                     autoCapitalize="none"
+                    secureTextEntry
                   />
                 )}
               />
