@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RainyWindowBackground from "@/components/background/rainyWindowBackground/rainyWindowBackground";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { useMusicColors } from "@/utils/useMusicColors";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ export default function RootLayout() {
     );
   }
 
+  useMusicColors();
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={TransparentTheme}>
