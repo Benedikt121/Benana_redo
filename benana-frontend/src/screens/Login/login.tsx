@@ -132,9 +132,13 @@ export default function LoginMobile() {
               isLoginPending || isRegisterPending ? "bg-white/50" : "bg-white"
             }`}
           >
-            <Text className="text-black font-bold text-lg">
-              {isLogin ? "Anmelden" : "Registrieren"}
-            </Text>
+            {isLoginPending || isRegisterPending ? (
+              <ActivityIndicator color="black" />
+            ) : (
+              <Text className="text-black font-bold text-lg">
+                {isLogin ? "Anmelden" : "Account erstellen"}
+              </Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity onPress={toggleState} className="mt-6 items-center">
