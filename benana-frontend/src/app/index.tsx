@@ -11,12 +11,16 @@ export default function Index() {
   };
   return (
     <View className="flex-1 justify-center items-center">
-      <Text className="text-white text-3xl font-bold mb-8">Hauptseite</Text>
+      <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">
+        Hauptseite
+      </Text>
       <Pressable
         onPress={handleLogout}
         className="text-white text-3xl font-bold mb-8"
       >
-        <Text className="text-white font-bold text-lg">Auslogen</Text>
+        <Text className="text-white font-bold text-lg text-shadow-glow">
+          Auslogen
+        </Text>
       </Pressable>
     </View>
   );
