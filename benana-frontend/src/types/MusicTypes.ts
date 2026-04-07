@@ -1,12 +1,27 @@
-export type MusicPlatform = "spotify" | "apple_music" | "none";
+export type MusicPlatform = "SPOTIFY" | "APPLE_MUSIC" | "none";
+export type PlaybackState = "PLAYING" | "PAUSED";
 
 export interface SongInfo {
-  id?: string;
+  trackId?: string;
   title: string;
   artist: string;
-  albumCoverUrl: string | null;
+  albumCoverUrl?: string | null;
   timestamp: number;
-  isPlaying: boolean;
+  playbackState: PlaybackState;
   platform: MusicPlatform;
   updatedAt: number;
+  appleTrackId?: string | null;
+  spotifyTrackId?: string | null;
+}
+
+export interface BackendSongInfo {
+  trackId: string;
+  trackName: string;
+  artist: string;
+  playbackState: PlaybackState;
+  timestamp: number;
+  platform: MusicPlatform;
+  updatedAt: number;
+  appleTrackId?: string | null;
+  spotifyTrackId?: string | null;
 }
