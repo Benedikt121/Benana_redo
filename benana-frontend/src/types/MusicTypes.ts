@@ -24,4 +24,5 @@ export interface BackendSongInfo {
   updatedAt: number;
   appleTrackId?: string | null;
   spotifyTrackId?: string | null;
+  coverUrl?: string | null;
 }

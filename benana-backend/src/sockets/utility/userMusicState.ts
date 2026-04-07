@@ -10,6 +10,7 @@ export interface UserMusicState {
   updatedAt: number;
   appleTrackId?: string | null;
   spotifyTrackId?: string | null;
+  coverUrl?: string | null;
 }
 
 const USER_MUSIC_STATE_PREFIX = "user_music_state:";

@@ -1,4 +1,3 @@
-import { useMusic } from "@/hooks/music/useMusic";
 import { socketService } from "@/services/sockets.service";
 import { useMusicStore } from "@/store/music.store";
 import { BackendSongInfo, SongInfo } from "@/types/MusicTypes";
@@ -15,6 +14,7 @@ const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
     updatedAt: data.updatedAt,
     appleTrackId: data.appleTrackId,
     spotifyTrackId: data.spotifyTrackId,
+    albumCoverUrl: data.coverUrl ?? null,
   };
 };
 
@@ -26,17 +26,26 @@ export function useMusicSync() {
   useEffect(() => {
     const socket = socketService.connect();
 
-    socket.on("HOST_MUSIC_SYNC", async (data: BackendSongInfo) => {
+    socket.on("HOST_MUSIC_SYNC", (data: BackendSongInfo) => {
       console.log("🎵 Host hat den Song gewechselt:", data);
-      let coverUrl: string | null = null;
-
-      if (preferedPlatform === "APPLE_MUSIC") {
-        const trackData = await useMusic().fetchAppleMusicTrackDetails;
-      } else if (preferedPlatform === "SPOTIFY") {
-        const trackData = await useMusic().fetchSpotifyTrackDetails;
-      } else {
-        console.log("Melde dich mit einem Streaming dienst an.")
-      }
+      setCurrentSong(mapBackendSongToSongInfo(data));
     });
+
+    socket.on(
+      "friend_music_update",
+      (data: { friendId: string; musicStatus: BackendSongInfo }) => {
+        // setFriendSong(data.friendId, mapBackendStateToSongInfo(data.musicStatus));
+      },
+    );
+
+    socket.on("FRIEND_MUSIC_STOPPED", (data: { friendId: string }) => {
+      // clearFriendSong(data.friendId)
+    });
+
+    return () => {
+      socket.off("HOST_MUSIC_SYNC");
+      socket.off("friend_music_update");
+      socket.off("FRIEND_MUSIC_STOPPED");
+    };
   });
 }

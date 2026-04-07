@@ -14,6 +14,7 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
   socket.on("music_status_update", async (statusData: UserMusicState) => {
     let appleId = null;
     let spotifyId = null;
+    let coverUrl: string | null = null;
 
     const userId = socket.data.userId;
     const previousStatus = await getMusicState(userId);
@@ -29,16 +30,21 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
         "",
       );
       spotifyId = cleanSpotifyId;
-      appleId = await matchSpotifyToApple(cleanSpotifyId!);
+      const match = await matchSpotifyToApple(cleanSpotifyId!);
+      appleId = match?.appleTrackId ?? null;
+      coverUrl = match?.coverUrl ?? statusData.coverUrl ?? null;
     } else if (statusData.platform === "APPLE_MUSIC") {
       appleId = statusData.trackId;
-      spotifyId = await matchAppleToSpotify(appleId);
+      const match = await matchAppleToSpotify(appleId);
+      spotifyId = match?.spotifyTrackId ?? null;
+      coverUrl = match?.coverUrl ?? statusData.coverUrl ?? null;
     }
 
     const updatedStatusData: UserMusicState = {
       ...statusData,
       appleTrackId: appleId,
       spotifyTrackId: spotifyId,
+      coverUrl,
       updatedAt: Date.now(),
     };
     await setMusicState(userId, updatedStatusData);

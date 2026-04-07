@@ -28,6 +28,9 @@ interface AppleMusicSong {
     name: string;
     artistName: string;
     isrc?: string;
+    artwork: {
+      url: string
+    }
   };
 }
 
@@ -41,6 +44,12 @@ interface AppleMusicSearchResponse {
       data?: { id: string }[];
     };
   };
+}
+
+interface TrackCacheValue {
+  spotifyId?: string;
+  appleId?: string;
+  coverUrl?: string;
 }
 
 const getSpotifyClientToken = async () => {
@@ -64,18 +73,36 @@ const getSpotifyClientToken = async () => {
   return data.access_token;
 };
 
-const saveToCache = async (spotifyId: string, appleId: string) => {
-  await redisClient.set(`${CACHE_PREFIX}spotify:${spotifyId}`, appleId);
-  await redisClient.set(`${CACHE_PREFIX}apple:${appleId}`, spotifyId);
+const saveToCache = async (
+  spotifyId: string,
+  appleId: string,
+  coverUrl: string,
+) => {
+  const spotifyCache: TrackCacheValue = { appleId, coverUrl };
+  const appleCache: TrackCacheValue = { spotifyId, coverUrl };
+
+  await redisClient.set(
+    `${CACHE_PREFIX}spotify:${spotifyId}`,
+    JSON.stringify(spotifyCache),
+  );
+  await redisClient.set(
+    `${CACHE_PREFIX}apple:${appleId}`,
+    JSON.stringify(appleCache),
+  );
 };
 
-export const matchSpotifyToApple = async (spotifyTrackId: string) => {
+export const matchSpotifyToApple = async (
+  spotifyTrackId: string,
+): Promise<{ appleTrackId: string; coverUrl: string } | null> => {
   try {
-    const cachedAppleId = await redisClient.get(
+    const cachedValue = await redisClient.get(
       `${CACHE_PREFIX}spotify:${spotifyTrackId}`,
     );
-    if (cachedAppleId) {
-      return cachedAppleId;
+    if (cachedValue) {
+      const parsed = JSON.parse(cachedValue) as TrackCacheValue;
+      return parsed.appleId
+        ? { appleTrackId: parsed.appleId, coverUrl: parsed.coverUrl ?? "" }
+        : null;
     }
 
     const spotifyToken = await getSpotifyClientToken();
@@ -123,8 +150,18 @@ export const matchSpotifyToApple = async (spotifyTrackId: string) => {
     }
 
     if (appleTrackId) {
-      await saveToCache(spotifyTrackId, appleTrackId);
-      return appleTrackId;
+      const appleTrackRes = await fetch(
+        `https://api.music.apple.com/v1/catalog/de/songs/${appleTrackId}`,
+        {
+          headers: { Authorization: `Bearer ${appleToken}` },
+        },
+      );
+      const appleTrackData = (await appleTrackRes.json()) as AppleMusicSongsResponse;
+      const coverUrl =
+        appleTrackData.data?.[0]?.attributes.artwork.url ?? "";
+
+      await saveToCache(spotifyTrackId, appleTrackId, coverUrl);
+      return { appleTrackId, coverUrl };
     }
     return null;
   } catch (error) {
@@ -133,13 +170,18 @@ export const matchSpotifyToApple = async (spotifyTrackId: string) => {
   }
 };
 
-export const matchAppleToSpotify = async (appleTrackId: string) => {
+export const matchAppleToSpotify = async (
+  appleTrackId: string,
+): Promise<{ spotifyTrackId: string; coverUrl: string } | null> => {
   try {
-    const cachedId = await redisClient.get(
+    const cachedValue = await redisClient.get(
       `${CACHE_PREFIX}apple:${appleTrackId}`,
     );
-    if (cachedId) {
-      return cachedId;
+    if (cachedValue) {
+      const parsed = JSON.parse(cachedValue) as TrackCacheValue;
+      return parsed.spotifyId
+        ? { spotifyTrackId: parsed.spotifyId, coverUrl: parsed.coverUrl ?? "" }
+        : null;
     }
 
     const appleToken = getAppleDeveloperToken();
@@ -186,8 +228,9 @@ export const matchAppleToSpotify = async (appleTrackId: string) => {
     }
 
     if (spotifyTrackId) {
-      await saveToCache(spotifyTrackId, appleTrackId);
-      return spotifyTrackId;
+      const coverUrl = appleData.data?.[0]?.attributes.artwork.url ?? "";
+      await saveToCache(spotifyTrackId, appleTrackId, coverUrl);
+      return { spotifyTrackId, coverUrl };
     }
     return null;
   } catch (error) {
