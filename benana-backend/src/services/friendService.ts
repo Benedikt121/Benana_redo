@@ -74,8 +74,8 @@ export const getFriends = async (userId: string) => {
         status: "ACCEPTED",
       },
       include: {
-        sender: { select: { id: true, username: true, color: true } },
-        receiver: { select: { id: true, username: true, color: true } },
+        sender: { select: { id: true, username: true, color: true, profilePictureUrl: true } },
+        receiver: { select: { id: true, username: true, color: true, profilePictureUrl: true } },
       },
     });
 
