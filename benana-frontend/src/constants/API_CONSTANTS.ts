@@ -8,9 +8,10 @@ if (Platform.OS === "web") {
   API_URL = process.env.EXPO_PUBLIC_API_URL_MOBILE as string;
 }
 
-const { token } = useAuthStore();
-
-export const AUTH_HEADER = `Bearer ${token}`;
+export const getAuthHeaders = () => {
+  const token = useAuthStore.getState().token;
+  return { Authorization: `Bearer ${token}` };
+};
 
 export const API_PREFIX = `${API_URL}/api/`;
 
@@ -22,7 +23,7 @@ export const LOGOUT_PATH = `${AUTH_PATH}logout`;
 export const USER_PATH = `${API_PREFIX}users/`;
 export const ME_PATH = `${USER_PATH}me`;
 
-export const FRIEND_PATH = `${API_PREFIX}friends`;
+export const FRIEND_PATH = `${API_PREFIX}friends/`;
 export const FRIEND_REQUESTS_PATH = `${FRIEND_PATH}requests`;
 
 export const INVITE_PATH = `${API_PREFIX}invites`;

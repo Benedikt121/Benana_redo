@@ -1,14 +1,20 @@
+import { useInitialData } from "@/hooks/login/useInitialData";
+import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useAuthStore } from "@/store/auth.store";
+import { useMusicColors } from "@/utils/useMusicColors";
 import { useRouter } from "expo-router";
 import { View, Text, Pressable } from "react-native";
 
 export default function Index() {
+  const { isLoading } = useInitialData();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const handleLogout = () => {
     logout();
     router.replace("/login");
   };
+  useGlobalSocket();
+  useMusicColors();
   return (
     <View className="flex-1 justify-center items-center">
       <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">

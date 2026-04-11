@@ -29,11 +29,11 @@ export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
 
+  useMusicSync();
+
   useEffect(() => {
     hydrate();
   }, []);
-
-  const { isLoading } = useInitialData();
 
   useEffect(() => {
     if (!isHydrated) return;
@@ -47,17 +47,13 @@ export default function RootLayout() {
     }
   }, [token, isHydrated, segments]);
 
-  if (!isHydrated || (token && isLoading)) {
+  if (!isHydrated) {
     return (
       <View className="flex-1 justify-center items-center bg-black">
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
-
-  useGlobalSocket();
-  useMusicColors();
-  useMusicSync();
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={TransparentTheme}>
