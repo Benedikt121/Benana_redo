@@ -64,8 +64,10 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
           );
 
           if (response.status === 200 && response.data && response.data.item) {
-            const title = response.data.item.title;
-            const artist = response.data.item.artist;
+            const title = response.data.item.name;
+            const artist = response.data.item.artists
+              .map((a: any) => a.name)
+              .join(", ");
             const isPlaying = response.data.is_playing;
             const trackId = `spotify:track:${response.data.item.id}`;
             const progressMs = response.data.progress_ms;
