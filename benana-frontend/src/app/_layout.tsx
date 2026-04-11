@@ -8,7 +8,7 @@ import RainyWindowBackground from "@/components/background/rainyWindowBackground
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useMusicColors } from "@/utils/useMusicColors";
-import { useMusicSync } from "@/utils/useMusicSync";
+import { useMusicSync } from "@/hooks/sockets/useMusicSync";
 import { useUserStore } from "@/store/user.store";
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
