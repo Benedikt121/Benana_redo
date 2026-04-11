@@ -1,4 +1,4 @@
-export type MusicPlatform = "SPOTIFY" | "APPLE_MUSIC" | "none";
+export type MusicPlatform = "SPOTIFY" | "APPLE_MUSIC";
 export type PlaybackState = "PLAYING" | "PAUSED";
 
 export interface SongInfo {

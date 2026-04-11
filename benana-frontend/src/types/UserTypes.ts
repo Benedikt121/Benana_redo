@@ -10,5 +10,9 @@ export interface MeResponse {
     createdAt: Date;
     currentRoomId: string | null;
     isReady: boolean;
+    appleMusicUserToken: string | null;
+    spotifyAccessToken: string | null;
+    isAppleLinked: boolean;
+    isSpotifyLinked: boolean;
   };
 }

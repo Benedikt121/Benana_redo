@@ -6,10 +6,17 @@ import {
   getUsersByUsernameQuery,
   updateUserColorOrAvatar,
 } from "../services/userService.js";
+import { getValidSpotifyToken } from "../services/musicService.js";
 
 export const getMyUserProfile = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
+    const appleToken: string | null = user.appleMusicUserToken || null;
+
+    let spotifyAccessToken = null;
+    if (user.spotifyRefreshToken) {
+      spotifyAccessToken = await getValidSpotifyToken(user.id);
+    }
     const safeUser = {
       id: user.id,
       username: user.username,
@@ -18,6 +25,10 @@ export const getMyUserProfile = async (req: Request, res: Response) => {
       createdAt: user.createdAt,
       currentRoomId: user.currentRoomId,
       isReady: user.isReady,
+      appleMusicUserToken: appleToken,
+      spotifyAccessToken: spotifyAccessToken,
+      isAppleLinked: !!appleToken,
+      isSpotifyLinked: !!user.spotifyRefreshToken,
     };
     res.status(200).json({ status: "success", data: safeUser });
   } catch (error) {

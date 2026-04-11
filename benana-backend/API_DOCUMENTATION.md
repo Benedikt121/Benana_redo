@@ -159,7 +159,11 @@ Get the authenticated user's profile.
     "profilePictureUrl": "string | null",
     "createdAt": "ISO datetime",
     "currentRoomId": "uuid | null",
-    "isReady": false
+    "isReady": false,
+    "appleMusicUserToken": "string | null",
+    "spotifyAccessToken": "string | null",
+    "isAppleLinked": false,
+    "isSpotifyLinked": false
   }
 }
 ```
