@@ -23,6 +23,8 @@ export default function RootLayout() {
   const segments = useSegments();
   const router = useRouter();
 
+  useMusicSync();
+
   useEffect(() => {
     hydrate();
   }, []);
@@ -39,7 +41,13 @@ export default function RootLayout() {
     }
   }, [token, isHydrated, segments]);
 
-  useMusicColors();
+  if (!isHydrated) {
+    return (
+      <View className="flex-1 justify-center items-center bg-black">
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
   return (
     <QueryClientProvider client={queryClient}>
       <View className="flex-1 bg-transparent">

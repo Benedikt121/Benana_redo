@@ -1,7 +1,7 @@
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
-import { useMusicSync } from "@/hooks/sockets/useMusicSync";
 import { useAuthStore } from "@/store/auth.store";
+import { useMusicColors } from "@/utils/useMusicColors";
 import { useRouter } from "expo-router";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 
@@ -13,9 +13,8 @@ export default function Index() {
     logout();
     router.replace("/login");
   };
-
   useGlobalSocket();
-  useMusicSync();
+  useMusicColors();
   return (
     <View className="flex-1 justify-center items-center">
       <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">

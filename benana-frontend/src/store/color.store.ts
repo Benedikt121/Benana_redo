@@ -23,7 +23,7 @@ export const useColorStore = create<ColorState>((set) => ({
         secondary: result.secondary || null,
         detail: result.detail || null,
       };
-    } else if (result.platfrom === "ios") {
+    } else if (result.platform === "ios") {
       newColors = {
         dominant: result.background || null,
         vibrant: result.primary || null,
