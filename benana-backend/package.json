@@ -30,6 +30,7 @@
     "@prisma/adapter-mariadb": "^7.3.0",
     "@prisma/client": "^7.5.0",
     "@types/node-cron": "^3.0.11",
+    "axios": "^1.15.0",
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "dotenv": "^17.2.4",

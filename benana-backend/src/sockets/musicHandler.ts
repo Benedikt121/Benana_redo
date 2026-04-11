@@ -10,7 +10,106 @@ import {
   matchAppleToSpotify,
   matchSpotifyToApple,
 } from "../services/songMatchingService.js";
+import axios from "axios";
+import { getValidSpotifyToken } from "../services/musicService.js";
+
+const activeServerPollers = new Map<string, NodeJS.Timeout>();
+
 export const registerMusicHandlers = (io: Server, socket: Socket) => {
+  socket.on(
+    "START_SERVER_POLLING",
+    async (platform: "SPOTIFY" | "APPLE_MUSIC") => {
+      const userId = socket.data.userId;
+      if (!userId) return;
+
+      // Weiche: Server-Polling funktioniert nur für Spotify!
+      if (platform !== "SPOTIFY") {
+        console.log(
+          `[Music Sync] Server-Polling ignoriert für ${userId} (Nutzt ${platform})`,
+        );
+        return;
+      }
+
+      // 1. Prüfen: Gibt es überhaupt Zuhörer im Raum?
+      const roomName = `music_stream_${userId}`;
+      const room = io.sockets.adapter.rooms.get(roomName);
+
+      if (!room || room.size === 0) {
+        console.log(
+          `[Music Sync] Kein Polling gestartet für ${userId} - Raum ist leer.`,
+        );
+        return;
+      }
+
+      console.log(
+        `[Music Sync] Starte Spotify Server-Polling für User ${userId}...`,
+      );
+
+      // Bestehenden Poller stoppen, falls einer hängt
+      if (activeServerPollers.has(userId)) {
+        clearInterval(activeServerPollers.get(userId)!);
+      }
+
+      // 2. Das Polling-Intervall (z.B. alle 8 Sekunden)
+      const intervalId = setInterval(async () => {
+        const token = await getValidSpotifyToken(userId);
+        if (!token) return;
+
+        try {
+          const response = await axios.get(
+            "https://api.spotify.com/v1/me/player/currently-playing",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+
+          if (response.status === 200 && response.data && response.data.item) {
+            const isPlaying = response.data.is_playing;
+            const trackId = `spotify:track:${response.data.item.id}`;
+            const progressMs = response.data.progress_ms;
+            const { appleTrackId, coverUrl } = (await matchSpotifyToApple(
+              trackId,
+            )) as { appleTrackId: string; coverUrl: string };
+
+            // Daten formatieren
+            const statusData: UserMusicState = {
+              platform: "SPOTIFY",
+              trackId: trackId,
+              spotifyTrackId: trackId,
+              appleTrackId: appleTrackId,
+              playbackState: isPlaying ? "PLAYING" : "PAUSED",
+              timestamp: progressMs,
+              coverUrl: coverUrl,
+              updatedAt: Date.now(),
+            };
+
+            await setMusicState(userId, statusData);
+
+            io.to(roomName).emit("HOST_MUSIC_SYNC", statusData);
+          }
+        } catch (err) {
+          console.error(`[Music Sync] Fehler beim Polling für ${userId}`, err);
+        }
+      }, 8000);
+
+      activeServerPollers.set(userId, intervalId);
+    },
+  );
+
+  socket.on("STOP_SERVER_POLLING", () => {
+    const userId = socket.data.userId;
+    if (!userId) return;
+
+    const poller = activeServerPollers.get(userId);
+    if (poller) {
+      console.log(
+        `[Music Sync] Stoppe Server-Polling für User ${userId} (Host ist zurück)`,
+      );
+      clearInterval(poller);
+      activeServerPollers.delete(userId);
+    }
+  });
+
   socket.on("music_status_update", async (statusData: UserMusicState) => {
     let appleId = null;
     let spotifyId = null;
