@@ -1,12 +1,14 @@
 import { socketService } from "@/services/sockets.service";
+import { useAuthStore } from "@/store/auth.store";
+import { useFriendsStore } from "@/store/friends.store";
 import { useMusicStore } from "@/store/music.store";
 import { BackendSongInfo, SongInfo } from "@/types/MusicTypes";
 import { useEffect } from "react";
 
-const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
+export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
   return {
     trackId: data.trackId,
-    title: data.trackId,
+    title: data.trackName,
     artist: data.artist,
     timestamp: data.timestamp,
     playbackState: data.playbackState,
@@ -18,12 +20,33 @@ const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
   };
 };
 
+export const mapSongInfoToBackendSong = (data: SongInfo): BackendSongInfo => {
+  return {
+    trackId: data.trackId as string,
+    trackName: data.title,
+    artist: data.artist,
+    timestamp: data.timestamp,
+    playbackState: data.playbackState,
+    platform: data.platform,
+    updatedAt: data.updatedAt,
+    appleTrackId: data.appleTrackId,
+    spotifyTrackId: data.spotifyTrackId,
+    coverUrl: data.albumCoverUrl ?? null,
+  };
+};
+
 export function useMusicSync() {
   const setCurrentSong = useMusicStore((state) => state.setCurrentSong);
   const clearSong = useMusicStore((state) => state.clearSong);
-  const preferedPlatform = useMusicStore((state) => state.preferedPlatform);
+
+  const setFriendSong = useFriendsStore((state) => state.setFriendSong);
+  const clearFriendSong = useFriendsStore((state) => state.clearFriendSong);
+
+  const { token } = useAuthStore();
 
   useEffect(() => {
+    if (!token) return;
+
     const socket = socketService.connect();
 
     socket.on("HOST_MUSIC_SYNC", (data: BackendSongInfo) => {
@@ -34,12 +57,15 @@ export function useMusicSync() {
     socket.on(
       "friend_music_update",
       (data: { friendId: string; musicStatus: BackendSongInfo }) => {
-        // setFriendSong(data.friendId, mapBackendStateToSongInfo(data.musicStatus));
+        setFriendSong(
+          data.friendId,
+          mapBackendSongToSongInfo(data.musicStatus),
+        );
       },
     );
 
     socket.on("FRIEND_MUSIC_STOPPED", (data: { friendId: string }) => {
-      // clearFriendSong(data.friendId)
+      clearFriendSong(data.friendId);
     });
 
     return () => {
@@ -47,5 +73,5 @@ export function useMusicSync() {
       socket.off("friend_music_update");
       socket.off("FRIEND_MUSIC_STOPPED");
     };
-  });
+  }, [token]);
 }

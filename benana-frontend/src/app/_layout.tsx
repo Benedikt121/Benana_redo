@@ -8,6 +8,7 @@ import RainyWindowBackground from "@/components/background/rainyWindowBackground
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useMusicColors } from "@/utils/useMusicColors";
+import { useMusicSync } from "@/utils/useMusicSync";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,8 @@ export default function RootLayout() {
   }
 
   useMusicColors();
+  useMusicSync();
+  useInitialFetch();
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider value={TransparentTheme}>
