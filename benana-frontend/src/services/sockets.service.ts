@@ -1,24 +1,21 @@
+import { API_URL } from "@/constants/API_CONSTANTS";
 import { io, Socket } from "socket.io-client";
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const SOCKET_URL = API_URL;
 
 class SocketService {
   public socket: Socket | null = null;
 
-  connect() {
+  connect(): Socket {
     if (!this.socket) {
       this.socket = io(SOCKET_URL, {
         transports: ["websocket"],
-        autoConnect: true,
+        autoConnect: false,
       });
+    }
 
-      this.socket.on("connect", () => {
-        console.log("🟢 Globaler Socket verbunden:", this.socket?.id);
-      });
-
-      this.socket.on("disconnect", () => {
-        console.log("🔴 Globaler Socket getrennt");
-      });
+    if (!this.socket.connected) {
+      this.socket.connect();
     }
     return this.socket;
   }

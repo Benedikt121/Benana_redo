@@ -38,40 +38,35 @@ export const mapSongInfoToBackendSong = (data: SongInfo): BackendSongInfo => {
 export function useMusicSync() {
   const setCurrentSong = useMusicStore((state) => state.setCurrentSong);
   const clearSong = useMusicStore((state) => state.clearSong);
-
   const setFriendSong = useFriendsStore((state) => state.setFriendSong);
   const clearFriendSong = useFriendsStore((state) => state.clearFriendSong);
 
-  const { token } = useAuthStore();
-
   useEffect(() => {
-    if (!token) return;
-
     const socket = socketService.connect();
 
-    socket.on("HOST_MUSIC_SYNC", (data: BackendSongInfo) => {
-      console.log("🎵 Host hat den Song gewechselt:", data);
+    const onHostSync = (data: BackendSongInfo) => {
       setCurrentSong(mapBackendSongToSongInfo(data));
-    });
+    };
 
-    socket.on(
-      "friend_music_update",
-      (data: { friendId: string; musicStatus: BackendSongInfo }) => {
-        setFriendSong(
-          data.friendId,
-          mapBackendSongToSongInfo(data.musicStatus),
-        );
-      },
-    );
+    const onFriendUpdate = (data: {
+      friendId: string;
+      musicStatus: BackendSongInfo;
+    }) => {
+      setFriendSong(data.friendId, mapBackendSongToSongInfo(data.musicStatus));
+    };
 
-    socket.on("FRIEND_MUSIC_STOPPED", (data: { friendId: string }) => {
+    const onFriendStopped = (data: { friendId: string }) => {
       clearFriendSong(data.friendId);
-    });
+    };
+
+    socket.on("HOST_MUSIC_SYNC", onHostSync);
+    socket.on("friend_music_update", onFriendUpdate);
+    socket.on("FRIEND_MUSIC_STOPPED", onFriendStopped);
 
     return () => {
-      socket.off("HOST_MUSIC_SYNC");
-      socket.off("friend_music_update");
-      socket.off("FRIEND_MUSIC_STOPPED");
+      socket.off("HOST_MUSIC_SYNC", onHostSync);
+      socket.off("friend_music_update", onFriendUpdate);
+      socket.off("FRIEND_MUSIC_STOPPED", onFriendStopped);
     };
-  }, [token]);
+  }, []);
 }
