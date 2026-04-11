@@ -64,17 +64,21 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
           );
 
           if (response.status === 200 && response.data && response.data.item) {
+            const title = response.data.item.title;
+            const artist = response.data.item.artist;
             const isPlaying = response.data.is_playing;
             const trackId = `spotify:track:${response.data.item.id}`;
             const progressMs = response.data.progress_ms;
             const { appleTrackId, coverUrl } = (await matchSpotifyToApple(
-              trackId,
+              response.data.item.id,
             )) as { appleTrackId: string; coverUrl: string };
 
             // Daten formatieren
             const statusData: UserMusicState = {
               platform: "SPOTIFY",
               trackId: trackId,
+              trackName: title,
+              artist: artist,
               spotifyTrackId: trackId,
               appleTrackId: appleTrackId,
               playbackState: isPlaying ? "PLAYING" : "PAUSED",
@@ -176,11 +180,29 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
 
   socket.on("LEAVE_LISTENING_PARTY", (hostUserId: string) => {
     socket.leave(`music_stream_${hostUserId}`);
+
+    const room = io.sockets.adapter.rooms.get(`music_stream_${hostUserId}`);
+    if (!room || room.size === 0) {
+      const poller = activeServerPollers.get(hostUserId);
+      if (poller) {
+        console.log(
+          `[Music Sync] Letzter Zuhörer hat ${hostUserId} verlassen. Polling gestoppt.`,
+        );
+        clearInterval(poller);
+        activeServerPollers.delete(hostUserId);
+      }
+    }
   });
 
   socket.on("disconnect", async () => {
     const userId = socket.data.userId;
     if (!userId) return;
+
+    const poller = activeServerPollers.get(userId);
+    if (poller) {
+      clearInterval(poller);
+      activeServerPollers.delete(userId);
+    }
 
     await removeMusicState(userId);
     const friends = await getFriends(userId);
