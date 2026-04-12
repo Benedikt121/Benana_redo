@@ -29,4 +29,7 @@ export const FRIEND_REQUESTS_PATH = `${FRIEND_PATH}requests`;
 export const INVITE_PATH = `${API_PREFIX}invites`;
 
 export const MUSIC_PATH = `${API_PREFIX}music/`;
-export const SPOTIFY_EXCHANGE_PATH = `${MUSIC_PATH}spotify/exchange`;
+export const SPOTIFY_PATH = `${MUSIC_PATH}spotify/`;
+export const SPOTIFY_EXCHANGE_PATH = `${SPOTIFY_PATH}exchange`;
+export const APPLE_TOKEN_PATH = `${MUSIC_PATH}apple-token/`;
+export const APPLE_TOKEN_SAVE_PATH = `${APPLE_TOKEN_PATH}save`;

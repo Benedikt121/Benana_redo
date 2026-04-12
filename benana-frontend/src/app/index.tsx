@@ -13,6 +13,7 @@ export default function Index() {
     logout();
     router.replace("/login");
   };
+  const handleAuthTestingRedirect = () => router.navigate("/authTesting");
   useGlobalSocket();
   useMusicColors();
   return (
@@ -26,6 +27,15 @@ export default function Index() {
       >
         <Text className="text-white font-bold text-lg text-shadow-glow">
           Auslogen
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleAuthTestingRedirect}
+        className="text-white text-3xl font-bold mb-8"
+      >
+        <Text className="text-white font-bold text-lg text-shadow-glow">
+          Zum Auth-Test
         </Text>
       </Pressable>
     </View>

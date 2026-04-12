@@ -24,24 +24,28 @@ export function useInitialData() {
     queryKey: QUERY_KEYS.USER.ME,
     queryFn: async () => getMe(),
     enabled: !!token,
+    refetchOnWindowFocus: false,
   });
 
   const friendsQuery = useQuery({
     queryKey: QUERY_KEYS.FRIENDS.FRIENDLIST,
     queryFn: async () => getFriends(),
     enabled: !!token,
+    refetchOnWindowFocus: false,
   });
 
   const friendRequestsQuery = useQuery({
     queryKey: QUERY_KEYS.FRIENDS.FRIENDREQUESTS,
     queryFn: async () => getFriendRequests(),
     enabled: !!token,
+    refetchOnWindowFocus: false,
   });
 
   const roomInvitesQuery = useQuery({
     queryKey: QUERY_KEYS.INVITES.ROOM_INVITES,
     queryFn: async () => getInvites(),
     enabled: !!token,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
