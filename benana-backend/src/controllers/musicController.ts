@@ -184,3 +184,52 @@ export const exchangeSpotifyToken = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Interner Fehler beim Spotify Login." });
   }
 };
+
+import axios from "axios";
+
+export const testAppleMusicConnection = async (req: any, res: any) => {
+  try {
+    // 1. Hole den User (und seinen Apple Token) aus der DB
+    const userId = req.user.id; // Vorausgesetzt, die Route ist mit 'protect' abgesichert
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.appleMusicUserToken) {
+      return res.status(404).json({
+        status: "error",
+        message: "User hat keinen Apple Token in der DB!",
+      });
+    }
+
+    // 2. Generiere den aktuellen Developer Token
+    const developerToken = getAppleDeveloperToken();
+
+    // 3. Mach den Test-Call an die offizielle Apple API
+    // Wir fragen hier nach der "Storefront" (z.B. "de" für Deutschland)
+    const appleResponse = await axios.get(
+      "https://api.music.apple.com/v1/me/storefront",
+      {
+        headers: {
+          Authorization: `Bearer ${developerToken}`,
+          "Music-User-Token": user.appleMusicUserToken, // Hier kommt dein geretteter Token zum Einsatz!
+        },
+      },
+    );
+
+    // 4. Wenn wir hier ankommen, hat Apple den Token akzeptiert!
+    return res.status(200).json({
+      status: "success",
+      message: "🔥 Apple Music Token ist GÜLTIG! 🔥",
+      appleData: appleResponse.data,
+    });
+  } catch (error: any) {
+    console.error("Apple API Error:", error.response?.data || error.message);
+    return res.status(401).json({
+      status: "error",
+      message: "Token ist ungültig oder abgelaufen.",
+      appleError: error.response?.data,
+    });
+  }
+};
