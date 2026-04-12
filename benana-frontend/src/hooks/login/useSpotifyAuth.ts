@@ -25,6 +25,7 @@ export const useSpotifyAuth = () => {
 
   const redirectUri = makeRedirectUri({
     scheme: "benanafrontend",
+    path: "callback",
   });
 
   const [request, response, promptAsync] = useAuthRequest(
