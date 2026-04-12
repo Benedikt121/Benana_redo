@@ -26,7 +26,7 @@ interface UserState {
   setAppleMusicToken: (appleMusicUserToken: string) => void;
 }
 
-export const useUserStore = create<UserState>((set) => ({
+export const useUserStore = create<UserState>((set, get) => ({
   profile: null,
   setProfile: async (profile) => {
     if (!profile) {
@@ -42,7 +42,7 @@ export const useUserStore = create<UserState>((set) => ({
   },
 
   setSpotifyAccessToken: (spotifyAccessToken) => {
-    const profile = useUserStore((state) => state.profile);
+    const profile = get().profile;
     if (profile) {
       set({
         profile: { ...profile, spotifyAccessToken, isSpotifyLinked: true },
@@ -51,7 +51,7 @@ export const useUserStore = create<UserState>((set) => ({
   },
 
   setAppleMusicToken: (appleMusicUserToken) => {
-    const profile = useUserStore((state) => state.profile);
+    const profile = get().profile;
     if (profile) {
       set({
         profile: { ...profile, appleMusicUserToken, isAppleLinked: true },

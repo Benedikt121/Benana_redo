@@ -1,24 +1,42 @@
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/db.js";
 import axios from "axios";
+import path from "path";
+import fs from "fs";
 
 const teamId = process.env.APPLE_TEAM_ID!;
 const keyId = process.env.APPLE_KEY_ID!;
 
-const privateKey = process.env.APPLE_PRIVATE_KEY!.replace(/\\n/g, "\n");
-
 export const getAppleDeveloperToken = (): string => {
-  const token = jwt.sign({}, privateKey, {
-    algorithm: "ES256",
-    expiresIn: "30d",
-    issuer: teamId,
-    header: {
-      alg: "ES256",
-      kid: keyId,
-    },
-  });
+  try {
+    if (!teamId || !keyId) {
+      console.error(
+        "[Music Sync] Apple Developer Credentials fehlen in der .env Datei!",
+      );
+      throw new Error("Missing Apple credentials");
+    }
 
-  return token;
+    const keyPath = path.join(process.cwd(), `AuthKey_${keyId}.p8`);
+    if (!fs.existsSync(keyPath)) {
+      throw new Error(`Die Datei ${keyPath} wurde nicht gefunden!`);
+    }
+    const privateKey = fs.readFileSync(keyPath, "utf8");
+
+    const token = jwt.sign({}, privateKey, {
+      algorithm: "ES256",
+      expiresIn: "30d",
+      issuer: teamId,
+      header: {
+        alg: "ES256",
+        kid: keyId,
+      },
+    });
+
+    return token;
+  } catch (error) {
+    console.error("Error while signing the Apple Token");
+    throw error;
+  }
 };
 
 export const getValidSpotifyToken = async (
