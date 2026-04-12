@@ -2,10 +2,9 @@ import { getAppleDeveloperToken, saveAppleUserToken } from "@/api/music.api";
 import { useMusicStore } from "@/store/music.store";
 import { useUserStore } from "@/store/user.store";
 import { useState } from "react";
-// 1. FEHLER BEHOBEN: Modal, View und Button importiert
 import { Platform, Modal, View, Button } from "react-native";
-// 2. FEHLER BEHOBEN: WebView importiert
 import { WebView } from "react-native-webview";
+import { Buffer } from "buffer";
 
 declare global {
   interface Window {
@@ -20,7 +19,6 @@ export const useAppleMusicAuth = () => {
   );
 
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  // 3. FEHLER BEHOBEN: Der State für die Mobile-WebView fehlte komplett!
   const [mobileWebViewData, setMobileWebViewData] = useState<{
     devToken: string;
     resolve: (token: string | null) => void;
@@ -62,7 +60,16 @@ export const useAppleMusicAuth = () => {
       if (Platform.OS === "web") {
         try {
           if (!window.MusicKit) {
+            if (typeof window !== "undefined") {
+              if (!(window as any).process) (window as any).process = {};
+              if (!(window as any).process.versions)
+                (window as any).process.versions = {};
+              if (!(window as any).Buffer) (window as any).Buffer = Buffer;
+            }
+
             await new Promise<void>((res, rej) => {
+              document.addEventListener("musickitloaded", () => res());
+
               const script = document.createElement("script");
               script.src =
                 "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
@@ -73,7 +80,7 @@ export const useAppleMusicAuth = () => {
             });
           }
 
-          await window.MusicKit.configure({
+          const music = await window.MusicKit.configure({
             developerToken: developerToken,
             app: {
               name: "Benana",
@@ -81,10 +88,10 @@ export const useAppleMusicAuth = () => {
             },
           });
 
-          const music = window.MusicKit.getInstance();
+          const instance = music || window.MusicKit.getInstance();
 
-          await music.authorize();
-          resolve(music.musicUserToken);
+          await instance.authorize();
+          resolve(instance.musicUserToken);
         } catch (error) {
           console.error("Web MusicKit error:", error);
           resolve(null);
