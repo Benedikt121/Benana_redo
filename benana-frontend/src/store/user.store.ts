@@ -22,6 +22,8 @@ export interface UserProfile {
 interface UserState {
   profile: UserProfile | null;
   setProfile: (profile: UserProfile | null) => Promise<void>;
+  setSpotifyAccessToken: (spotifyAccessToken: string) => void;
+  setAppleMusicToken: (appleMusicUserToken: string) => void;
 }
 
 export const useUserStore = create<UserState>((set) => ({
@@ -37,6 +39,24 @@ export const useUserStore = create<UserState>((set) => ({
       "rainyWindow";
     const completeProfile: UserProfile = { ...profile, preferedBackground };
     set({ profile: completeProfile });
+  },
+
+  setSpotifyAccessToken: (spotifyAccessToken) => {
+    const profile = useUserStore((state) => state.profile);
+    if (profile) {
+      set({
+        profile: { ...profile, spotifyAccessToken, isSpotifyLinked: true },
+      });
+    }
+  },
+
+  setAppleMusicToken: (appleMusicUserToken) => {
+    const profile = useUserStore((state) => state.profile);
+    if (profile) {
+      set({
+        profile: { ...profile, appleMusicUserToken, isAppleLinked: true },
+      });
+    }
   },
 }));
 
