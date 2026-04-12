@@ -1,14 +1,17 @@
+import { loginUserWithSpotify } from "@/api/music.api";
+import { useAuthStore } from "@/store/auth.store";
 import { useMusicStore } from "@/store/music.store";
 import { useUserStore } from "@/store/user.store";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const discovery = {
-  authortationEndpoint: "https://accounts.spotify.com/api/token",
-  tokenEndpoint: "https://api.spotify.com/v1/search?type=track&q=isrc:$",
+  authorizationEndpoint: "https://accounts.spotify.com/authorize",
+  tokenEndpoint: "https://accounts.spotify.com/api/token",
 };
 
 export const useSpotifyAuth = () => {
@@ -18,6 +21,12 @@ export const useSpotifyAuth = () => {
   const setPreferedPlatform = useMusicStore(
     (state) => state.setPreferedPlatform,
   );
+  const token = useAuthStore((state) => state.token);
+
+  const redirectUri = makeRedirectUri({
+    scheme: "benanafrontend",
+    preferLocalhost: true, //maybe löschen noch?
+  });
 
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -27,24 +36,42 @@ export const useSpotifyAuth = () => {
         "user-read-playback-state",
         "user-read-currently-playing",
         "user-modify-playback-state",
+        "streaming",
+        "user-read-email",
+        "user-read-private",
       ],
       usePKCE: false,
-      redirectUri: makeRedirectUri({
-        scheme: "benanafrontend",
-      }),
+      redirectUri,
     },
     discovery,
   );
 
   useEffect(() => {
+    console.log(`Redirect URI (${Platform.OS}):`, redirectUri);
+
     if (response?.type === "success") {
       const { code } = response.params;
       console.log("Spotify Auth Code erhalten:", code);
-      linkSpotifyWithBackend(code);
+      linkSpotifyWithBackend(code, redirectUri);
     }
-  });
+  }, [response, redirectUri]);
 
-  const linkSpotifyWithBackend = async (code: string) => {
-    
-  }
+  const linkSpotifyWithBackend = async (
+    code: string,
+    currentRedirectURI: string,
+  ) => {
+    try {
+      const response = await loginUserWithSpotify(code, currentRedirectURI);
+      const data = response.data;
+
+      if (response.status === 200) {
+        setSpotifyAccessToken(data.access_token);
+        setPreferedPlatform("SPOTIFY");
+      }
+    } catch (error) {
+      console.error("Spotify login Error:", error);
+    }
+  };
+
+  return { promptAsync, isReady: !!request };
 };

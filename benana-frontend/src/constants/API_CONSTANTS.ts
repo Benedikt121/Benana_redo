@@ -27,3 +27,6 @@ export const FRIEND_PATH = `${API_PREFIX}friends/`;
 export const FRIEND_REQUESTS_PATH = `${FRIEND_PATH}requests`;
 
 export const INVITE_PATH = `${API_PREFIX}invites`;
+
+export const MUSIC_PATH = `${API_PREFIX}music/`;
+export const SPOTIFY_EXCHANGE_PATH = `${MUSIC_PATH}spotify/exchange`;

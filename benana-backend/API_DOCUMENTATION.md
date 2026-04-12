@@ -570,9 +570,9 @@ Get the currently active match for a room.
 
 **Error Responses:**
 
-| Status | Message                                        |
-| ------ | ---------------------------------------------- |
-| 404    | No active match found in this room.             |
+| Status | Message                             |
+| ------ | ----------------------------------- |
+| 404    | No active match found in this room. |
 
 ---
 
@@ -1071,9 +1071,9 @@ Generate an Apple Developer token (ES256 JWT) for Apple Music API requests. The 
 
 **Error Responses:**
 
-| Status | Message                                |
-| ------ | -------------------------------------- |
-| 500    | Could not generate Apple token.        |
+| Status | Message                         |
+| ------ | ------------------------------- |
+| 500    | Could not generate Apple token. |
 
 ---
 
@@ -1102,57 +1102,43 @@ Store the authenticated user's Apple Music user token (obtained from MusicKit on
 
 **Error Responses:**
 
-| Status | Message                              |
-| ------ | ------------------------------------ |
-| 400    | Apple Music token is required        |
-| 500    | Failed to save Apple Music token     |
-
----
-
-#### `GET /api/music/spotify/login`
-
-Initiates the Spotify OAuth flow. Redirects the user to Spotify's authorization page where they grant permission for playback, streaming, and profile access.
-
-- **Auth Required:** Yes
-
-**Request Body:** None
-
-**Behavior:** Redirects (`302`) to `https://accounts.spotify.com/authorize` with the following scopes:
-- `user-read-playback-state`
-- `user-modify-playback-state`
-- `streaming`
-- `user-read-email`
-- `user-read-private`
-
-**Error Responses:**
-
-| Status | Message                             |
-| ------ | ----------------------------------- |
-| 500    | Could not initiate Spotify login    |
-
----
-
-#### `GET /api/music/spotify/callback`
-
-Handles the Spotify OAuth callback. Exchanges the authorization code for access and refresh tokens, fetches the Spotify user profile, stores the Spotify ID and refresh token on the user record, then redirects to the frontend.
-
-- **Auth Required:** Yes
-
-**Query Params:**
-
-| Param | Type   | Description                              |
-| ----- | ------ | ---------------------------------------- |
-| code  | string | Authorization code returned by Spotify   |
-
-**Behavior:**
-- On success: redirects to `<FRONTEND_URL>/music?spotify_success=true&access_token=<token>`
-- On failure: redirects to `<FRONTEND_URL>/music?spotify_success=false`
-
-**Error Responses:**
-
 | Status | Message                          |
 | ------ | -------------------------------- |
-| 400    | Authorization code is missing    |
+| 400    | Apple Music token is required    |
+| 500    | Failed to save Apple Music token |
+
+---
+
+#### `POST /api/music/spotify/exchange`
+
+Exchanges the authorization code (obtained by the frontend via Spotify OAuth) for access and refresh tokens. Fetches the Spotify user profile, stores the Spotify ID and refresh token on the user record in the database for background polling, and returns the access token to the client.
+
+- **Auth Required:** Yes
+
+**Request Body:**
+
+```json
+{
+  "code": "string",
+  "redirectUri": "string"
+}
+```
+
+**Success Response:**
+
+```json
+{
+  "access_token": "BDQj...",
+  "expires_in": 3600
+}
+```
+
+**Error Responses:**
+
+| Status | Message                         |
+| ------ | ------------------------------- |
+| 400    | Code or redirectUri are missing |
+| 500    | Server error                    |
 
 ---
 
@@ -1175,10 +1161,10 @@ Get a fresh Spotify access token using the stored refresh token. If Spotify rota
 
 **Error Responses:**
 
-| Status | Message                                    |
-| ------ | ------------------------------------------ |
-| 400    | No Spotify refresh token found for user    |
-| 500    | Failed to refresh Spotify token            |
+| Status | Message                                 |
+| ------ | --------------------------------------- |
+| 400    | No Spotify refresh token found for user |
+| 500    | Failed to refresh Spotify token         |
 
 ---
 
@@ -1643,14 +1629,14 @@ Broadcast the current user's music playback status to all online friends and any
 }
 ```
 
-| Field         | Type   | Description                                  |
-| ------------- | ------ | -------------------------------------------- |
-| trackId       | string | Platform-specific track identifier           |
-| trackName     | string | Name of the track                            |
-| artist        | string | Artist name                                  |
-| playbackState | string | `"PLAYING"` or `"PAUSED"`                     |
-| timestamp     | number | Unix timestamp of the playback position      |
-| platform      | string | `"SPOTIFY"` or `"APPLE_MUSIC"`               |
+| Field         | Type   | Description                             |
+| ------------- | ------ | --------------------------------------- |
+| trackId       | string | Platform-specific track identifier      |
+| trackName     | string | Name of the track                       |
+| artist        | string | Artist name                             |
+| playbackState | string | `"PLAYING"` or `"PAUSED"`               |
+| timestamp     | number | Unix timestamp of the playback position |
+| platform      | string | `"SPOTIFY"` or `"APPLE_MUSIC"`          |
 
 **Side Effects:**
 

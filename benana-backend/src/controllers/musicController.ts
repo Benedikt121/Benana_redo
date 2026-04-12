@@ -58,105 +58,6 @@ export const saveAppleMusicToken = async (req: Request, res: Response) => {
   }
 };
 
-export const spotifyLogin = async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    const scope =
-      "user-read-playback-state user-modify-playback-state streaming user-read-email user-read-private";
-
-    const state = crypto.randomBytes(16).toString("hex");
-    await redisClient.set(`spotify_state:${state}`, userId, { EX: 600 });
-
-    const authUrl = new URL("https://accounts.spotify.com/authorize");
-    authUrl.searchParams.append("response_type", "code");
-    authUrl.searchParams.append("client_id", process.env.SPOTIFY_CLIENT_ID!);
-    authUrl.searchParams.append("scope", scope);
-    authUrl.searchParams.append(
-      "redirect_uri",
-      process.env.SPOTIFY_REDIRECT_URI!,
-    );
-
-    res.redirect(authUrl.toString());
-  } catch (error) {
-    console.error("Error initiating Spotify login:", error);
-    res
-      .status(500)
-      .json({ status: "error", message: "Could not initiate Spotify login" });
-  }
-};
-
-export const spotifyCallback = async (req: Request, res: Response) => {
-  const code = req.query.code as string;
-  const state = req.query.state as string;
-
-  if (!code) {
-    return res
-      .status(400)
-      .json({ status: "error", message: "Authorization code is missing" });
-  }
-  try {
-    const userId = await redisClient.get(`spotify_state:${state}`);
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Invalid or expired state" });
-    }
-    await redisClient.del(`spotify_state:${state}`);
-
-    const tokenResponse = await fetch(
-      "https://accounts.spotify.com/api/token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization:
-            "Basic " +
-            Buffer.from(
-              process.env.SPOTIFY_CLIENT_ID +
-                ":" +
-                process.env.SPOTIFY_CLIENT_SECRET,
-            ).toString("base64"),
-        },
-        body: new URLSearchParams({
-          code: code,
-          redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
-          grant_type: "authorization_code",
-        }),
-      },
-    );
-
-    const tokenData = (await tokenResponse.json()) as SpotifyTokenResponse;
-
-    if (tokenData.error) {
-      throw new Error(
-        `Spotify token exchange failed: ${tokenData.error_description}`,
-      );
-    }
-
-    const userResponse = await fetch("https://api.spotify.com/v1/me", {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
-    });
-
-    const userData = (await userResponse.json()) as SpotifyUserResponse;
-
-    if (userId) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          spotifyId: userData.id,
-          spotifyRefreshToken: tokenData.refresh_token,
-        },
-      });
-    }
-    res.redirect(`http://localhost:5173/music?spotify_success=true`);
-  } catch (error) {
-    console.error("Spotify OAuth Error:", error);
-    res.redirect(`http://localhost:5173/music?spotify_success=false`);
-  }
-};
-
 export const refreshSpotifyToken = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
@@ -217,5 +118,69 @@ export const refreshSpotifyToken = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: "error", message: "Failed to refresh Spotify token" });
+  }
+};
+
+export const exchangeSpotifyToken = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const { code, redirectUri } = req.body;
+
+    if (!code || !redirectUri) {
+      return res.status(400).json({ message: "Code und Redirect URI fehlen." });
+    }
+
+    const tokenResponse = await fetch(
+      "https://accounts.spotify.com/api/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`,
+            ).toString("base64"),
+        },
+        body: new URLSearchParams({
+          code,
+          redirect_uri: redirectUri, // Hier wird die dynamische URI genutzt
+          grant_type: "authorization_code",
+        }),
+      },
+    );
+
+    const tokenData = (await tokenResponse.json()) as {
+      error_description: string;
+      refresh_token: string;
+      access_token: string;
+      expires_in: number;
+    };
+
+    if (!tokenResponse.ok) throw new Error(tokenData.error_description);
+
+    const userResponse = await fetch("https://api.spotify.com/v1/me", {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+      },
+    });
+    const userData = (await userResponse.json()) as { id: string };
+
+    // Phase 2: Refresh Token für das Server-Polling speichern!
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        spotifyRefreshToken: tokenData.refresh_token,
+        spotifyId: userData.id,
+      },
+    });
+
+    res.status(200).json({
+      access_token: tokenData.access_token,
+      expires_in: tokenData.expires_in,
+    });
+  } catch (error) {
+    console.error("Spotify Exchange Error:", error);
+    res.status(500).json({ message: "Interner Fehler beim Spotify Login." });
   }
 };
