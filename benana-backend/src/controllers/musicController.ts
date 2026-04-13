@@ -233,3 +233,56 @@ export const testAppleMusicConnection = async (req: any, res: any) => {
     });
   }
 };
+
+export const renderAppleMobileLogin = async (req: any, res: any) => {
+  try {
+    const devToken = getAppleDeveloperToken();
+    
+    // Wir senden eine fertige Webseite zurück!
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+          <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"></script>
+        </head>
+        <body style="background-color: #111; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: -apple-system, sans-serif;">
+          <h1 style="margin-bottom: 10px;">Benana x Apple Music</h1>
+          <p style="margin-bottom: 40px; opacity: 0.7; text-align: center; padding: 0 20px;">
+            Klicke auf den Button, um dich sicher im System-Browser anzumelden.
+          </p>
+          
+          <button onclick="startLogin()" id="loginBtn" style="background-color: #FA243C; color: white; padding: 16px 32px; border-radius: 12px; font-size: 18px; font-weight: bold; border: none; cursor: pointer;">
+            Mit Apple Music verbinden
+          </button>
+
+          <script>
+            async function startLogin() {
+              const btn = document.getElementById('loginBtn');
+              btn.innerText = "Lade...";
+              
+              try {
+                const music = await MusicKit.configure({
+                  developerToken: '${devToken}',
+                  app: { name: 'Benana', build: '1.0.0' }
+                });
+                
+                await music.authorize();
+                const token = music.musicUserToken;
+                
+                // DER TRICK: Wir rufen den Deep-Link deiner App auf und hängen den Token an!
+                window.location.href = 'benanafrontend://callback?appleToken=' + encodeURIComponent(token);
+                
+                btn.innerText = "Erfolgreich! Zurück zur App...";
+              } catch (err) {
+                window.location.href = 'benanafrontend://callback?error=cancelled';
+              }
+            }
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    res.status(500).send("Fehler beim Laden des Apple Developer Tokens.");
+  }
+};

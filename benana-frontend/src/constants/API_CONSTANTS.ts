@@ -30,6 +30,8 @@ export const INVITE_PATH = `${API_PREFIX}invites`;
 
 export const MUSIC_PATH = `${API_PREFIX}music/`;
 export const SPOTIFY_PATH = `${MUSIC_PATH}spotify/`;
+export const APPLE_MUSIC_PATH = `${MUSIC_PATH}apple/`
 export const SPOTIFY_EXCHANGE_PATH = `${SPOTIFY_PATH}exchange`;
 export const APPLE_TOKEN_PATH = `${MUSIC_PATH}apple-token/`;
 export const APPLE_TOKEN_SAVE_PATH = `${APPLE_TOKEN_PATH}save`;
+export const APPLE_MOBILE_LOGIN_PATH = `${APPLE_MUSIC_PATH}mobile-login`
