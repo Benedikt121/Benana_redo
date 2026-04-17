@@ -3,4 +3,4 @@ url: "{{baseUrl}}/olympiade/:id/next-game"
 method: POST
 pathVariables:
   id: ""
-order: 1776441144110
+order: 1000

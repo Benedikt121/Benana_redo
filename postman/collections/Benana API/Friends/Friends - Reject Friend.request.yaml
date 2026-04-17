@@ -1,6 +1,6 @@
 $kind: http-request
-url: "{{baseUrl}}/friends/accept/:requestId"
+url: "{{baseUrl}}/friends/reject/:requestId"
 method: POST
 pathVariables:
   requestId: ""
-order: 4000
+order: 5000

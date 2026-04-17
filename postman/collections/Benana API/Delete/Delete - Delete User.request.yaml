@@ -1,4 +1,4 @@
 $kind: http-request
 url: "{{baseUrl}}/delete/user"
 method: DELETE
-order: 1776441195432
+order: 1000

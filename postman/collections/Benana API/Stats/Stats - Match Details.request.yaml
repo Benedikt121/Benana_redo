@@ -3,4 +3,4 @@ url: "{{baseUrl}}/stats/match/:matchId"
 method: GET
 pathVariables:
   matchId: ""
-order: 3125566753632928
+order: 3000

@@ -1,4 +1,12 @@
 $kind: http-request
-url: '{{baseUrl}}/rooms/create'
+url: "{{baseUrl}}/rooms/create"
 method: POST
-order: 4490985881947036
+body:
+  type: json
+  content: |-
+    {
+      "name": "",
+      "isPrivate": false,
+      "password": ""
+    }
+order: 7000

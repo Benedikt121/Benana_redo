@@ -1,11 +1,11 @@
 $kind: http-request
-url: '{{baseUrl}}/invites/invite'
+url: "{{baseUrl}}/invitations/send"
 method: POST
 body:
   type: json
   content: |-
     {
-      "roomId": "",
-      "receiverUsername": ""
+      "friendId": "",
+      "roomId": ""
     }
-order: 1776441043285
+order: 1000

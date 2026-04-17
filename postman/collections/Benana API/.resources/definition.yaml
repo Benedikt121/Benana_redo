@@ -4,7 +4,7 @@ variables:
   baseUrl: http://localhost:3000/api
   token: ""
 auth:
-  - id: 7d71b76e-6f19-499e-98c6-997d4b2c81da
+  - id: 3082a06d-cfd1-41ef-ae0d-85120da86a27
     type: bearer
     name: bearer auth
     credentials:

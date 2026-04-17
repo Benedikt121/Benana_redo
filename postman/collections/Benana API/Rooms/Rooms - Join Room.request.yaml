@@ -1,7 +1,11 @@
 $kind: http-request
-url: '{{baseUrl}}/rooms/join/:roomId'
-method: PATCH
-pathVariables:
-  - key: roomId
-    value: ''
-order: 3427092373968361
+url: "{{baseUrl}}/rooms/join"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "roomId": "",
+      "password": ""
+    }
+order: 2000

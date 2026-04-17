@@ -1,12 +1,20 @@
 $kind: http-request
+name: Auth - Register
 url: "{{baseUrl}}/auth/register"
 method: POST
 body:
   type: json
   content: |-
     {
-      "username": "",
-      "email": "",
-      "password": ""
+      "username": "TestUser",
+      "clientPasswordHash": "Test123"
     }
-order: 1776434187448
+scripts:
+  - type: afterResponse
+    code: "var jsonData = pm.response.json();\r
+
+      \r
+
+      pm.environment.set(\"token\", jsonData.token);"
+    language: text/javascript
+order: 1000

@@ -1,7 +1,6 @@
 $kind: http-request
-url: '{{baseUrl}}/invites/accept/:inviteId'
+url: "{{baseUrl}}/invitations/accept/:invitationId"
 method: POST
 pathVariables:
-  - key: inviteId
-    value: ''
-order: 4194987738702232
+  invitationId: ""
+order: 3000

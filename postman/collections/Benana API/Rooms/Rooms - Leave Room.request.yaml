@@ -1,4 +1,10 @@
 $kind: http-request
-url: '{{baseUrl}}/rooms/leave'
-method: PATCH
-order: 3457355154491847
+url: "{{baseUrl}}/rooms/leave"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "roomId": ""
+    }
+order: 3000

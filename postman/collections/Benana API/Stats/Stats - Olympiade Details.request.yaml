@@ -3,4 +3,4 @@ url: "{{baseUrl}}/stats/olympiade/:olympiadeId"
 method: GET
 pathVariables:
   olympiadeId: ""
-order: 4251505364650477
+order: 4000

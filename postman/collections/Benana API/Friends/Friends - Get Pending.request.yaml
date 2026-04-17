@@ -1,4 +1,4 @@
 $kind: http-request
-url: "{{baseUrl}}/invitations/"
+url: "{{baseUrl}}/friends/pending"
 method: GET
 order: 2000

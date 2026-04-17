@@ -1,11 +1,10 @@
 $kind: http-request
-url: "{{baseUrl}}/music/spotify/exchange"
+url: "{{baseUrl}}/friends/add"
 method: POST
 body:
   type: json
   content: |-
     {
-      "code": "",
-      "redirectUri": ""
+      "emailOrUsername": ""
     }
 order: 3000

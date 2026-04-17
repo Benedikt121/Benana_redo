@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/update-profile"
+method: PATCH
+body:
+  type: json
+  content: |-
+    {
+        "username": "",
+        "email": "",
+        "currentPassword": ""
+    }
+order: 6000
