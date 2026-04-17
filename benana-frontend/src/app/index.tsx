@@ -35,7 +35,7 @@ export default function Index() {
         className="text-white text-3xl font-bold mb-8"
       >
         <Text className="text-white font-bold text-lg text-shadow-glow">
-          Zum Auth-Test
+          Auth Testing
         </Text>
       </Pressable>
     </View>
