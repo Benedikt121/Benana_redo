@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/rooms/ready"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "roomId": "",
+      "isReady": true
+    }
+order: 4184489301148967

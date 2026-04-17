@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/stats/user/:userId/overview"
+method: GET
+pathVariables:
+  userId: ""
+order: 1776441100715

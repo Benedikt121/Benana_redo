@@ -1,0 +1,9 @@
+name: Benana Dev
+values:
+  - key: baseUrl
+    enabled: true
+    value: "http://localhost:5001"
+  - key: token
+    enabled: true
+    value: ""
+color: 120

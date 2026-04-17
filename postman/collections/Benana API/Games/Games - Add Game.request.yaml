@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/games/addGame"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "name": ""
+    }
+order: 4473110163023701

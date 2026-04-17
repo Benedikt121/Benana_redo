@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/friends/pending"
+method: GET
+order: 1557279465895935

@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/rooms/create"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "name": "",
+      "isPrivate": false,
+      "password": ""
+    }
+order: 4490985881947036

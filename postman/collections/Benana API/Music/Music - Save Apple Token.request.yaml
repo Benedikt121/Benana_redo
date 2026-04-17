@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/music/apple-token/save"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "appleMusicToken": ""
+    }
+order: 548274863431554

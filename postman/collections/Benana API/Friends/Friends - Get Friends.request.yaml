@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/friends/"
+method: GET
+order: 1776434214770

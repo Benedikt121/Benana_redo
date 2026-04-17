@@ -1,0 +1,18 @@
+# Use this workspace to collaborate
+workspace:
+  id: f89701a7-0932-4795-8fd0-8a541ac81abe
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ..\postman\collections\Benana API: 46122931-31aac1de-9fc7-4209-a36f-146f102ac53e
+  environments:
+    ..\postman\environments\Benana Prod.environment.yaml: 46122931-7c8489d5-1f4a-448d-afcc-711d4922b7c8
+    ..\postman\environments\Benana Dev.environment.yaml: 46122931-7ecc2c74-15e0-495a-887c-df72aa011da0
+
+# All resources in the `postman/` folder are automatically registered in Local View.
+# Point to additional files outside the `postman/` folder to register them individually. Example:
+#localResources:
+#  collections:
+#    - ../tests/E2E Test Collection/

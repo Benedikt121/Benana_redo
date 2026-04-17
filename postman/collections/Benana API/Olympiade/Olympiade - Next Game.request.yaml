@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/olympiade/:id/next-game"
+method: POST
+pathVariables:
+  id: ""
+order: 1776441144110

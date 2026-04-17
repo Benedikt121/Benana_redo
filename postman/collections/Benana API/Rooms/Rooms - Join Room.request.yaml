@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/rooms/join"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "roomId": "",
+      "password": ""
+    }
+order: 3427092373968361

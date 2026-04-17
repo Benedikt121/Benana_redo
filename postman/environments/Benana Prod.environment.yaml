@@ -1,0 +1,9 @@
+name: Benana Prod
+values:
+  - key: baseUrl
+    enabled: true
+    value: 'https://benana.me:10000'
+  - key: token
+    enabled: true
+    value: ''
+color: 300

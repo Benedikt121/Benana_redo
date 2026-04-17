@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/friends/accept/:requestId"
+method: POST
+pathVariables:
+  requestId: ""
+order: 4459529064220424

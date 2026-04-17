@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/stats/user/:userId/history?filter=ALL"
+method: GET
+queryParams:
+  filter: ALL
+pathVariables:
+  userId: ""
+order: 2694593187834219

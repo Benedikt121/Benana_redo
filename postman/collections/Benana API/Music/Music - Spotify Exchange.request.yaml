@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/music/spotify/exchange"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "code": "",
+      "redirectUri": ""
+    }
+order: 3344159903141098

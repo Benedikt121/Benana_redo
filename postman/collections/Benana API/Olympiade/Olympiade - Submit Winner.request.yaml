@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/olympiade/match/:matchId/winner"
+method: PATCH
+pathVariables:
+  matchId: ""
+body:
+  type: json
+  content: |-
+    {
+      "winnerId": ""
+    }
+order: 2327157515178778

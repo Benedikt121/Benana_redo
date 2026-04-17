@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/invitations/send"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "friendId": "",
+      "roomId": ""
+    }
+order: 1776441043285

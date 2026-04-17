@@ -1,0 +1,10 @@
+$kind: http-request
+url: "{{baseUrl}}/friends/add"
+method: POST
+body:
+  type: json
+  content: |-
+    {
+      "emailOrUsername": ""
+    }
+order: 3500026558095114

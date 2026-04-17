@@ -1,0 +1,11 @@
+$kind: collection
+description: API endpoints for Benana
+variables:
+  baseUrl: http://localhost:3000/api
+  token: ""
+auth:
+  - id: 7d71b76e-6f19-499e-98c6-997d4b2c81da
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"
