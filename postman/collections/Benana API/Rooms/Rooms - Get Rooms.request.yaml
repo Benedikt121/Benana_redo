@@ -1,4 +1,4 @@
 $kind: http-request
-url: "{{baseUrl}}/rooms/"
+url: '{{baseUrl}}/rooms/all'
 method: GET
 order: 1776441000450

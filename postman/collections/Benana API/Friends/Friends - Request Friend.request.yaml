@@ -1,10 +1,10 @@
 $kind: http-request
-url: "{{baseUrl}}/friends/add"
+url: '{{baseUrl}}/friends/request'
 method: POST
 body:
   type: json
   content: |-
     {
-      "emailOrUsername": ""
+      "username": ""
     }
 order: 3500026558095114

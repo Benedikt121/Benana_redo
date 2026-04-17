@@ -1,6 +1,7 @@
 $kind: http-request
-url: "{{baseUrl}}/friends/accept/:requestId"
-method: POST
+url: '{{baseUrl}}/friends/accept/:id'
+method: PATCH
 pathVariables:
-  requestId: ""
+  - key: id
+    value: ''
 order: 4459529064220424

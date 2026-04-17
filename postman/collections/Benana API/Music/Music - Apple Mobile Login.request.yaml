@@ -1,0 +1,4 @@
+$kind: http-request
+url: '{{baseUrl}}/music/apple/mobile-login'
+method: GET
+order: 4450000000000

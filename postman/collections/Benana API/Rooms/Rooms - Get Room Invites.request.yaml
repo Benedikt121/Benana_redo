@@ -1,0 +1,7 @@
+$kind: http-request
+url: '{{baseUrl}}/rooms/invites/:roomId'
+method: GET
+pathVariables:
+  - key: roomId
+    value: ''
+order: 3600000000000

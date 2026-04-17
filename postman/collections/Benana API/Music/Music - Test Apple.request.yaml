@@ -1,0 +1,4 @@
+$kind: http-request
+url: '{{baseUrl}}/music/test-apple'
+method: GET
+order: 4400000000000

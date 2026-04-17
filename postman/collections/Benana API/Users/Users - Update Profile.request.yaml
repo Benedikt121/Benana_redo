@@ -1,0 +1,11 @@
+$kind: http-request
+url: '{{baseUrl}}/users/me'
+method: PATCH
+body:
+  type: json
+  content: |-
+    {
+      "color": "",
+      "avatar": ""
+    }
+order: 2000000000000

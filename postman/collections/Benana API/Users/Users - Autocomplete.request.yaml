@@ -1,0 +1,7 @@
+$kind: http-request
+url: '{{baseUrl}}/users/names?q='
+method: GET
+queryParams:
+  - key: q
+    value: ''
+order: 5000000000000

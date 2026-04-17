@@ -2,7 +2,7 @@ name: Benana Prod
 values:
   - key: baseUrl
     enabled: true
-    value: 'https://benana.me:10000'
+    value: 'https://benana.me:10000/api'
   - key: token
     enabled: true
     value: ''

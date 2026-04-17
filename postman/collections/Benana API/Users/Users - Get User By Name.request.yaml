@@ -1,0 +1,7 @@
+$kind: http-request
+url: '{{baseUrl}}/users/name/:username'
+method: GET
+pathVariables:
+  - key: username
+    value: ''
+order: 4000000000000

@@ -1,6 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/friends/reject/:requestId"
-method: POST
-pathVariables:
-  requestId: ""
-order: 4473119634814691

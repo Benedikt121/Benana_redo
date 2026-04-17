@@ -1,6 +1,7 @@
 $kind: http-request
-url: "{{baseUrl}}/friends/remove/:friendId"
+url: '{{baseUrl}}/friends/remove/:id'
 method: DELETE
 pathVariables:
-  friendId: ""
+  - key: id
+    value: ''
 order: 4499802962395122

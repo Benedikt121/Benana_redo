@@ -1,11 +1,7 @@
 $kind: http-request
-url: "{{baseUrl}}/rooms/kick"
-method: POST
-body:
-  type: json
-  content: |-
-    {
-      "roomId": "",
-      "userIdToKick": ""
-    }
+url: '{{baseUrl}}/rooms/kick/:userId'
+method: DELETE
+pathVariables:
+  - key: userId
+    value: ''
 order: 4392441678284659

@@ -1,11 +1,4 @@
 $kind: http-request
-url: "{{baseUrl}}/rooms/ready"
-method: POST
-body:
-  type: json
-  content: |-
-    {
-      "roomId": "",
-      "isReady": true
-    }
+url: '{{baseUrl}}/rooms/ready'
+method: PATCH
 order: 4184489301148967

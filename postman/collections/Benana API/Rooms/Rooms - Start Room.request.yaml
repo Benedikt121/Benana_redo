@@ -1,6 +1,4 @@
 $kind: http-request
-url: "{{baseUrl}}/rooms/start/:roomId"
-method: POST
-pathVariables:
-  roomId: ""
+url: '{{baseUrl}}/rooms/start'
+method: PATCH
 order: 4413971210703142
