@@ -6,8 +6,8 @@ body:
   type: json
   content: |-
     {
-      "username": "Bene",
-      "clientPasswordHash": "Filou1305"
+      "username": "TestUser",
+      "clientPasswordHash": "Test123"
     }
 scripts:
   - type: afterResponse
