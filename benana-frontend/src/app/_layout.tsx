@@ -54,7 +54,7 @@ export default function RootLayout() {
         {usedBackground === "deepWater" ? (
           <DeepWaterBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
         ) : (
-          <RainyWindowBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
+          <RainyWindowBackground />
         )}
         <Stack
           screenOptions={{

@@ -109,11 +109,10 @@ export default function LoginWeb() {
                 name="username"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${
-                      errors.username
+                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${errors.username
                         ? "border-red-500"
                         : "border-transparent focus:border-white/50"
-                    }`}
+                      }`}
                     placeholder="Username eingeben..."
                     placeholderTextColor="#9ca3af"
                     onBlur={onBlur}
@@ -139,12 +138,11 @@ export default function LoginWeb() {
                 name="password"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${
-                      errors.password
+                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${errors.password
                         ? "border-red-500"
                         : "border-transparent focus:border-white/50"
-                    }`}
-                    placeholder="Username eingeben..."
+                      }`}
+                    placeholder="Passwort eingeben..."
                     placeholderTextColor="#9ca3af"
                     onBlur={onBlur}
                     onChangeText={onChange}

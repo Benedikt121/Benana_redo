@@ -57,7 +57,7 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
 
         try {
           const response = await axios.get(
-            "https://api.spotify.com/v1/me/player/currently-playing",
+            "https://api.spotify.com/v1/me/player",
             {
               headers: { Authorization: `Bearer ${token}` },
             },

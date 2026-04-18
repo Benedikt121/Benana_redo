@@ -12,6 +12,7 @@ import { RAINY_CONFIG } from "./rainyWindowConfig";
 import { vertexShader, fragmentShader } from "./rainyWindowShaders";
 import * as THREE from "three";
 import { View } from "react-native";
+import { useMusicStore } from "@/store/music.store";
 
 interface RainyWindowProps {
   coverUrl?: string | null;
@@ -133,6 +134,8 @@ const RainyPlane = ({ coverUrl }: RainyWindowProps) => {
 };
 
 export default function RainyWindowBackground({ coverUrl }: RainyWindowProps) {
+  const stateCoverUrl = useMusicStore((state) => state.currentSong?.albumCoverUrl)
+  const imageUrl = coverUrl || stateCoverUrl
   return (
     <View className="absolute inset-0 z-[-1] bg-[#050510]">
       <Canvas
@@ -141,7 +144,7 @@ export default function RainyWindowBackground({ coverUrl }: RainyWindowProps) {
         dpr={[1, 1.5]}
       >
         <Suspense fallback={null}>
-          <RainyPlane coverUrl={coverUrl} />
+          <RainyPlane coverUrl={imageUrl} />
         </Suspense>
       </Canvas>
     </View>

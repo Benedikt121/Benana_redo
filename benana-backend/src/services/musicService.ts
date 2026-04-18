@@ -62,8 +62,8 @@ export const getValidSpotifyToken = async (
           "Basic " +
           Buffer.from(
             process.env.SPOTIFY_CLIENT_ID +
-              ":" +
-              process.env.SPOTIFY_CLIENT_SECRET,
+            ":" +
+            process.env.SPOTIFY_CLIENT_SECRET,
           ).toString("base64"),
       },
       data: new URLSearchParams({
