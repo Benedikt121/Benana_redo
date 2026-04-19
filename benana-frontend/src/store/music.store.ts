@@ -1,6 +1,6 @@
 import { MusicPlatform, SongInfo } from "@/types/MusicTypes";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { useUserStore } from "./user.store";
 
 interface MusicState {
   currentSong: SongInfo | null;
@@ -10,8 +10,9 @@ interface MusicState {
   // Aktionen
   setCurrentSong: (song: SongInfo | null) => void;
   clearSong: () => void;
-  setPreferedPlatform: (platform: MusicPlatform) => void;
+  setPreferedPlatform: (platform: MusicPlatform) => Promise<void>;
   setListeningToHostId: (hostId: string | null) => void;
+  hydrate: () => Promise<void>;
 }
 
 export const useMusicStore = create<MusicState>((set) => ({
@@ -21,6 +22,20 @@ export const useMusicStore = create<MusicState>((set) => ({
 
   setCurrentSong: (song) => set({ currentSong: song }),
   clearSong: () => set({ currentSong: null }),
-  setPreferedPlatform: (platform) => set({ preferedPlatform: platform }),
+  setPreferedPlatform: async (platform) => {
+    await AsyncStorage.setItem("preferedPlatform", platform);
+    set({ preferedPlatform: platform });
+  },
   setListeningToHostId: (hostId) => set({ listeningToHostId: hostId }),
+  hydrate: async () => {
+    try {
+      const platform = await AsyncStorage.getItem("preferedPlatform");
+      if (platform) {
+        set({ preferedPlatform: platform as MusicPlatform });
+      }
+    } catch (error) {
+      console.error("Failed to hydrate music store:", error);
+    }
+  },
 }));
+

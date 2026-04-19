@@ -13,9 +13,7 @@ import { useEffect } from "react";
 export function useInitialData() {
   const { token } = useAuthStore();
   const setProfile = useUserStore((state) => state.setProfile);
-  const setPreferedPlatform = useMusicStore(
-    (state) => state.setPreferedPlatform,
-  );
+  const { preferedPlatform, setPreferedPlatform } = useMusicStore();
   const setFriends = useFriendsStore((state) => state.setFriends);
   const setFriendRequests = useFriendsStore((state) => state.setFriendRequests);
   const setRoomInvites = useInvitesStore((state) => state.setRoomInvites);
@@ -51,10 +49,12 @@ export function useInitialData() {
   useEffect(() => {
     if (userQuery.data) {
       setProfile(userQuery.data.data);
-      if (userQuery.data.data.isAppleLinked) {
-        setPreferedPlatform("APPLE_MUSIC");
-      } else if (userQuery.data.data.isSpotifyLinked) {
-        setPreferedPlatform("SPOTIFY");
+      if (!preferedPlatform) {
+        if (userQuery.data.data.isAppleLinked) {
+          setPreferedPlatform("APPLE_MUSIC");
+        } else if (userQuery.data.data.isSpotifyLinked) {
+          setPreferedPlatform("SPOTIFY");
+        }
       }
     }
     if (friendsQuery.data) setFriends(friendsQuery.data.data);
@@ -66,6 +66,7 @@ export function useInitialData() {
     friendsQuery.data,
     friendRequestsQuery.data,
     roomInvitesQuery.data,
+    preferedPlatform,
   ]);
 
   return {

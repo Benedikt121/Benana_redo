@@ -10,6 +10,7 @@ import { useMusicColors } from "@/utils/useMusicColors";
 import { useMusicSync } from "@/hooks/sockets/useMusicSync";
 import { useUserStore } from "@/store/user.store";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
+import { useMusicStore } from "@/store/music.store";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ export default function RootLayout() {
   );
 
   const { token, isHydrated, hydrate } = useAuthStore();
+  const hydrateMusic = useMusicStore((state) => state.hydrate);
   const segments = useSegments();
   const router = useRouter();
 
@@ -27,6 +29,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     hydrate();
+    hydrateMusic();
   }, []);
 
   useEffect(() => {
