@@ -28,7 +28,7 @@ export const useAppleMusicAuth = () => {
       if (Platform.OS === "web") {
         // --- DER ALTE WEB FLOW (Der ja funktioniert hat) ---
         const devTokenRes = await getAppleDeveloperToken();
-        const developerToken = devTokenRes.data.token;
+        const developerToken = devTokenRes.token;
 
         if (!window.MusicKit) {
           if (typeof window !== "undefined") {
@@ -95,10 +95,12 @@ export const useAppleMusicAuth = () => {
 
   const handleTokenSave = async (token: string) => {
     const saveRes = await saveAppleUserToken(token);
-    if (saveRes.status === 200) {
+    if (saveRes.status === "success") {
       setAppleMusicToken(token);
       setPreferedPlatform("APPLE_MUSIC");
       console.log("Apple Music erfolgreich verknüpft! Token ist in der DB.");
+    } else {
+      console.error("Fehler beim Speichern des Apple Music Tokens:", saveRes);
     }
   };
 

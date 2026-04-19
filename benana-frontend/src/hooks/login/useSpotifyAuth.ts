@@ -67,6 +67,7 @@ export const useSpotifyAuth = () => {
       if (response.status === 200) {
         setSpotifyAccessToken(data.access_token);
         setPreferedPlatform("SPOTIFY");
+        console.log("Spotify login success", data.access_token);
       }
     } catch (error) {
       console.error("Spotify login Error:", error);

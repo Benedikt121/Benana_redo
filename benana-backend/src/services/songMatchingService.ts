@@ -29,8 +29,8 @@ interface AppleMusicSong {
     artistName: string;
     isrc?: string;
     artwork: {
-      url: string
-    }
+      url: string;
+    };
   };
 }
 
@@ -131,7 +131,8 @@ export const matchSpotifyToApple = async (
         },
       );
 
-      const appleIsrcData = (await appleIsrcRes.json()) as AppleMusicSongsResponse;
+      const appleIsrcData =
+        (await appleIsrcRes.json()) as AppleMusicSongsResponse;
       if (appleIsrcData.data && appleIsrcData.data.length > 0)
         appleTrackId = appleIsrcData.data[0].id;
     }
@@ -143,10 +144,10 @@ export const matchSpotifyToApple = async (
           headers: { Authorization: `Bearer ${appleToken}` },
         },
       );
-      const appleSearchData = (await appleSearchRes.json()) as AppleMusicSearchResponse;
+      const appleSearchData =
+        (await appleSearchRes.json()) as AppleMusicSearchResponse;
       const appleSongs = appleSearchData.results?.songs?.data;
-      if (appleSongs && appleSongs.length > 0)
-        appleTrackId = appleSongs[0].id;
+      if (appleSongs && appleSongs.length > 0) appleTrackId = appleSongs[0].id;
     }
 
     if (appleTrackId) {
@@ -156,9 +157,12 @@ export const matchSpotifyToApple = async (
           headers: { Authorization: `Bearer ${appleToken}` },
         },
       );
-      const appleTrackData = (await appleTrackRes.json()) as AppleMusicSongsResponse;
-      const coverUrl =
-        appleTrackData.data?.[0]?.attributes.artwork.url ?? "";
+      const appleTrackData =
+        (await appleTrackRes.json()) as AppleMusicSongsResponse;
+      let coverUrl = appleTrackData.data?.[0]?.attributes.artwork.url ?? "";
+      if (coverUrl) {
+        coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
+      }
 
       await saveToCache(spotifyTrackId, appleTrackId, coverUrl);
       return { appleTrackId, coverUrl };
@@ -211,7 +215,8 @@ export const matchAppleToSpotify = async (
           headers: { Authorization: `Bearer ${spotifyToken}` },
         },
       );
-      const spotifyIsrcData = (await spotifyIsrcRes.json()) as SpotifySearchResponse;
+      const spotifyIsrcData =
+        (await spotifyIsrcRes.json()) as SpotifySearchResponse;
       if (spotifyIsrcData.tracks.items.length > 0)
         spotifyTrackId = spotifyIsrcData.tracks.items[0].id;
     }
@@ -222,13 +227,17 @@ export const matchAppleToSpotify = async (
           headers: { Authorization: `Bearer ${spotifyToken}` },
         },
       );
-      const spotifySearchData = (await spotifySearchRes.json()) as SpotifySearchResponse;
+      const spotifySearchData =
+        (await spotifySearchRes.json()) as SpotifySearchResponse;
       if (spotifySearchData.tracks.items.length > 0)
         spotifyTrackId = spotifySearchData.tracks.items[0].id;
     }
 
     if (spotifyTrackId) {
-      const coverUrl = appleData.data?.[0]?.attributes.artwork.url ?? "";
+      let coverUrl = appleData.data?.[0]?.attributes.artwork.url ?? "";
+      if (coverUrl) {
+        coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
+      }
       await saveToCache(spotifyTrackId, appleTrackId, coverUrl);
       return { spotifyTrackId, coverUrl };
     }
