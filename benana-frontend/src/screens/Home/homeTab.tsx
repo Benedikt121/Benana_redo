@@ -6,7 +6,7 @@ import { useMusicColors } from "@/utils/useMusicColors";
 import { useRouter } from "expo-router";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 
-export default function Index() {
+export default function HomeTab() {
   const { isLoading } = useInitialData();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
