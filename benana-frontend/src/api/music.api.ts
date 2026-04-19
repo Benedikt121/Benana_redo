@@ -3,6 +3,7 @@ import {
   APPLE_TOKEN_SAVE_PATH,
   SPOTIFY_CURRENT_PATH,
   SPOTIFY_EXCHANGE_PATH,
+  SPOTIFY_PLAY_PATH,
   SPOTIFY_REFRESH_PATH,
 } from "@/constants/API_CONSTANTS";
 import { useAuthStore } from "@/store/auth.store";
@@ -59,16 +60,17 @@ export const saveAppleUserToken = async (
   return response.data;
 };
 
-export const refreshSpotifyToken = async (): Promise<SpotifyRefreshResponse> => {
-  const { token } = useAuthStore.getState();
-  const response = await axios.get<SpotifyRefreshResponse>(
-    SPOTIFY_REFRESH_PATH,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
-  );
-  return response.data;
-};
+export const refreshSpotifyToken =
+  async (): Promise<SpotifyRefreshResponse> => {
+    const { token } = useAuthStore.getState();
+    const response = await axios.get<SpotifyRefreshResponse>(
+      SPOTIFY_REFRESH_PATH,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    return response.data;
+  };
 
 export const fetchCurrentSpotifySong =
   async (): Promise<SpotifyCurrentSongResponse | null> => {
@@ -84,3 +86,18 @@ export const fetchCurrentSpotifySong =
     // Backend returns 204 with no body when nothing is playing
     return response.status === 204 ? null : response.data;
   };
+
+export const forcePlaySpotify = async (trackId: string, positionMs: number) => {
+  const { token } = useAuthStore.getState();
+  const response = await axios.post(
+    SPOTIFY_PLAY_PATH,
+    { spotifyTrackId: trackId, positionMs: positionMs },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+  return response;
+};

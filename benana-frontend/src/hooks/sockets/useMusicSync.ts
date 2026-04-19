@@ -4,6 +4,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useFriendsStore } from "@/store/friends.store";
 import { useMusicStore } from "@/store/music.store";
 import { BackendSongInfo, SongInfo } from "@/types/MusicTypes";
+import { syncPlaybackToHost } from "@/utils/syncPlaybackToHost";
 import { useEffect, useRef } from "react";
 import { AppState, Platform } from "react-native";
 
@@ -51,6 +52,7 @@ export function useMusicSync() {
 
     const onHostSync = (data: BackendSongInfo) => {
       setCurrentSong(mapBackendSongToSongInfo(data));
+      syncPlaybackToHost(data, preferedPlatform);
     };
 
     const onFriendUpdate = (data: {

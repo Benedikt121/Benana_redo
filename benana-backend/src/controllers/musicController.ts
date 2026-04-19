@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   getAppleDeveloperToken,
   getValidSpotifyToken,
+  syncSpotifyPlayback,
 } from "../services/musicService.js";
 import { prisma } from "../config/db.js";
 import crypto from "crypto";
@@ -346,5 +347,34 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
     return res
       .status(500)
       .json({ message: "Interner Fehler beim Spotify Login." });
+  }
+};
+
+export const forcePlaySpotify = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const { spotifyTrackId, positionMs } = req.body;
+
+    if (!spotifyTrackId) {
+      return res.status(400).json({ message: "spotifyTrackId missing" });
+    }
+
+    const success = await syncSpotifyPlayback(
+      userId,
+      spotifyTrackId,
+      positionMs || 0,
+    );
+
+    if (success) {
+      return res
+        .status(200)
+        .json({ message: "Spotify was synced successfully" });
+    } else {
+      return res
+        .status(404)
+        .json({ message: "No active Spotify player found." });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
   }
 };

@@ -62,8 +62,8 @@ export const getValidSpotifyToken = async (
           "Basic " +
           Buffer.from(
             process.env.SPOTIFY_CLIENT_ID +
-            ":" +
-            process.env.SPOTIFY_CLIENT_SECRET,
+              ":" +
+              process.env.SPOTIFY_CLIENT_SECRET,
           ).toString("base64"),
       },
       data: new URLSearchParams({
@@ -81,5 +81,35 @@ export const getValidSpotifyToken = async (
       error,
     );
     return null;
+  }
+};
+
+export const syncSpotifyPlayback = async (
+  userId: string,
+  spotifyTrackId: string,
+  positionMs: number,
+) => {
+  try {
+    const token = await getValidSpotifyToken(userId);
+    if (!token) return false;
+
+    await axios.put(
+      "https://api.spotify.com/v1/me/player/play",
+      {
+        uris: [spotifyTrackId],
+        position_ms: positionMs,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`Couldn't sync the music for User ${userId}:`, error);
+    return false;
   }
 };
