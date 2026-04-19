@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { getAppleDeveloperToken } from "../services/musicService.js";
+import {
+  getAppleDeveloperToken,
+  getValidSpotifyToken,
+} from "../services/musicService.js";
 import { prisma } from "../config/db.js";
 import crypto from "crypto";
 import { redisClient } from "../config/redis.js";
@@ -186,6 +189,8 @@ export const exchangeSpotifyToken = async (req: Request, res: Response) => {
 };
 
 import axios from "axios";
+import { matchSpotifyToApple } from "../services/songMatchingService.js";
+import { UserMusicState } from "../sockets/utility/userMusicState.js";
 
 export const testAppleMusicConnection = async (req: any, res: any) => {
   try {
@@ -237,7 +242,7 @@ export const testAppleMusicConnection = async (req: any, res: any) => {
 export const renderAppleMobileLogin = async (req: any, res: any) => {
   try {
     const devToken = getAppleDeveloperToken();
-    
+
     // Wir senden eine fertige Webseite zurück!
     res.send(`
       <!DOCTYPE html>
@@ -284,5 +289,62 @@ export const renderAppleMobileLogin = async (req: any, res: any) => {
     `);
   } catch (error) {
     res.status(500).send("Fehler beim Laden des Apple Developer Tokens.");
+  }
+};
+
+export const getCurrentSpotifySong = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const token = await getValidSpotifyToken(userId);
+
+    if (!token)
+      return res.status(401).json({ message: "No Spotify Token provided." });
+
+    const response = await axios.get(
+      "https://api.spotify.com/v1/me/player/currently-playing",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (response.status === 200 && response.data && response.data.item) {
+      const title = response.data.item.name;
+      const artist = response.data.item.artists
+        .map((a: any) => a.name)
+        .join(", ");
+      const isPlaying = response.data.is_playing;
+      const trackId = `spotify:track:${response.data.item.id}`;
+      const progressMs = response.data.progress_ms;
+
+      const { appleTrackId, coverUrl } = (await matchSpotifyToApple(
+        response.data.item.id,
+      )) as any;
+
+      const statusData: UserMusicState = {
+        platform: "SPOTIFY",
+        trackId,
+        trackName: title,
+        artist,
+        timestamp: progressMs,
+        playbackState: isPlaying ? "PLAYING" : "PAUSED",
+        appleTrackId,
+        spotifyTrackId: response.data.item.id,
+        coverUrl: coverUrl,
+        updatedAt: Date.now(),
+      };
+
+      return res.status(200).json({
+        success: true,
+        data: statusData,
+      });
+    }
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Spotify API Error:", error);
+    return res
+      .status(500)
+      .json({ message: "Interner Fehler beim Spotify Login." });
   }
 };

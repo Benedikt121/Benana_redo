@@ -26,3 +26,34 @@ export interface BackendSongInfo {
   spotifyTrackId?: string | null;
   coverUrl?: string | null;
 }
+
+// --- API Response Types (based on backend musicController) ---
+
+/** GET /music/apple-token */
+export interface AppleTokenResponse {
+  token: string;
+}
+
+/** POST /music/apple-token/save */
+export interface AppleTokenSaveResponse {
+  status: "success" | "error";
+  message: string;
+}
+
+/** POST /music/spotify/exchange */
+export interface SpotifyExchangeResponse {
+  access_token: string;
+  expires_in: number;
+}
+
+/** GET /music/spotify/refresh */
+export interface SpotifyRefreshResponse {
+  access_token: string;
+  expires_in: number;
+}
+
+/** GET /music/spotify/current — success (HTTP 200) */
+export interface SpotifyCurrentSongResponse {
+  success: true;
+  data: BackendSongInfo;
+}

@@ -1,9 +1,11 @@
+import { fetchCurrentSpotifySong } from "@/api/music.api";
 import { socketService } from "@/services/sockets.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useFriendsStore } from "@/store/friends.store";
 import { useMusicStore } from "@/store/music.store";
 import { BackendSongInfo, SongInfo } from "@/types/MusicTypes";
 import { useEffect, useRef } from "react";
+import { AppState, Platform } from "react-native";
 
 export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
   return {
@@ -41,7 +43,8 @@ export function useMusicSync() {
   const setFriendSong = useFriendsStore((state) => state.setFriendSong);
   const clearFriendSong = useFriendsStore((state) => state.clearFriendSong);
   const preferedPlatform = useMusicStore((state) => state.preferedPlatform);
-  const lastEmitedState = useRef<string | null>(null);
+  const lastEmittedState = useRef<string | null>(null);
+  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
     const socket = socketService.connect();
@@ -74,58 +77,99 @@ export function useMusicSync() {
 
   useEffect(() => {
     const socket = socketService.connect();
-
     if (!socket || !preferedPlatform) return;
 
     let intervalId: NodeJS.Timeout;
 
-    if (preferedPlatform === "APPLE_MUSIC") {
-      intervalId = setInterval(() => {
+    const startLocalPolling = () => {
+      if (intervalId) clearInterval(intervalId);
+
+      intervalId = setInterval(async () => {
         try {
-          if (typeof window !== "undefined" && window.MusicKit) {
-            const music = window.MusicKit.getInstance();
+          if (preferedPlatform === "APPLE_MUSIC") {
+            if (typeof window !== "undefined" && window.MusicKit) {
+              const music = window.MusicKit.getInstance();
+              if (!music || !music.nowPlayingItem) return;
 
-            if (!music || !music.nowPlayingItem) return;
-            const isPlaying = music.isPlaying;
-            const currentPlaybackTime = music.currentPlaybackTime * 1000;
-            const item = music.nowPlayingItem;
+              const isPlaying = music.isPlaying;
+              const currentPlaybackTime = music.currentPlaybackTime * 1000;
+              const item = music.nowPlayingItem;
 
-            const currentSong: SongInfo = {
-              platform: "APPLE_MUSIC",
-              trackId: item.id as string,
-              title: item.title as string,
-              artist: item.artistName as string,
-              timestamp: currentPlaybackTime,
-              playbackState: isPlaying ? "PLAYING" : "PAUSED",
-              updatedAt: Date.now(),
-              appleTrackId: item.id,
-              spotifyTrackId: null,
-              albumCoverUrl: item.artwork?.url,
+              const backendSong: BackendSongInfo = {
+                platform: "APPLE_MUSIC",
+                trackId: item.id,
+                trackName: item.title,
+                artist: item.artistName,
+                playbackState: isPlaying ? "PLAYING" : "PAUSED",
+                timestamp: currentPlaybackTime,
+                coverUrl: item.artworkURL
+                  ? item.artworkURL.replace("{w}", "600").replace("{h}", "600")
+                  : null,
+                updatedAt: Date.now(),
+              };
+
+              setCurrentSong(mapBackendSongToSongInfo(backendSong)); // UI SOFORT updaten!
+
+              const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
+              if (lastEmittedState.current !== stateString) {
+                socket.emit("music_status_update", backendSong);
+                lastEmittedState.current = stateString;
+              }
             }
+          } else if (preferedPlatform === "SPOTIFY") {
+            // LOKALES POLLING FÜR SPOTIFY
+            const response = await fetchCurrentSpotifySong();
 
-            setCurrentSong(currentSong);
+            if (!response) return;
 
-            const backendSong = mapSongInfoToBackendSong(currentSong);
-            const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
+            if (response.data) {
+              const backendSong: BackendSongInfo = response.data;
 
-            if (lastEmitedState.current !== stateString) {
-              socket.emit("music_status_update", backendSong);
-              lastEmitedState.current = stateString;
+              setCurrentSong(mapBackendSongToSongInfo(backendSong));
+
+              const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
+              if (lastEmittedState.current !== stateString) {
+                socket.emit("music_status_update", backendSong);
+                lastEmittedState.current = stateString;
+              }
             }
           }
-        } catch (error) {
-          console.error("Error while fetching music state:", error);
-        }
-      }, 1000)
+        } catch (error) {}
+      }, 5000);
+    };
+
+    const stopLocalPolling = () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === "active"
+      ) {
+        if (preferedPlatform === "SPOTIFY") socket.emit("STOP_SERVER_POLLING");
+        startLocalPolling();
+      } else if (
+        appState.current === "active" &&
+        nextAppState.match(/inactive|background/)
+      ) {
+        stopLocalPolling();
+        if (preferedPlatform === "SPOTIFY")
+          socket.emit("START_SERVER_POLLING", "SPOTIFY");
+      }
+      appState.current = nextAppState;
+    });
+
+    if (appState.current === "active") {
+      startLocalPolling();
     } else if (preferedPlatform === "SPOTIFY") {
       socket.emit("START_SERVER_POLLING", "SPOTIFY");
     }
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
-      if (preferedPlatform === "SPOTIFY") {
-        socket.emit("STOP_SERVER_POLLING")
-      }
-    }
-  }, [preferedPlatform])
+      stopLocalPolling();
+      subscription.remove();
+      if (preferedPlatform === "SPOTIFY") socket.emit("STOP_SERVER_POLLING");
+    };
+  }, [preferedPlatform]);
 }
