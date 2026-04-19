@@ -3,8 +3,14 @@ import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useAuthStore } from "@/store/auth.store";
 import { useMusicStore } from "@/store/music.store";
 import { useMusicColors } from "@/utils/useMusicColors";
-import { useRouter } from "expo-router";
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { Redirect, useRouter } from "expo-router";
+import {
+  View,
+  Text,
+  Pressable,
+  ActivityIndicator,
+  useWindowDimensions,
+} from "react-native";
 
 export default function DashboardScreen() {
   const { isLoading } = useInitialData();
@@ -17,6 +23,12 @@ export default function DashboardScreen() {
   const handleAuthTestingRedirect = () => router.navigate("/authTesting");
   useGlobalSocket();
   useMusicColors();
+
+  const { width } = useWindowDimensions();
+
+  if (width < 768) {
+    return <Redirect href="/(tabs)/home" />;
+  }
   return (
     <View className="flex-1 justify-center items-center">
       <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">
