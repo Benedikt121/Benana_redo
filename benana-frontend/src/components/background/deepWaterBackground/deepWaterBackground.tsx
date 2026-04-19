@@ -13,6 +13,7 @@ import { useFBO } from "@react-three/drei";
 import * as THREE from "three";
 import { useTexture } from "@react-three/drei/native";
 import { WATER_CONFIG } from "./deepWaterConfigs";
+import { useMusicStore } from "@/store/music.store";
 
 interface WaterProps {
   /**
@@ -215,15 +216,19 @@ export default function DeepWaterBackground({
   speed,
   lightThreshold,
 }: WaterProps) {
+  const stateCoverUrl = useMusicStore(
+    (state) => state.currentSong?.albumCoverUrl,
+  );
   const defaultImage = require("../../../../assets/default_background_image.png");
   const defaultColor = "#001d5a";
+  coverUrl = stateCoverUrl || coverUrl || defaultImage;
   return (
     <View className="absolute inset-0 z-[-1] bg-[#050510]">
       <Canvas className="flex-1">
         <Suspense fallback={null}>
           <WaterShaderPlane
             baseWaterColor={baseWaterColor || defaultColor}
-            coverUrl={coverUrl || defaultImage}
+            coverUrl={coverUrl}
             dropSize={dropSize}
             dropIntensity={dropIntensity}
             dropInterval={dropInterval}

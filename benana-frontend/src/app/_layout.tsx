@@ -55,7 +55,7 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <View className="flex-1 bg-transparent">
         {usedBackground === "deepWater" ? (
-          <DeepWaterBackground coverUrl="https://i.scdn.co/image/ab67616d0000b27346f6a37af54494f2b038eaf0" />
+          <DeepWaterBackground />
         ) : (
           <RainyWindowBackground />
         )}
