@@ -8,7 +8,7 @@ export interface Friend {
     id: string;
     username: string;
     color: string;
-    profilePictureURL: string;
+    profilePictureUrl: string;
   };
 }
 

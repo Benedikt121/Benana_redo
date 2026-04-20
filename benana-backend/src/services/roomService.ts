@@ -9,7 +9,7 @@ export const createRoom = async (hostId: string) => {
       },
       include: {
         participants: {
-          select: { username: true, color: true },
+          select: { username: true, color: true, profilePictureUrl: true },
         },
       },
     });
@@ -37,7 +37,7 @@ export const getRooms = async () => {
           select: { participants: true },
         },
         host: {
-          select: { username: true },
+          select: { username: true, profilePictureUrl: true },
         },
       },
     });
@@ -60,10 +60,16 @@ export const getRoom = async (roomId: string) => {
       },
       include: {
         participants: {
-          select: { id: true, username: true, color: true, isReady: true },
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            isReady: true,
+            profilePictureUrl: true,
+          },
         },
         host: {
-          select: { username: true },
+          select: { username: true, profilePictureUrl: true },
         },
       },
     });
@@ -143,8 +149,22 @@ export const findInvitationsForRoom = async (roomId: string) => {
     return await prisma.invitation.findMany({
       where: { roomId },
       include: {
-        sender: { select: { id: true, username: true, color: true } },
-        receiver: { select: { id: true, username: true, color: true } },
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            profilePictureUrl: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            profilePictureUrl: true,
+          },
+        },
       },
     });
   } catch (error) {

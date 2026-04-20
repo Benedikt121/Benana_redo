@@ -62,6 +62,7 @@ app.get("/api/health", async (req, res) => res.send("OK"));
 
 const clientPath = path.join(__dirname, "../client");
 app.use(express.static(clientPath));
+app.use("/public", express.static(path.join(__dirname, "../public")));
 
 app.get("*all", (req, res) => {
   if (!req.path.startsWith("/api/")) {

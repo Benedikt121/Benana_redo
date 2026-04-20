@@ -137,15 +137,15 @@ export const deleteUserById = async (id: string) => {
 
 export const updateUserColorOrAvatar = async (
   id: string,
-  color: string,
-  avatar: string,
+  color?: string,
+  avatar?: string,
 ) => {
   try {
     return await prisma.user.update({
       where: { id },
       data: {
-        color,
-        profilePictureUrl: avatar,
+        ...(color !== undefined && { color }),
+        ...(avatar !== undefined && { profilePictureUrl: avatar }),
       },
       select: safeUserSelect,
     });
@@ -188,9 +188,11 @@ export const getAllUsernams = async (excludeUserId: string) => {
       },
       select: {
         username: true,
+        profilePictureUrl: true,
+        color: true,
       },
     });
-    return users.map((user) => user.username);
+    return users;
   } catch (error) {
     console.error("Error fetching usernames by query:", error);
     throw error;

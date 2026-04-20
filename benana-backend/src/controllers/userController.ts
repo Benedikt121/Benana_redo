@@ -110,3 +110,31 @@ export const searchUsersAutoComplete = async (req: Request, res: Response) => {
       .json({ status: "error", message: "Failed to search users" });
   }
 };
+export const uploadProfilePicture = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const file = req.file;
+
+    if (!file) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "No file uploaded" });
+    }
+
+    // The path should be relative to the public folder
+    const profilePictureUrl = `/public/uploads/${file.filename}`;
+
+    const updatedUser = await updateUserColorOrAvatar(
+      userId,
+      undefined,
+      profilePictureUrl,
+    );
+
+    res.status(200).json({ status: "success", data: updatedUser });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to upload profile picture" });
+  }
+};

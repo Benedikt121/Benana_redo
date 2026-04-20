@@ -57,7 +57,14 @@ export const getPendingFriendRequests = async (userId: string) => {
     return await prisma.friendship.findMany({
       where: { receiverId: userId, status: "PENDING" },
       include: {
-        sender: { select: { id: true, username: true, color: true } },
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            profilePictureUrl: true,
+          },
+        },
       },
     });
   } catch (error) {

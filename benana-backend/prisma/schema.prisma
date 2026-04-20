@@ -26,7 +26,7 @@ model User {
   id                  String   @id @default(uuid())
   username            String   @unique
   passwordHash        String
-  profilePictureUrl   String?  @default("/public/uploads/default.png")
+  profilePictureUrl   String?  @default("/public/uploads/avatar_placeholder.png")
   createdAt           DateTime @default(now())
   color               String   @default("#ffffff")
   spotifyId           String?
