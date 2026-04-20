@@ -17,6 +17,11 @@ export function useInitialData() {
   const setFriends = useFriendsStore((state) => state.setFriends);
   const setFriendRequests = useFriendsStore((state) => state.setFriendRequests);
   const setRoomInvites = useInvitesStore((state) => state.setRoomInvites);
+  const hydrateMusic = useMusicStore((state) => state.hydrate);
+
+  useEffect(() => {
+    hydrateMusic();
+  }, []);
 
   const userQuery = useQuery({
     queryKey: QUERY_KEYS.USER.ME,

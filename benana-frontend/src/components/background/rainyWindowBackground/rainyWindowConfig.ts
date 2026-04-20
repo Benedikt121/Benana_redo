@@ -27,7 +27,7 @@ export const RAINY_CONFIG = {
       normal: 0.8,
       zoom: 2.2,
       blurIntensity: 5.0,
-      blurIterations: 32,
+      blurIterations: 20,
     },
     default: {
       intensity: 0.5,

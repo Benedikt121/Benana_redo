@@ -2,6 +2,7 @@ import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useAuthStore } from "@/store/auth.store";
 import { useMusicStore } from "@/store/music.store";
+import { useMusicSync } from "@/hooks/sockets/useMusicSync";
 import { useMusicColors } from "@/utils/useMusicColors";
 import { useRouter } from "expo-router";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
@@ -10,6 +11,7 @@ export default function HomeTab() {
   const { isLoading } = useInitialData();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  useMusicSync();
   const handleLogout = () => {
     logout();
     router.replace("/login");

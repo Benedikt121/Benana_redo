@@ -8,19 +8,23 @@ export interface ProfileCircleProps {
   onClick?: () => void;
   me?: boolean;
   userId?: string;
+  size?: number;
 }
 
 export function ProfileCircle({
-  onClick = () => {},
+  onClick,
   me = true,
   userId,
+  size = 48,
 }: ProfileCircleProps) {
   const myUserProfilePictureUrl = useUserStore(
     (state) => state.profile?.profilePictureUrl,
   );
 
-  const friendUserProfilePictureUrl = useFriendsStore((state) =>
-    state.friends.filter((f) => f.friend.id === userId),
+  const friendProfilePictureUrl = useFriendsStore(
+    (state) =>
+      state.friends.find((f) => f.friend.id === userId)?.friend
+        .profilePictureUrl,
   );
 
   let profilePictureUrl: string | null | undefined;
@@ -28,29 +32,35 @@ export function ProfileCircle({
   if (me) {
     profilePictureUrl = myUserProfilePictureUrl;
   } else {
-    profilePictureUrl =
-      friendUserProfilePictureUrl[0]?.friend.profilePictureUrl;
+    profilePictureUrl = friendProfilePictureUrl;
   }
-  return (
-    <Pressable onPress={onClick}>
-      <View className="overflow-hidden rounded-full border border-gray-700">
-        <Image
-          source={
-            profilePictureUrl &&
-            profilePictureUrl !== "/public/uploads/avatar_placeholder.png"
-              ? {
-                  uri: profilePictureUrl.startsWith("http")
-                    ? profilePictureUrl
-                    : `${API_URL}${profilePictureUrl}`,
-                }
-              : require("../../assets/uploads/avatar_placeholder.png")
-          }
-          className="w-12 h-12"
-          contentFit="cover"
-          transition={200}
-          cachePolicy="disk"
-        />
-      </View>
-    </Pressable>
+  const imageContent = (
+    <View
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+      className="overflow-hidden border border-gray-700"
+    >
+      <Image
+        source={
+          profilePictureUrl &&
+          profilePictureUrl !== "/public/uploads/avatar_placeholder.png"
+            ? {
+                uri: profilePictureUrl.startsWith("http")
+                  ? profilePictureUrl
+                  : `${API_URL}${profilePictureUrl}`,
+              }
+            : require("../../assets/uploads/avatar_placeholder.png")
+        }
+        style={{ width: size, height: size }}
+        contentFit="cover"
+        transition={200}
+        cachePolicy="disk"
+      />
+    </View>
   );
+
+  if (onClick) {
+    return <Pressable onPress={onClick}>{imageContent}</Pressable>;
+  }
+
+  return imageContent;
 }

@@ -1,3 +1,4 @@
+import { ProfileCircle } from "@/components/profileCircle";
 import { Tabs } from "expo-router";
 
 export default function TabLayout() {
@@ -22,7 +23,10 @@ export default function TabLayout() {
           // tabBarIcon
         }}
       />
-      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+      <Tabs.Screen
+        name="profile"
+        options={{ title: "Profile", tabBarIcon: ({ size }) => <ProfileCircle size={size} /> }}
+      />
     </Tabs>
   );
 }

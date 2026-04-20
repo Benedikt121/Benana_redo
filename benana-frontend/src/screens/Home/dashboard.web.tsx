@@ -1,3 +1,4 @@
+import { ProfileCircle } from "@/components/profileCircle";
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useAuthStore } from "@/store/auth.store";
@@ -45,6 +46,12 @@ export default function DashboardScreen() {
           Auslogen
         </Text>
       </Pressable>
+
+      <ProfileCircle
+        onClick={() => {
+          router.navigate("/profile");
+        }}
+      />
 
       <Pressable
         onPress={handleAuthTestingRedirect}

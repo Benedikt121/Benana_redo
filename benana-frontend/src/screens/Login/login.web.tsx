@@ -8,6 +8,7 @@ import {
   Text,
   TextInput,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import z from "zod";
 import Animated, {
@@ -15,9 +16,17 @@ import Animated, {
   FadeOutUp,
   LinearTransition,
 } from "react-native-reanimated";
+import LoginMobile from "./login";
 
 export default function LoginWeb() {
   type AuthFormValues = z.infer<typeof registerSchema>;
+
+  const { width } = useWindowDimensions();
+
+  if (width < 768) {
+    return <LoginMobile />;
+  }
+
   const {
     handleLogin,
     handleRegister,
@@ -109,10 +118,11 @@ export default function LoginWeb() {
                 name="username"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${errors.username
+                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${
+                      errors.username
                         ? "border-red-500"
                         : "border-transparent focus:border-white/50"
-                      }`}
+                    }`}
                     placeholder="Username eingeben..."
                     placeholderTextColor="#9ca3af"
                     onBlur={onBlur}
@@ -138,10 +148,11 @@ export default function LoginWeb() {
                 name="password"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <TextInput
-                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${errors.password
+                    className={`bg-white/10 text-white px-4 py-3 rounded-xl border outline-none transition-colors ${
+                      errors.password
                         ? "border-red-500"
                         : "border-transparent focus:border-white/50"
-                      }`}
+                    }`}
                     placeholder="Passwort eingeben..."
                     placeholderTextColor="#9ca3af"
                     onBlur={onBlur}

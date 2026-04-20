@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { useSpotifyAuth } from "@/hooks/login/useSpotifyAuth";
 import { useAppleMusicAuth } from "@/hooks/login/useAppleMusicAuth";
+import { router } from "expo-router";
 
 export default function AuthTestingMobile() {
   const { promptAsync: promptSpotify, isReady: isSpotifyReady } =
@@ -11,6 +12,10 @@ export default function AuthTestingMobile() {
     isAuthenticating: isAppleLoading,
     AppleAuthUI,
   } = useAppleMusicAuth();
+
+  function handleHomeRedirect(): void {
+    router.back();
+  }
 
   return (
     <View className="flex-1 justify-center items-center bg-white">
@@ -43,6 +48,15 @@ export default function AuthTestingMobile() {
           </Text>
         </Pressable>
       </View>
+
+      <Pressable
+        onPress={handleHomeRedirect}
+        className="text-white text-3xl font-bold mb-8"
+      >
+        <Text className="text-white font-bold text-lg text-shadow-glow">
+          Auth Test
+        </Text>
+      </Pressable>
 
       {/* WICHTIG: Das unsichtbare Modal für den Apple Login */}
       {AppleAuthUI}
