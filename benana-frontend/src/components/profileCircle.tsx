@@ -3,6 +3,7 @@ import { useUserStore } from "@/store/user.store";
 import { Pressable, View } from "react-native";
 import { Image } from "expo-image";
 import { API_URL } from "@/constants/API_CONSTANTS";
+import { useProfile } from "@/hooks/Profile/useProfile";
 
 export interface ProfileCircleProps {
   onClick?: () => void;
@@ -17,27 +18,18 @@ export function ProfileCircle({
   userId,
   size = 48,
 }: ProfileCircleProps) {
-  const myUserProfilePictureUrl = useUserStore(
-    (state) => state.profile?.profilePictureUrl,
-  );
+  const { displayedUser } = useProfile(userId);
 
-  const friendProfilePictureUrl = useFriendsStore(
-    (state) =>
-      state.friends.find((f) => f.friend.id === userId)?.friend
-        .profilePictureUrl,
-  );
+  const profilePictureUrl = displayedUser?.profilePictureUrl;
 
-  let profilePictureUrl: string | null | undefined;
+  const borderColor = displayedUser?.color; // hex color to border
 
-  if (me) {
-    profilePictureUrl = myUserProfilePictureUrl;
-  } else {
-    profilePictureUrl = friendProfilePictureUrl;
-  }
   const imageContent = (
     <View
-      style={{ width: size, height: size, borderRadius: size / 2 }}
-      className="overflow-hidden border border-gray-700"
+      style={{
+        borderColor: borderColor,
+      }}
+      className={`overflow-hidden w-[${size}px] h-[${size}px] rounded-full border-3`}
     >
       <Image
         source={

@@ -16,3 +16,16 @@ export interface MeResponse {
     isSpotifyLinked: boolean;
   };
 }
+
+export interface getUserResponse {
+  status: string;
+  data: {
+    id: string;
+    username: string;
+    color: string;
+    profilePictureUrl: string | null;
+    createdAt: Date;
+    currentRoomId: string | null;
+    isReady: boolean;
+  };
+}

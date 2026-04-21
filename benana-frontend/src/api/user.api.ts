@@ -1,6 +1,10 @@
-import { getAuthHeaders } from "./../constants/API_CONSTANTS";
+import {
+  getAuthHeaders,
+  USER_BY_ID_PATH,
+  USER_BY_NAME_PATH,
+} from "./../constants/API_CONSTANTS";
 import { ME_PATH } from "@/constants/API_CONSTANTS";
-import { MeResponse } from "@/types/UserTypes";
+import { getUserResponse, MeResponse } from "@/types/UserTypes";
 import axios from "axios";
 
 export const getMe = async (): Promise<MeResponse> => {
@@ -9,7 +13,9 @@ export const getMe = async (): Promise<MeResponse> => {
   });
   return response.data;
 };
-export const uploadProfilePicture = async (uri: string): Promise<MeResponse> => {
+export const uploadProfilePicture = async (
+  uri: string,
+): Promise<MeResponse> => {
   const formData = new FormData();
 
   // Handle hybrid environment (web vs mobile)
@@ -28,6 +34,23 @@ export const uploadProfilePicture = async (uri: string): Promise<MeResponse> => 
       ...getAuthHeaders(),
       "Content-Type": "multipart/form-data",
     },
+  });
+  return response.data;
+};
+
+export const getUser = async (
+  userId?: string,
+  username?: string,
+): Promise<getUserResponse> => {
+  const searchBy = userId ? userId : username ? username : null;
+  let path = "";
+
+  if (searchBy === userId) path = USER_BY_ID_PATH(userId);
+  else if (searchBy === username) path = USER_BY_NAME_PATH(username);
+  else throw new Error("No Id or Username was provided.");
+
+  const response = await axios.get<getUserResponse>(path, {
+    headers: getAuthHeaders(),
   });
   return response.data;
 };
