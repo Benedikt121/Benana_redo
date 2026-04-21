@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 
 export function ProfileEditPopup({
   isVisible,
@@ -7,9 +7,13 @@ export function ProfileEditPopup({
   isVisible: boolean;
   onClose: () => void;
 }) {
+  let width = "90vw";
+  if (Platform.OS === "web") width = "50vw";
   if (!isVisible) return null;
   return (
-    <View className="absolute bottom-0 left-0 right-0 h-2/3 bg-background rounded-t-3xl border-t-2 border-white/10">
+    <View
+      className={`absolute w-[${width}] h-2/3 bg-white/20 rounded-3xl border-2 border-white/10 shadow-2xl backdrop-blur-sm `}
+    >
       <Text>ProfileEditPopup</Text>
     </View>
   );
