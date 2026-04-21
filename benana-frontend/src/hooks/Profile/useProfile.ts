@@ -9,8 +9,10 @@ export function useProfile(userId?: string, username?: string) {
 
   const myProfile = useUserStore((state) => state.profile);
 
-  // If no params are given, it's my own profile
-  const isMe = (!userId && !username) || userId === myProfile?.id || username === myProfile?.username;
+  const isMe =
+    (!userId && !username) ||
+    userId === myProfile?.id ||
+    username === myProfile?.username;
 
   const userByIdQuery = useQuery({
     queryKey: QUERY_KEYS.USER.USER_BY_ID(userId!),
@@ -24,9 +26,9 @@ export function useProfile(userId?: string, username?: string) {
     enabled: !!token && !!username && !isMe,
   });
 
-  const displayedUser = isMe 
-    ? myProfile 
-    : (userByIdQuery.data?.data || userByUsernameQuery.data?.data);
+  const displayedUser = isMe
+    ? myProfile
+    : userByIdQuery.data?.data || userByUsernameQuery.data?.data;
 
   return {
     myProfile,

@@ -38,6 +38,16 @@ export const uploadProfilePicture = async (
   return response.data;
 };
 
+export const updateMe = async (data: {
+  color?: string;
+  avatar?: string;
+}): Promise<getUserResponse> => {
+  const response = await axios.patch<getUserResponse>(ME_PATH, data, {
+    headers: getAuthHeaders(),
+  });
+  return response.data;
+};
+
 export const getUser = async (
   userId?: string,
   username?: string,
