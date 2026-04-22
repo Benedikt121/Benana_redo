@@ -1,5 +1,6 @@
 import { Platform, Text, View } from "react-native";
 import { ImageUploader } from "./ImageUploader";
+import { ColorChanger } from "./ColorChanger";
 
 export function ProfileEditPopup({
   isVisible,
@@ -22,17 +23,24 @@ export function ProfileEditPopup({
         <ImageUploader />
       </View>
 
-      <View
-        className={`flex-1 justify-start items-center pt-10 ${
-          Platform.OS === "web" ? "pr-10" : "pl-10"
-        }`}
-      >
+      <View className={`flex-1 justify-start items-center pt-10`}>
         <Text
           className={`text-white text-2xl font-bold ${
-            Platform.OS === "web" ? "self-end" : "self-start"
+            Platform.OS === "web" ? "self-center" : "self-start"
           }`}
         >
           Farbe ändern
+        </Text>
+        <ColorChanger />
+      </View>
+
+      <View className="flex-1 justify-start items-center pt-10 px-10">
+        <Text
+          className={`text-white text-2xl font-bold mb-4 ${
+            Platform.OS === "web" ? "self-start" : "self-end"
+          }`}
+        >
+          Hintergrund ändern
         </Text>
       </View>
     </View>
