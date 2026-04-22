@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import {
   getAuthHeaders,
   USER_BY_ID_PATH,
@@ -18,16 +19,22 @@ export const uploadProfilePicture = async (
 ): Promise<MeResponse> => {
   const formData = new FormData();
 
-  // Handle hybrid environment (web vs mobile)
-  const filename = uri.split("/").pop();
-  const match = /\.(\w+)$/.exec(filename || "");
-  const type = match ? `image/${match[1]}` : `image`;
+  if (Platform.OS === "web") {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const filename = uri.split("/").pop() || "avatar.jpg";
+    formData.append("avatar", blob, filename);
+  } else {
+    const filename = uri.split("/").pop();
+    const match = /\.(\w+)$/.exec(filename || "");
+    const type = match ? `image/${match[1]}` : `image`;
 
-  formData.append("avatar", {
-    uri: uri,
-    name: filename || "avatar.png",
-    type,
-  } as any);
+    formData.append("avatar", {
+      uri: uri,
+      name: filename || "avatar.png",
+      type,
+    } as any);
+  }
 
   const response = await axios.post<MeResponse>(`${ME_PATH}/avatar`, formData, {
     headers: {
