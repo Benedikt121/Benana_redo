@@ -40,7 +40,7 @@ export function ProfileCircle({
                   ? profilePictureUrl
                   : `${API_URL}${profilePictureUrl}`,
               }
-            : require("../../assets/uploads/avatar_placeholder.png")
+            : require("../../../assets/uploads/avatar_placeholder.png")
         }
         style={{ width: size, height: size }}
         contentFit="cover"

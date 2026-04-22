@@ -1,4 +1,4 @@
-import { ProfileCircle } from "@/components/profileCircle";
+import { ProfileCircle } from "@/components/profile/profileCircle";
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useAuthStore } from "@/store/auth.store";

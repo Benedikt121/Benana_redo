@@ -1,5 +1,5 @@
-import { ProfileCircle } from "@/components/profileCircle";
-import { ProfileEditPopup } from "@/components/ProfileEditPopup";
+import { ProfileCircle } from "@/components/profile/profileCircle";
+import { ProfileEditPopup } from "@/components/profile/ProfileEditPopup";
 import { useProfile } from "@/hooks/Profile/useProfile";
 import { useAuthStore } from "@/store/auth.store";
 import { router, useLocalSearchParams } from "expo-router";
@@ -43,8 +43,8 @@ export default function ProfileWeb() {
     <View className="flex-1 justify-center items-center">
       <ProfileCircle size={150} userId={displayedUser.id} me={isMe} />
       {isMe && (
-        <Pressable 
-          className="mt-0.5" 
+        <Pressable
+          className="mt-0.5"
           onPress={() => setIsEditPopupVisible(true)}
         >
           <Text className="text-white text-xs underline">
@@ -64,9 +64,9 @@ export default function ProfileWeb() {
         </Pressable>
       )}
 
-      <ProfileEditPopup 
-        isVisible={isEditPopupVisible} 
-        onClose={() => setIsEditPopupVisible(false)} 
+      <ProfileEditPopup
+        isVisible={isEditPopupVisible}
+        onClose={() => setIsEditPopupVisible(false)}
       />
     </View>
   );
