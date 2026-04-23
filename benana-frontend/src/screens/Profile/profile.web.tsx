@@ -2,12 +2,14 @@ import { ProfileCircle } from "@/components/profile/profileCircle";
 import { ProfileEditPopup } from "@/components/profile/ProfileEditPopup";
 import { useProfile } from "@/hooks/Profile/useProfile";
 import { useAuthStore } from "@/store/auth.store";
+import { useUserStore } from "@/store/user.store";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Text, View, ActivityIndicator, Pressable } from "react-native";
 
 export default function ProfileWeb() {
   const [isEditPopupVisible, setIsEditPopupVisible] = useState(false);
+  const { profile } = useUserStore((state) => state);
   const { userId, username } = useLocalSearchParams<{
     userId?: string;
     username?: string;
@@ -56,6 +58,22 @@ export default function ProfileWeb() {
       <Text className="text-white">
         Beigetreten am: {new Date(displayedUser.createdAt).toLocaleDateString()}
       </Text>
+      {isMe && profile && profile.isSpotifyLinked && (
+        <View className="flex-row items-center">
+          <Text className="text-white">Spotify linked</Text>
+          <Pressable onPress={() => {}}>
+            <Text className="text-red-500">Entkoppeln</Text>
+          </Pressable>
+        </View>
+      )}
+      {isMe && profile && profile.isAppleLinked && (
+        <View className="flex-row items-center">
+          <Text className="text-white">Apple Music linked</Text>
+          <Pressable onPress={() => {}}>
+            <Text className="text-red-500">Entkoppeln</Text>
+          </Pressable>
+        </View>
+      )}
 
       <Text className="text-white text-xl mt-4">Stats</Text>
       {isMe && (
