@@ -112,6 +112,7 @@ export const searchUsersAutoComplete = async (req: Request, res: Response) => {
       .json({ status: "error", message: "Failed to search users" });
   }
 };
+
 export const uploadProfilePicture = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;

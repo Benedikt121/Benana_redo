@@ -1,3 +1,4 @@
+import { updateColor } from "@/api/user.api";
 import { useUserStore } from "@/store/user.store";
 import { useState } from "react";
 import { View, StyleSheet, Pressable, Text } from "react-native";
@@ -11,6 +12,8 @@ import ColorPicker, {
 export function ColorChanger() {
   const { profile } = useUserStore();
   const [color, setColor] = useState<string | undefined>(profile?.color);
+
+  const setProfile = useUserStore((state) => state.setProfile);
 
   const handleColorChange = ({ hex }: { hex: string }) => {
     setColor(hex);
@@ -38,7 +41,12 @@ export function ColorChanger() {
       {color !== profile?.color && (
         <Pressable
           className="bg-white/20 px-6 py-2 rounded-xl items-center justify-center mt-4"
-          onPress={() => {}}
+          onPress={async () => {
+            if (profile && color) {
+              await updateColor(color);
+              setProfile({ ...profile, color: color });
+            }
+          }}
         >
           <Text className="text-white text-lg font-bold">Farbe bestätigen</Text>
         </Pressable>

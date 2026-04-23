@@ -71,3 +71,14 @@ export const getUser = async (
   });
   return response.data;
 };
+
+export const updateColor = async (color: string): Promise<getUserResponse> => {
+  const response = await axios.patch(
+    ME_PATH,
+    { color: color },
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return response.data;
+};
