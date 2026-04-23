@@ -1,5 +1,6 @@
-import { Redirect } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 
 export default function Profile() {
-  return <Redirect href="/(tabs)/profile" />;
+  const params = useLocalSearchParams();
+  return <Redirect href={{ pathname: "/(tabs)/profile", params }} />;
 }

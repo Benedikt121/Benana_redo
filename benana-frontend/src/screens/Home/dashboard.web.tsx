@@ -14,7 +14,6 @@ import {
 } from "react-native";
 
 export default function DashboardScreen() {
-  const { isLoading } = useInitialData();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const handleLogout = () => {
@@ -22,8 +21,6 @@ export default function DashboardScreen() {
     router.replace("/login");
   };
   const handleAuthTestingRedirect = () => router.navigate("/authTesting");
-  useGlobalSocket();
-  useMusicColors();
 
   const { width } = useWindowDimensions();
 

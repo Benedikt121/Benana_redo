@@ -8,17 +8,13 @@ import { useRouter } from "expo-router";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 
 export default function HomeTab() {
-  const { isLoading } = useInitialData();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
-  useMusicSync();
   const handleLogout = () => {
     logout();
     router.replace("/login");
   };
   const handleAuthTestingRedirect = () => router.navigate("/authTesting");
-  useGlobalSocket();
-  useMusicColors();
   return (
     <View className="flex-1 justify-center items-center">
       <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">

@@ -10,24 +10,26 @@ import { useUserStore } from "@/store/user.store";
 import { useMusicSync } from "@/hooks/sockets/useMusicSync";
 import { useMusicStore } from "@/store/music.store";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useInitialData } from "@/hooks/login/useInitialData";
+import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
+import { useMusicColors } from "@/utils/useMusicColors";
 
 const queryClient = new QueryClient();
 
-export default function RootLayout() {
-  const usedBackground = useUserStore(
-    (state) => state.profile?.preferedBackground,
-  );
+function AppInitializer({ children }: { children: React.ReactNode }) {
+  useInitialData();
+  useGlobalSocket();
+  useMusicColors();
+  return <>{children}</>;
+}
 
+export default function RootLayout() {
   const { token, isHydrated, hydrate } = useAuthStore();
-  const hydrateMusic = useMusicStore((state) => state.hydrate);
   const segments = useSegments();
   const router = useRouter();
 
-  useMusicSync();
-
   useEffect(() => {
     hydrate();
-    hydrateMusic();
   }, []);
 
   useEffect(() => {
@@ -49,23 +51,38 @@ export default function RootLayout() {
       </View>
     );
   }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
-        <View className="flex-1 bg-transparent">
-          {usedBackground === "deepWater" ? (
-            <DeepWaterBackground />
-          ) : (
-            <RainyWindowBackground />
-          )}
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" },
-            }}
-          />
-        </View>
+        <AppInitializer>
+          <RootLayoutContent />
+        </AppInitializer>
       </QueryClientProvider>
     </GestureHandlerRootView>
+  );
+}
+
+function RootLayoutContent() {
+  const usedBackground = useUserStore(
+    (state) => state.profile?.preferedBackground,
+  );
+
+  useMusicSync();
+
+  return (
+    <View className="flex-1 bg-transparent">
+      {usedBackground === "deepWater" ? (
+        <DeepWaterBackground />
+      ) : (
+        <RainyWindowBackground />
+      )}
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "transparent" },
+        }}
+      />
+    </View>
   );
 }

@@ -1,4 +1,4 @@
-import { getUser } from "@/api/user.api";
+import { getMe, getUser } from "@/api/user.api";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { useUserStore } from "@/store/user.store";
@@ -13,6 +13,12 @@ export function useProfile(userId?: string, username?: string) {
     (!userId && !username) ||
     userId === myProfile?.id ||
     username === myProfile?.username;
+
+  const meQuery = useQuery({
+    queryKey: QUERY_KEYS.USER.ME,
+    queryFn: async () => getMe(),
+    enabled: !!token && isMe,
+  });
 
   const userByIdQuery = useQuery({
     queryKey: QUERY_KEYS.USER.USER_BY_ID(userId!),
@@ -30,15 +36,20 @@ export function useProfile(userId?: string, username?: string) {
     ? myProfile
     : userByIdQuery.data?.data || userByUsernameQuery.data?.data;
 
+  const isAnyLoading = isMe
+    ? meQuery.isLoading && !myProfile
+    : userByIdQuery.isLoading || userByUsernameQuery.isLoading;
+
   return {
     myProfile,
     displayedUser,
     isMe,
-    isLoading: userByIdQuery.isLoading || userByUsernameQuery.isLoading,
+    isLoading: isAnyLoading,
     isError: userByIdQuery.isError || userByUsernameQuery.isError,
     refetch: () => {
       userByIdQuery.refetch();
       userByUsernameQuery.refetch();
+      meQuery.refetch();
     },
   };
 }
