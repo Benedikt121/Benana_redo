@@ -9,7 +9,11 @@ import ColorPicker, {
   Preview,
 } from "reanimated-color-picker";
 
-export function ColorChanger() {
+export function ColorChanger({
+  onEditingChange,
+}: {
+  onEditingChange?: (isEditing: boolean) => void;
+}) {
   const { profile } = useUserStore();
   const [color, setColor] = useState<string | undefined>(profile?.color);
 
@@ -24,7 +28,11 @@ export function ColorChanger() {
       <ColorPicker
         style={{ width: "100%", gap: 15 }}
         value={profile?.color}
-        onComplete={handleColorChange}
+        onComplete={(color) => {
+          handleColorChange(color);
+          onEditingChange?.(false);
+        }}
+        onChange={() => onEditingChange?.(true)}
       >
         <Preview style={styles.preview} />
         <Panel1 style={styles.panel} />

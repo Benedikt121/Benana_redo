@@ -15,7 +15,11 @@ import { uploadProfilePicture } from "@/api/user.api";
 
 const CIRCLE_SIZE = 200;
 
-export function ImageUploader() {
+export function ImageUploader({
+  onEditingChange,
+}: {
+  onEditingChange?: (isEditing: boolean) => void;
+}) {
   const profile = useUserStore((state) => state.profile);
   const setProfile = useUserStore((state) => state.setProfile);
 
@@ -24,6 +28,10 @@ export function ImageUploader() {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    onEditingChange?.(isEditing);
+  }, [isEditing, onEditingChange]);
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
 
   const translateX = useSharedValue(0);
@@ -35,7 +43,7 @@ export function ImageUploader() {
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: false,
       quality: 1,
     });
