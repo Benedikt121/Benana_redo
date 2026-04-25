@@ -4,6 +4,8 @@ import * as ImagePicker from "expo-image-picker";
 import { useState, useEffect } from "react";
 import { useUserStore } from "@/store/user.store";
 import { API_URL } from "@/constants/API_CONSTANTS";
+import { QUERY_KEYS } from "@/constants/QueryKeys";
+import { useQueryClient } from "@tanstack/react-query";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -22,6 +24,7 @@ export function ImageUploader({
 }) {
   const profile = useUserStore((state) => state.profile);
   const setProfile = useUserStore((state) => state.setProfile);
+  const queryClient = useQueryClient();
 
   const [image, setImage] = useState<string | null>(
     profile?.profilePictureUrl ?? null,
@@ -155,14 +158,46 @@ export function ImageUploader({
     setIsUploading(true);
 
     try {
+      // Calculate displayed dimensions based on "cover" content fit and current scale
+      const scaleToFill = Math.max(
+        CIRCLE_SIZE / imageSize.width,
+        CIRCLE_SIZE / imageSize.height,
+      );
+      const totalScale = scaleToFill * scale.value;
+
+      const cropSize = CIRCLE_SIZE / totalScale;
+      const originX =
+        (imageSize.width - cropSize) / 2 - translateX.value / totalScale;
+      const originY =
+        (imageSize.height - cropSize) / 2 - translateY.value / totalScale;
+
       const result = await ImageManipulator.manipulateAsync(
         image,
-        [{ resize: { width: 1000 } }],
+        [
+          {
+            crop: {
+              originX: Math.max(0, originX),
+              originY: Math.max(0, originY),
+              width: cropSize,
+              height: cropSize,
+            },
+          },
+          { resize: { width: 1000 } },
+        ],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
       );
 
       const updatedUser = await uploadProfilePicture(result.uri);
       await setProfile(updatedUser.data);
+
+      // Invalidate queries to sync the rest of the app
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.ME });
+
+      // Update local state and add a cache-buster if it's a URL
+      if (updatedUser.data.profilePictureUrl) {
+        setImage(`${updatedUser.data.profilePictureUrl}?t=${Date.now()}`);
+      }
+
       setIsEditing(false);
     } catch (error) {
       console.error(error);

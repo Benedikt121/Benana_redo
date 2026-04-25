@@ -1,7 +1,7 @@
 import { updateColor } from "@/api/user.api";
 import { useUserStore } from "@/store/user.store";
 import { useState } from "react";
-import { View, StyleSheet, Pressable, Text } from "react-native";
+import { View, StyleSheet, Pressable, Text, Platform } from "react-native";
 import ColorPicker, {
   HueSlider,
   InputWidget,
@@ -23,30 +23,61 @@ export function ColorChanger({
     setColor(hex);
   };
 
+  const handleColorChangeMobile = async ({ hex }: { hex: string }) => {
+    "worklet";
+    setColor(hex);
+    await updateColor(hex);
+    setProfile({ ...profile!, color: hex });
+  };
+
   return (
     <View className="mt-6 items-center w-full px-6">
-      <ColorPicker
-        style={{ width: "100%", gap: 15 }}
-        value={profile?.color}
-        onComplete={(color) => {
-          handleColorChange(color);
-          onEditingChange?.(false);
-        }}
-        onChange={() => onEditingChange?.(true)}
-      >
-        <Preview style={styles.preview} />
-        <Panel1 style={styles.panel} />
-        <HueSlider style={styles.slider} />
-        <InputWidget
-          containerStyle={styles.inputContainer}
-          inputStyle={styles.input}
-          inputTitleStyle={styles.inputTitle}
-          iconColor="#ffffff"
-          iconStyle={styles.icon}
-        />
-      </ColorPicker>
+      {Platform.OS === "web" && (
+        <ColorPicker
+          style={{ width: "100%", gap: 15 }}
+          value={profile?.color}
+          onComplete={(color) => {
+            handleColorChange(color);
+            onEditingChange?.(false);
+          }}
+          onChange={() => onEditingChange?.(true)}
+        >
+          <Preview style={styles.preview} />
+          <Panel1 style={styles.panel} />
+          <HueSlider style={styles.slider} />
+          <InputWidget
+            containerStyle={styles.inputContainer}
+            inputStyle={styles.input}
+            inputTitleStyle={styles.inputTitle}
+            iconColor="#ffffff"
+            iconStyle={styles.icon}
+          />
+        </ColorPicker>
+      )}
+      {Platform.OS !== "web" && (
+        <ColorPicker
+          style={{ width: "100%", gap: 15 }}
+          value={profile?.color}
+          onCompleteJS={(color) => {
+            handleColorChangeMobile(color);
+            onEditingChange?.(false);
+          }}
+          onChangeJS={() => onEditingChange?.(true)}
+        >
+          <Preview style={styles.preview} />
+          <Panel1 style={styles.panel} />
+          <HueSlider style={styles.slider} />
+          <InputWidget
+            containerStyle={styles.inputContainer}
+            inputStyle={styles.input}
+            inputTitleStyle={styles.inputTitle}
+            iconColor="#ffffff"
+            iconStyle={styles.icon}
+          />
+        </ColorPicker>
+      )}
 
-      {color !== profile?.color && (
+      {color !== profile?.color && Platform.OS === "web" && (
         <Pressable
           className="bg-white/20 px-6 py-2 rounded-xl items-center justify-center mt-4"
           onPress={async () => {

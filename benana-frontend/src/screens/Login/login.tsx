@@ -125,6 +125,12 @@ export default function LoginMobile() {
             </Text>
           )}
 
+          {(isLoginError || isRegisterError) && !isLogin && (
+            <Text className="text-red-400 text-center mb-4">
+              Fehler beim Registrieren. Der Username ist bereits vergeben.
+            </Text>
+          )}
+
           <TouchableOpacity
             onPress={handleSubmit(onSubmit)}
             disabled={isLoginPending || isRegisterPending}
