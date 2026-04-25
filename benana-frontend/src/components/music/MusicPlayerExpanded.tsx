@@ -18,6 +18,9 @@ import { useMusicControls } from "@/hooks/music/useMusicControls";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { PlayingIndicator } from "./PlayingIndicator";
+import { useColorStore } from "@/store/color.store";
+
 
 interface MusicPlayerExpandedProps {
   visible: boolean;
@@ -35,6 +38,10 @@ export const MusicPlayerExpanded = ({
     skipNext,
     skipPrevious,
   } = useMusicControls();
+
+  const dominant = useColorStore((s) => s.dominant) || "#1DB954";
+  const vibrant = useColorStore((s) => s.vibrant) || "#1DB954";
+
 
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -99,12 +106,20 @@ export const MusicPlayerExpanded = ({
 
         {/* Song Info */}
         <View style={styles.songInfo}>
-          <Text style={styles.songTitle} numberOfLines={1}>
-            {currentSong.title}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.songTitle} numberOfLines={1}>
+              {currentSong.title}
+            </Text>
+            <PlayingIndicator
+              isPlaying={isPlaying}
+              color1={vibrant}
+              color2={dominant}
+            />
+          </View>
           <Text style={styles.songArtist} numberOfLines={1}>
             {currentSong.artist}
           </Text>
+
         </View>
 
         {/* Progress indicator (visual only, based on current poll data) */}
@@ -229,10 +244,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 22,
     fontWeight: "700",
+    flex: 1,
     ...(Platform.OS === "web"
       ? { fontFamily: "Inter, system-ui, -apple-system, sans-serif" }
       : {}),
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
   songArtist: {
     color: "rgba(255,255,255,0.55)",
     fontSize: 16,

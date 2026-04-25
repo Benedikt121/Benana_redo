@@ -17,7 +17,9 @@ import Animated, {
 } from "react-native-reanimated";
 import { useMusicControls } from "@/hooks/music/useMusicControls";
 import { useMusicStore } from "@/store/music.store";
+import { useColorStore } from "@/store/color.store";
 import { Ionicons } from "@expo/vector-icons";
+import { PlayingIndicator } from "./PlayingIndicator";
 
 const COMPACT_WIDTH = 120;
 const COMPACT_HEIGHT = 48;
@@ -25,7 +27,6 @@ const EXPANDED_WIDTH = 420;
 const EXPANDED_HEIGHT = 80;
 
 const SPRING_CONFIG = {
-  damping: 20,
   stiffness: 300,
   mass: 0.8,
 };
@@ -44,6 +45,8 @@ export const WebDynamicIsland = () => {
     (s) => s.setExpandedPlayerVisible,
   );
 
+  const dominantColor = useColorStore((s) => s.dominant) || "#1a1a1a";
+  const vibrantColor = useColorStore((s) => s.vibrant) || "#1DB954";
   const [isHovered, setIsHovered] = useState(false);
   const expansion = useSharedValue(0);
 
@@ -110,14 +113,12 @@ export const WebDynamicIsland = () => {
             </View>
           )}
 
-          {/* Playing indicator dots — uses CSS animation classes from global.css */}
-          {isPlaying && (
-            <View style={styles.playingIndicator}>
-              <div className="di-dot di-dot-1" />
-              <div className="di-dot di-dot-2" />
-              <div className="di-dot di-dot-3" />
-            </View>
-          )}
+          {/* Playing indicator — now persistent for smooth animation on mount */}
+          <PlayingIndicator
+            isPlaying={isPlaying}
+            color1={vibrantColor}
+            color2={dominantColor}
+          />
         </Animated.View>
 
         {/* Expanded View — full controls */}
@@ -233,12 +234,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  playingIndicator: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 2,
-    height: 16,
-  },
+
   // --- Expanded ---
   expandedContent: {
     ...StyleSheet.absoluteFillObject,

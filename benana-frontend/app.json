@@ -55,14 +55,7 @@
               "name": "NowPlayingActivity",
               "displayName": "Now Playing",
               "description": "Shows the currently playing song on the Lock Screen and Dynamic Island",
-              "supportedFamilies": [
-                "systemSmall",
-                "systemMedium",
-                "systemLarge",
-                "accessoryRectangular",
-                "accessoryCircular",
-                "accessoryInline"
-              ]
+              "supportedFamilies": []
             }
           ]
         }

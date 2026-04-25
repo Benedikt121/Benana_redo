@@ -1,4 +1,4 @@
-import { Text, Image, HStack, VStack } from "@expo/ui/swift-ui";
+import { Text, Image, HStack, VStack, Button, Spacer } from "@expo/ui/swift-ui";
 import {
   font,
   foregroundStyle,
@@ -60,9 +60,10 @@ const NowPlayingActivity = (props: NowPlayingProps, environment: any) => {
 
     // Dynamic Island compact — right side
     compactTrailing: (
-      <Text modifiers={[foregroundStyle(accentColor)]}>
-        {props.isPlaying ? "▶" : "⏸"}
-      </Text>
+      <Image
+        systemName={props.isPlaying ? "chart.bar.fill" : "pause.fill"}
+        modifiers={[foregroundStyle(accentColor), font({ size: 14 })]}
+      />
     ),
 
     // Dynamic Island minimal (when multiple live activities)
@@ -105,15 +106,29 @@ const NowPlayingActivity = (props: NowPlayingProps, environment: any) => {
 
     // Dynamic Island expanded — bottom
     expandedBottom: (
-      <Text
-        modifiers={[
-          font({ size: 11 }),
-          foregroundStyle("rgba(255,255,255,0.4)"),
-          padding({ bottom: 4 }),
-        ]}
-      >
-        {props.isPlaying ? "Playing" : "Paused"}
-      </Text>
+      <VStack modifiers={[padding({ bottom: 8 })]}>
+        <HStack modifiers={[padding({ top: 12 })]}>
+          <Spacer />
+          <Button
+            target="prev"
+            systemImage="backward.fill"
+            modifiers={[foregroundStyle("#FFFFFF"), font({ size: 24 })]}
+          />
+          <Spacer />
+          <Button
+            target="togglePlayback"
+            systemImage={props.isPlaying ? "pause.fill" : "play.fill"}
+            modifiers={[foregroundStyle("#FFFFFF"), font({ size: 32 })]}
+          />
+          <Spacer />
+          <Button
+            target="next"
+            systemImage="forward.fill"
+            modifiers={[foregroundStyle("#FFFFFF"), font({ size: 24 })]}
+          />
+          <Spacer />
+        </HStack>
+      </VStack>
     ),
   };
 };

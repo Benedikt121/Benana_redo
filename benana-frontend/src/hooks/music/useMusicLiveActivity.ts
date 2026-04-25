@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import { useMusicStore } from "@/store/music.store";
+import { addUserInteractionListener } from "expo-widgets";
+import { musicPlayback } from "@/services/musicPlayback.service";
 
 // This file is only loaded on iOS (web uses .web.ts stub)
 let NowPlayingActivity: any = null;
@@ -89,6 +91,25 @@ export function useMusicLiveActivity() {
         }
         instanceRef.current = null;
       }
+    };
+  }, []);
+
+  // Listen for user interactions from the Live Activity buttons
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+
+    const subscription = addUserInteractionListener(async (event) => {
+      if (event.target === "togglePlayback") {
+        await musicPlayback.togglePlayPause();
+      } else if (event.target === "next") {
+        await musicPlayback.skipNext();
+      } else if (event.target === "prev") {
+        await musicPlayback.skipPrevious();
+      }
+    });
+
+    return () => {
+      subscription.remove();
     };
   }, []);
 }

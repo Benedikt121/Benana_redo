@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,16 +16,22 @@ import Animated, {
   Extrapolation,
   FadeIn,
   FadeOut,
+  withRepeat,
+  withSequence,
+  withDelay,
 } from "react-native-reanimated";
 import { useMusicControls } from "@/hooks/music/useMusicControls";
 import { useMusicStore } from "@/store/music.store";
+import { useColorStore } from "@/store/color.store";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { PlayingIndicator } from "./PlayingIndicator";
+import { StatusBar } from "expo-status-bar";
 
-const COMPACT_WIDTH = 56;
-const COMPACT_HEIGHT = 56;
+const COMPACT_WIDTH = 250;
+const COMPACT_HEIGHT = 42;
 const EXPANDED_WIDTH = 340;
-const EXPANDED_HEIGHT = 72;
 
 const SPRING_CONFIG = {
   damping: 22,
@@ -49,6 +55,10 @@ export const MobileFloatingIsland = () => {
   const setExpandedPlayerVisible = useMusicStore(
     (s) => s.setExpandedPlayerVisible,
   );
+  const dominant = useColorStore((s) => s.dominant) || "#1DB954";
+  const vibrant = useColorStore((s) => s.vibrant) || "#1DB954";
+
+  const dynamicExpandedHeight = 100;
 
   const toggle = () => {
     const next = !isExpanded;
@@ -66,13 +76,16 @@ export const MobileFloatingIsland = () => {
     height: interpolate(
       expansion.value,
       [0, 1],
-      [COMPACT_HEIGHT, EXPANDED_HEIGHT],
+      [COMPACT_HEIGHT, dynamicExpandedHeight],
       Extrapolation.CLAMP,
     ),
   }));
 
   const expandedContentStyle = useAnimatedStyle(() => ({
     opacity: withTiming(expansion.value > 0.5 ? 1 : 0, { duration: 150 }),
+    paddingTop: withTiming(expansion.value > 0.5 ? insets.top * 0.4 : 0, {
+      duration: 200,
+    }),
     transform: [
       {
         scale: interpolate(
@@ -96,8 +109,9 @@ export const MobileFloatingIsland = () => {
     <Animated.View
       entering={FadeIn.duration(300)}
       exiting={FadeOut.duration(200)}
-      style={[styles.wrapper, { top: insets.top + 8 }]}
+      style={[styles.wrapper, { top: 10 }]}
     >
+      <StatusBar hidden={hasSong} />
       <Pressable
         onPress={toggle}
         onLongPress={() => setExpandedPlayerVisible(true)}
@@ -108,18 +122,28 @@ export const MobileFloatingIsland = () => {
           {/* Background */}
           <View style={styles.background} />
 
-          {/* Compact View — album art thumbnail */}
+          {/* Compact View — album art on left, indicator on right */}
           <Animated.View style={[styles.compactContent, compactContentStyle]}>
-            {currentSong.albumCoverUrl ? (
-              <Image
-                source={{ uri: currentSong.albumCoverUrl }}
-                style={styles.compactAlbumArt}
+            <View style={styles.compactLeading}>
+              {currentSong.albumCoverUrl ? (
+                <Image
+                  source={{ uri: currentSong.albumCoverUrl }}
+                  style={styles.compactAlbumArt}
+                />
+              ) : (
+                <View style={styles.compactAlbumPlaceholder}>
+                  <Ionicons name="musical-notes" size={16} color="#fff" />
+                </View>
+              )}
+            </View>
+
+            <View style={styles.compactTrailing}>
+              <PlayingIndicator
+                isPlaying={isPlaying}
+                color1={vibrant}
+                color2={dominant}
               />
-            ) : (
-              <View style={styles.compactAlbumPlaceholder}>
-                <Ionicons name="musical-notes" size={22} color="#fff" />
-              </View>
-            )}
+            </View>
           </Animated.View>
 
           {/* Expanded View — full controls */}
@@ -211,28 +235,41 @@ const styles = StyleSheet.create({
   // --- Compact ---
   compactContent: {
     ...StyleSheet.absoluteFillObject,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+  },
+  compactLeading: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  compactTrailing: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   compactAlbumArt: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
   },
   compactAlbumPlaceholder: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.1)",
     alignItems: "center",
     justifyContent: "center",
   },
+
   // --- Expanded ---
   expandedContent: {
     ...StyleSheet.absoluteFillObject,
     flexDirection: "row",
+
     alignItems: "center",
     paddingHorizontal: 14,
+    paddingVertical: 4,
     gap: 10,
   },
   expandedAlbumArt: {
