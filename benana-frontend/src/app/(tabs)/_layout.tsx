@@ -1,6 +1,7 @@
 import Foundation from "@expo/vector-icons/Foundation";
 import { Tabs } from "expo-router";
 import { ProfileCircle } from "@/components/profile/profileCircle";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   return (
@@ -24,6 +25,19 @@ export default function TabLayout() {
           tabBarIcon: ({ size, focused }) => (
             <Foundation
               name="home"
+              size={size}
+              color={focused ? "white" : "#888888"}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          title: "Friends",
+          tabBarIcon: ({ size, focused }) => (
+            <Ionicons
+              name="people"
               size={size}
               color={focused ? "white" : "#888888"}
             />
