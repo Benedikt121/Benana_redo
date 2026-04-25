@@ -23,27 +23,36 @@ export function ProfileCircle({
   const { displayedUser } = useProfile(userId);
 
   const profilePictureUrl = displayedUser?.profilePictureUrl;
+  const borderColor = displayedUser?.color || "#ffffff";
 
-  const borderColor = displayedUser?.color; // hex color to border
+  const getSource = () => {
+    if (
+      !profilePictureUrl ||
+      profilePictureUrl === "/public/uploads/avatar_placeholder.png"
+    ) {
+      return require("../../../assets/uploads/avatar_placeholder.png");
+    }
+
+    if (profilePictureUrl.startsWith("http")) {
+      return { uri: profilePictureUrl };
+    }
+
+    return {
+      uri: `${API_URL}${profilePictureUrl.startsWith("/") ? "" : "/"}${profilePictureUrl}`,
+    };
+  };
 
   const imageContent = (
     <View
       style={{
         borderColor: borderColor,
+        width: size,
+        height: size,
       }}
-      className={`overflow-hidden w-[${size}px] h-[${size}px] rounded-full border-2`}
+      className="overflow-hidden rounded-full border-2"
     >
       <Image
-        source={
-          profilePictureUrl &&
-          profilePictureUrl !== "/public/uploads/avatar_placeholder.png"
-            ? {
-                uri: profilePictureUrl.startsWith("http")
-                  ? profilePictureUrl
-                  : `${API_URL}${profilePictureUrl}`,
-              }
-            : require("../../../assets/uploads/avatar_placeholder.png")
-        }
+        source={getSource()}
         style={{ width: size, height: size }}
         contentFit="cover"
         transition={200}

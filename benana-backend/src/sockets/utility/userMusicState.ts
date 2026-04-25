@@ -23,7 +23,7 @@ export const setMusicState = async (
     await redisClient.set(
       `${USER_MUSIC_STATE_PREFIX}${userId}`,
       JSON.stringify(status),
-      { expiration: { type: "EX", value: 3600 } },
+      { expiration: { type: "EX", value: 600 } },
     );
   } catch (error) {
     console.error("Error setting music state in Redis", error);

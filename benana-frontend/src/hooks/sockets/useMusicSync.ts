@@ -51,6 +51,7 @@ export function useMusicSync() {
   const preferedPlatform = useMusicStore((state) => state.preferedPlatform);
   const lastEmittedState = useRef<string | null>(null);
   const appState = useRef(AppState.currentState);
+  const hostId = useMusicStore((state) => state.listeningToHostId);
 
   useEffect(() => {
     const socket = socketService.connect();
@@ -58,6 +59,7 @@ export function useMusicSync() {
     const onHostSync = (data: BackendSongInfo) => {
       setCurrentSong(mapBackendSongToSongInfo(data));
       syncPlaybackToHost(data, preferedPlatform);
+      setFriendSong(hostId!, mapBackendSongToSongInfo(data));
     };
 
     const onFriendUpdate = (data: {
@@ -179,4 +181,34 @@ export function useMusicSync() {
       if (preferedPlatform === "SPOTIFY") socket.emit("STOP_SERVER_POLLING");
     };
   }, [preferedPlatform]);
+
+  useEffect(() => {
+    const STALE_THRESHOLD = 5 * 60 * 1000;
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+
+      const currentSong = useMusicStore.getState().currentSong;
+      if (
+        currentSong &&
+        currentSong.updatedAt &&
+        now - currentSong.updatedAt > STALE_THRESHOLD
+      ) {
+        clearSong();
+      }
+
+      const friends = useFriendsStore.getState().friends;
+      friends.forEach((friend) => {
+        if (
+          friend.musicState &&
+          friend.musicState.updatedAt &&
+          now - friend.musicState.updatedAt > STALE_THRESHOLD
+        ) {
+          clearFriendSong(friend.friend.id);
+        }
+      });
+    }, 60000); // check every minute
+
+    return () => clearInterval(intervalId);
+  }, [clearSong, clearFriendSong]);
 }

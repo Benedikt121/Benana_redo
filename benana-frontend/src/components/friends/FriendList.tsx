@@ -30,8 +30,8 @@ export const FriendList: React.FC<FriendListProps> = ({
 
       {/* Friend Requests - Animates in when expanded */}
       {!compact && friendRequests.length > 0 && (
-        <Animated.View 
-          entering={FadeInDown.duration(300)} 
+        <Animated.View
+          entering={FadeInDown.duration(300)}
           exiting={FadeOutUp.duration(200)}
           className="mb-4"
         >
@@ -51,16 +51,13 @@ export const FriendList: React.FC<FriendListProps> = ({
       {/* Friends List - Always visible */}
       <View>
         {showLabels && !compact && friends.length > 0 && (
-          <Animated.View 
-            entering={FadeInDown.delay(100)} 
-            className="px-4 py-2"
-          >
+          <Animated.View entering={FadeInDown.delay(100)} className="px-4 py-2">
             <Text className="text-white/40 font-bold text-xs uppercase tracking-widest">
               Freunde ({friends.length})
             </Text>
           </Animated.View>
         )}
-        
+
         {friends.length === 0 ? (
           <View className="w-full justify-center items-center py-20 px-4">
             {!compact && (

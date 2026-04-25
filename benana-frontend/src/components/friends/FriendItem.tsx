@@ -18,12 +18,12 @@ export const FriendItem: React.FC<FriendItemProps> = ({
 
   return (
     <View
-      className={`flex-row items-center py-3 ${compact ? "px-2 justify-center" : "px-4"}`}
+      className={`flex-row items-center py-3 ${compact ? "px-2 justify-center" : "px-2"}`}
     >
       <View>
         <ProfileCircle userId={friend.friend.id} size={35} />
         <View
-          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${friend.isOnline ? "bg-green-500" : "bg-gray-500"} border-1 border-[#121212]`}
+          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${friend.isOnline ? "bg-green-500" : "bg-gray-500"} border border-[#121212]`}
           style={{
             shadowColor: friend.isOnline ? "#22c55e" : "#9ca3af",
             shadowOffset: { width: 0, height: 0 },
@@ -50,7 +50,7 @@ export const FriendItem: React.FC<FriendItemProps> = ({
               />
             </View>
           ) : (
-            <Text className="text-gray-500 text-xs">
+            <Text className="text-gray-500 text-xs" numberOfLines={1}>
               {friend.isOnline ? "Online" : "Offline"}
             </Text>
           )}
