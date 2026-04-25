@@ -31,7 +31,7 @@ export function ProfileCircle({
       style={{
         borderColor: borderColor,
       }}
-      className={`overflow-hidden w-[${size}px] h-[${size}px] rounded-full border-3`}
+      className={`overflow-hidden w-[${size}px] h-[${size}px] rounded-full border-2`}
     >
       <Image
         source={

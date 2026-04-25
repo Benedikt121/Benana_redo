@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, Platform } from "react-native";
+import { View, Text, Pressable, Platform, ScrollView } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -9,6 +9,7 @@ import Animated, {
 import { BlurView } from "expo-blur";
 import { FriendList } from "./FriendList";
 import { Ionicons } from "@expo/vector-icons";
+import { useFriendsStore } from "@/store/friends.store";
 
 export const FriendListSidebar = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -26,6 +27,9 @@ export const FriendListSidebar = () => {
   const handleHover = (hovering: boolean) => {
     setIsExpanded(hovering);
   };
+
+  const { friendRequests } = useFriendsStore();
+  const hasRequests = friendRequests.length > 0;
 
   if (Platform.OS !== "web") return null;
 
@@ -52,7 +56,12 @@ export const FriendListSidebar = () => {
               className={`py-4 items-center ${isExpanded ? "px-6 items-start" : "px-0"}`}
             >
               <View className="flex-row items-center">
-                <Ionicons name="people" size={20} color="white" />
+                <View>
+                  <Ionicons name="people" size={20} color="white" />
+                  {hasRequests && (
+                    <View className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-black/20" />
+                  )}
+                </View>
                 {isExpanded && (
                   <Text className="text-white font-bold ml-2 text-lg">
                     Freunde
@@ -61,9 +70,9 @@ export const FriendListSidebar = () => {
               </View>
             </View>
 
-            <View className="flex-1">
-              <FriendList compact={!isExpanded} />
-            </View>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+              <FriendList compact={!isExpanded} showLabels={false} />
+            </ScrollView>
           </View>
         </BlurView>
       </View>

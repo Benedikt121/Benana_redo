@@ -15,7 +15,7 @@ import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useMusicColors } from "@/utils/useMusicColors";
 import { Toaster } from "sonner-native";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 function AppInitializer({ children }: { children: React.ReactNode }) {
   useInitialData();
@@ -59,20 +59,20 @@ export default function RootLayout() {
         <AppInitializer>
           <RootLayoutContent />
         </AppInitializer>
+        <Toaster
+          theme="dark"
+          position="top-center"
+          visibleToasts={3}
+          duration={3000}
+          swipeToDismissDirection="left"
+          richColors
+          toastOptions={{
+            style: {
+              maxWidth: 350,
+            },
+          }}
+        />
       </QueryClientProvider>
-      <Toaster
-        theme="dark"
-        position="top-center"
-        visibleToasts={3}
-        duration={3000}
-        swipeToDismissDirection="left"
-        richColors
-        toastOptions={{
-          style: {
-            maxWidth: 350,
-          },
-        }}
-      />
     </GestureHandlerRootView>
   );
 }

@@ -45,6 +45,16 @@ export const sendFriendRequest = async (
         senderId,
         receiverId: receiver.id,
       },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            profilePictureUrl: true,
+          },
+        },
+      },
     });
   } catch (error) {
     console.error("Error sending friend request:", error);
@@ -81,8 +91,22 @@ export const getFriends = async (userId: string) => {
         status: "ACCEPTED",
       },
       include: {
-        sender: { select: { id: true, username: true, color: true, profilePictureUrl: true } },
-        receiver: { select: { id: true, username: true, color: true, profilePictureUrl: true } },
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            profilePictureUrl: true,
+          },
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            color: true,
+            profilePictureUrl: true,
+          },
+        },
       },
     });
 
@@ -114,6 +138,13 @@ export const acceptFriendRequest = async (
     return await prisma.friendship.update({
       where: { id: friendshipId },
       data: { status: "ACCEPTED" },
+      include: {
+        receiver: {
+          select: {
+            username: true,
+          },
+        },
+      },
     });
   } catch (error) {
     console.error("Error accepting friend request:", error);

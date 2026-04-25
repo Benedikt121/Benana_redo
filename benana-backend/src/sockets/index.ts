@@ -15,6 +15,8 @@ export const setupSockets = (io: Server) => {
       socket.data.userId = userId;
       socket.join(`user_${userId}`);
       console.log(`👤 User ${userId} registered with Socket ${socket.id}`);
+
+      io.emit("user_status_change", { userId, isOnline: true });
     });
 
     registerRoomHandlers(io, socket);
@@ -28,6 +30,7 @@ export const setupSockets = (io: Server) => {
       for (const [userId, socketId] of connectedUsers.entries()) {
         if (socketId === socket.id) {
           connectedUsers.delete(userId);
+          io.emit("user_status_change", { userId, isOnline: false });
           break;
         }
       }

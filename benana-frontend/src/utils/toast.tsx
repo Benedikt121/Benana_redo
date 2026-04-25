@@ -1,3 +1,6 @@
+import React from "react";
+import { FriendRequestToast } from "@/components/friends/FriendRequestToast";
+import { FriendRequest } from "@/types/FriendTypes";
 import { toast as sonnerToast } from "sonner-native";
 
 /**
@@ -24,6 +27,14 @@ export const toast = {
     sonnerToast.warning(message, {
       description,
     });
+  },
+  incomingFriendRequest: (friendRequest: FriendRequest) => {
+    sonnerToast.custom(
+      <FriendRequestToast
+        friendRequest={friendRequest}
+        description="Anfrage erhalten"
+      />,
+    );
   },
   custom: sonnerToast,
 };

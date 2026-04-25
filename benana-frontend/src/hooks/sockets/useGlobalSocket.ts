@@ -1,9 +1,13 @@
 import { socketService } from "@/services/sockets.service";
 import { useUserStore } from "@/store/user.store";
 import { useEffect } from "react";
+import { useFriendSocket } from "./useFriendSocket";
 
 export function useGlobalSocket() {
   const userId = useUserStore((state) => state.profile?.id);
+  
+  // Call sub-sockets
+  useFriendSocket();
 
   useEffect(() => {
     if (!userId) return;

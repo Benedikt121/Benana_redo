@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { ProfileCircle } from "../profile/profileCircle";
 import { Friend } from "@/types/FriendTypes";
 import { Ionicons } from "@expo/vector-icons";
+import { MarqueeText } from "../common/MarqueeText";
 
 interface FriendItemProps {
   friend: Friend;
@@ -16,8 +17,21 @@ export const FriendItem: React.FC<FriendItemProps> = ({
   const isPlaying = !!friend.musicState;
 
   return (
-    <View className={`flex-row items-center py-3 ${compact ? "px-2" : "px-4"}`}>
-      <ProfileCircle userId={friend.friend.id} size={compact ? 40 : 48} />
+    <View
+      className={`flex-row items-center py-3 ${compact ? "px-2 justify-center" : "px-4"}`}
+    >
+      <View>
+        <ProfileCircle userId={friend.friend.id} size={35} />
+        <View
+          className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${friend.isOnline ? "bg-green-500" : "bg-gray-500"} border-1 border-[#121212]`}
+          style={{
+            shadowColor: friend.isOnline ? "#22c55e" : "#9ca3af",
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.5,
+            shadowRadius: 4,
+          }}
+        />
+      </View>
 
       {!compact && (
         <View className="ml-3 flex-1">
@@ -28,24 +42,19 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             {friend.friend.username}
           </Text>
           {isPlaying ? (
-            <View className="flex-row items-center mt-0.5">
+            <View className="flex-row items-center mt-0.5 flex-1 overflow-hidden">
               <Ionicons name="musical-notes" size={12} color="#1DB954" />
-              <Text
-                className="text-gray-400 text-xs ml-1 flex-1"
-                numberOfLines={1}
-              >
-                {friend.musicState?.title} -{" "}
-                {friend.musicState?.artist.split(",")}
-              </Text>
+              <MarqueeText
+                text={`${friend.musicState?.title || (friend.musicState as any)?.trackName} - ${friend.musicState?.artist}`}
+                className="text-gray-400 text-xs ml-1"
+              />
             </View>
           ) : (
-            <Text className="text-gray-500 text-xs">Offline / Idle</Text>
+            <Text className="text-gray-500 text-xs">
+              {friend.isOnline ? "Online" : "Offline"}
+            </Text>
           )}
         </View>
-      )}
-
-      {!compact && isPlaying && (
-        <View className="w-2 h-2 rounded-full bg-green-500 ml-2 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
       )}
     </View>
   );
