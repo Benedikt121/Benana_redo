@@ -103,7 +103,15 @@ export const MobileFloatingIsland = () => {
   }));
 
   // Only on mobile, only when there's a song
-  if (Platform.OS === "web" || !hasSong || !currentSong) return null;
+  // Hide on devices with a hardware Dynamic Island (proxied by insets.top > 50)
+  if (
+    Platform.OS === "web" ||
+    !hasSong ||
+    !currentSong ||
+    insets.top > 50
+  ) {
+    return null;
+  }
 
   return (
     <Animated.View

@@ -55,9 +55,10 @@
               "name": "NowPlayingActivity",
               "displayName": "Now Playing",
               "description": "Shows the currently playing song on the Lock Screen and Dynamic Island",
-              "supportedFamilies": []
+              "supportedFamilies": ["systemSmall", "systemMedium"]
             }
-          ]
+          ],
+          "groupId": "group.com.notbene.benanafrontend"
         }
       ]
     ],
