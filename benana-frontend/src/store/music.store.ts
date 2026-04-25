@@ -1,4 +1,4 @@
-import { MusicPlatform, SongInfo } from "@/types/MusicTypes";
+import { MusicPlatform, SongInfo, PlaybackState } from "@/types/MusicTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
@@ -14,6 +14,7 @@ interface MusicState {
   setPreferedPlatform: (platform: MusicPlatform) => Promise<void>;
   setListeningToHostId: (hostId: string | null) => void;
   setExpandedPlayerVisible: (visible: boolean) => void;
+  setPlaybackState: (state: PlaybackState) => void;
   hydrate: () => Promise<void>;
 }
 
@@ -31,6 +32,12 @@ export const useMusicStore = create<MusicState>((set) => ({
   },
   setListeningToHostId: (hostId) => set({ listeningToHostId: hostId }),
   setExpandedPlayerVisible: (visible) => set({ expandedPlayerVisible: visible }),
+  setPlaybackState: (state) =>
+    set((s) => ({
+      currentSong: s.currentSong
+        ? { ...s.currentSong, playbackState: state }
+        : null,
+    })),
   hydrate: async () => {
     try {
       const platform = await AsyncStorage.getItem("preferedPlatform");
