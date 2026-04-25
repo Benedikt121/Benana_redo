@@ -14,11 +14,14 @@ interface SpotifyTrack {
   name: string;
   artists: { name: string }[];
   external_ids: { isrc?: string };
+  album: {
+    images: { url: string }[];
+  };
 }
 
 interface SpotifySearchResponse {
   tracks: {
-    items: { id: string }[];
+    items: SpotifyTrack[];
   };
 }
 
@@ -115,6 +118,7 @@ export const matchSpotifyToApple = async (
 
     if (!spotifyRes.ok) return null;
     const spotifyTrack = (await spotifyRes.json()) as SpotifyTrack;
+    const sourceCoverUrl = spotifyTrack.album?.images?.[0]?.url ?? "";
 
     const isrc = spotifyTrack.external_ids?.isrc;
     const query = encodeURIComponent(
@@ -151,21 +155,8 @@ export const matchSpotifyToApple = async (
     }
 
     if (appleTrackId) {
-      const appleTrackRes = await fetch(
-        `https://api.music.apple.com/v1/catalog/de/songs/${appleTrackId}`,
-        {
-          headers: { Authorization: `Bearer ${appleToken}` },
-        },
-      );
-      const appleTrackData =
-        (await appleTrackRes.json()) as AppleMusicSongsResponse;
-      let coverUrl = appleTrackData.data?.[0]?.attributes.artwork.url ?? "";
-      if (coverUrl) {
-        coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
-      }
-
-      await saveToCache(spotifyTrackId, appleTrackId, coverUrl);
-      return { appleTrackId, coverUrl };
+      await saveToCache(spotifyTrackId, appleTrackId, sourceCoverUrl);
+      return { appleTrackId, coverUrl: sourceCoverUrl };
     }
     return null;
   } catch (error) {
@@ -201,6 +192,11 @@ export const matchAppleToSpotify = async (
     if (!appleData.data || appleData.data.length === 0) return null;
     const appleTrack = appleData.data[0].attributes;
 
+    let sourceCoverUrl = appleTrack.artwork.url ?? "";
+    if (sourceCoverUrl) {
+      sourceCoverUrl = sourceCoverUrl.replace("{w}", "600").replace("{h}", "600");
+    }
+
     const isrc = appleTrack.isrc;
     const trackQuery = encodeURIComponent(
       `${appleTrack.name} ${appleTrack.artistName}`,
@@ -234,12 +230,8 @@ export const matchAppleToSpotify = async (
     }
 
     if (spotifyTrackId) {
-      let coverUrl = appleData.data?.[0]?.attributes.artwork.url ?? "";
-      if (coverUrl) {
-        coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
-      }
-      await saveToCache(spotifyTrackId, appleTrackId, coverUrl);
-      return { spotifyTrackId, coverUrl };
+      await saveToCache(spotifyTrackId, appleTrackId, sourceCoverUrl);
+      return { spotifyTrackId, coverUrl: sourceCoverUrl };
     }
     return null;
   } catch (error) {
@@ -247,3 +239,4 @@ export const matchAppleToSpotify = async (
     return null;
   }
 };
+

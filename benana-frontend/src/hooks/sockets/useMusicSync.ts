@@ -9,6 +9,11 @@ import { useEffect, useRef } from "react";
 import { AppState, Platform } from "react-native";
 
 export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
+  let coverUrl = data.coverUrl ?? null;
+  if (coverUrl && coverUrl.includes("{w}") && coverUrl.includes("{h}")) {
+    coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
+  }
+
   return {
     trackId: data.trackId,
     title: data.trackName,
@@ -19,7 +24,7 @@ export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
     updatedAt: data.updatedAt,
     appleTrackId: data.appleTrackId,
     spotifyTrackId: data.spotifyTrackId,
-    albumCoverUrl: data.coverUrl ?? null,
+    albumCoverUrl: coverUrl,
   };
 };
 

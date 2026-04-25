@@ -319,7 +319,8 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
       const trackId = `spotify:track:${response.data.item.id}`;
       const progressMs = response.data.progress_ms;
 
-      const { appleTrackId, coverUrl } = (await matchSpotifyToApple(
+      const spotifyCoverUrl = response.data.item.album?.images?.[0]?.url;
+      const { appleTrackId, coverUrl: matchedCoverUrl } = (await matchSpotifyToApple(
         response.data.item.id,
       )) as any;
 
@@ -332,7 +333,7 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
         playbackState: isPlaying ? "PLAYING" : "PAUSED",
         appleTrackId,
         spotifyTrackId: response.data.item.id,
-        coverUrl: coverUrl,
+        coverUrl: spotifyCoverUrl ?? matchedCoverUrl,
         updatedAt: Date.now(),
       };
 
