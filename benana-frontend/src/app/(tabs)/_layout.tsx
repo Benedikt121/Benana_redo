@@ -1,5 +1,6 @@
-import { ProfileCircle } from "@/components/profile/profileCircle";
+import Foundation from "@expo/vector-icons/Foundation";
 import { Tabs } from "expo-router";
+import { ProfileCircle } from "@/components/profile/profileCircle";
 
 export default function TabLayout() {
   return (
@@ -20,7 +21,13 @@ export default function TabLayout() {
         name="home"
         options={{
           title: "Home",
-          // tabBarIcon
+          tabBarIcon: ({ size, focused }) => (
+            <Foundation
+              name="home"
+              size={size}
+              color={focused ? "white" : "#888888"}
+            />
+          ),
         }}
       />
       <Tabs.Screen
