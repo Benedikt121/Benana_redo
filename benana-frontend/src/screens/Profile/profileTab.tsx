@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Text, View, ActivityIndicator, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ProfileTab() {
   const [isEditPopupVisible, setIsEditPopupVisible] = useState(false);
@@ -46,11 +47,17 @@ export default function ProfileTab() {
       <ProfileCircle size={150} userId={displayedUser.id} me={isMe} />
       {isMe && (
         <Pressable
-          className="mt-0.5"
+          className="mt-4 flex-row items-center bg-white/10 active:bg-white/20 border border-white/20 px-4 py-2 rounded-full active:opacity-70 shadow-lg"
           onPress={() => setIsEditPopupVisible(true)}
         >
-          <Text className="text-white text-xs underline">
-            Profilbild/Farbe ändern
+          <Ionicons
+            name="pencil"
+            size={16}
+            color="white"
+            style={{ marginRight: 8 }}
+          />
+          <Text className="text-white text-sm font-medium">
+            Profil bearbeiten
           </Text>
         </Pressable>
       )}

@@ -4,7 +4,11 @@ import {
   USER_BY_ID_PATH,
   USER_BY_NAME_PATH,
 } from "./../constants/API_CONSTANTS";
-import { ME_PATH } from "@/constants/API_CONSTANTS";
+import {
+  ME_PATH,
+  SPOTIFY_UNLINK_PATH,
+  APPLE_UNLINK_PATH,
+} from "@/constants/API_CONSTANTS";
 import { getUserResponse, MeResponse } from "@/types/UserTypes";
 import axios from "axios";
 
@@ -81,4 +85,16 @@ export const updateColor = async (color: string): Promise<getUserResponse> => {
     },
   );
   return response.data;
+};
+
+export const unlinkSpotify = async (): Promise<void> => {
+  await axios.delete(SPOTIFY_UNLINK_PATH, {
+    headers: getAuthHeaders(),
+  });
+};
+
+export const unlinkAppleMusic = async (): Promise<void> => {
+  await axios.delete(APPLE_UNLINK_PATH, {
+    headers: getAuthHeaders(),
+  });
 };

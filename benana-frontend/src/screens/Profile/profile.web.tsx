@@ -6,6 +6,7 @@ import { useUserStore } from "@/store/user.store";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Text, View, ActivityIndicator, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ProfileWeb() {
   const [isEditPopupVisible, setIsEditPopupVisible] = useState(false);
@@ -46,11 +47,17 @@ export default function ProfileWeb() {
       <ProfileCircle size={150} userId={displayedUser.id} me={isMe} />
       {isMe && (
         <Pressable
-          className="mt-0.5"
+          className="mt-4 flex-row items-center bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full transition-all active:opacity-70 shadow-lg backdrop-blur-sm"
           onPress={() => setIsEditPopupVisible(true)}
         >
-          <Text className="text-white text-xs underline">
-            Profilbild/Farbe ändern
+          <Ionicons
+            name="pencil"
+            size={16}
+            color="white"
+            style={{ marginRight: 8 }}
+          />
+          <Text className="text-white text-sm font-medium">
+            Profil bearbeiten
           </Text>
         </Pressable>
       )}
@@ -58,23 +65,6 @@ export default function ProfileWeb() {
       <Text className="text-white">
         Beigetreten am: {new Date(displayedUser.createdAt).toLocaleDateString()}
       </Text>
-      {isMe && profile && profile.isSpotifyLinked && (
-        <View className="flex-row items-center">
-          <Text className="text-white">Spotify linked</Text>
-          <Pressable onPress={() => {}}>
-            <Text className="text-red-500">Entkoppeln</Text>
-          </Pressable>
-        </View>
-      )}
-      {isMe && profile && profile.isAppleLinked && (
-        <View className="flex-row items-center">
-          <Text className="text-white">Apple Music linked</Text>
-          <Pressable onPress={() => {}}>
-            <Text className="text-red-500">Entkoppeln</Text>
-          </Pressable>
-        </View>
-      )}
-
       <Text className="text-white text-xl mt-4">Stats</Text>
       {isMe && (
         <Pressable className="mt-3" onPress={handleLogout}>

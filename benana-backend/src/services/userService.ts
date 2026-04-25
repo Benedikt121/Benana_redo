@@ -215,3 +215,24 @@ export const updateIsReady = async (userId: string, isReady: boolean) => {
     throw error;
   }
 };
+
+export const unlinkMusicService = async (
+  userId: string,
+  service: "spotify" | "apple",
+) => {
+  try {
+    return await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(service === "spotify" && {
+          spotifyRefreshToken: null,
+          spotifyId: null,
+        }),
+        ...(service === "apple" && { appleMusicUserToken: null }),
+      },
+    });
+  } catch (error) {
+    console.error(`Error unlinking ${service}:`, error);
+    throw error;
+  }
+};

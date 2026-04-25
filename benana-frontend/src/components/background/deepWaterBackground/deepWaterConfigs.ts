@@ -26,7 +26,7 @@ export const WATER_CONFIG = {
       dropInterval: 0.004,
       damping: 1,
       attenuation: 0.00005,
-      speed: 0.9,
+      speed: 0.6,
       lightThreshold: 0.002,
     },
     default: {

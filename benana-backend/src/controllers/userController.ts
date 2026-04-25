@@ -7,6 +7,7 @@ import {
   getAllUsernams,
   getUsersByUsernameQuery,
   updateUserColorOrAvatar,
+  unlinkMusicService,
 } from "../services/userService.js";
 import { getValidSpotifyToken } from "../services/musicService.js";
 
@@ -150,5 +151,29 @@ export const uploadProfilePicture = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: "error", message: "Failed to upload profile picture" });
+  }
+};
+
+export const unlinkSpotify = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    await unlinkMusicService(userId, "spotify");
+    res.status(200).json({ status: "success", message: "Spotify unlinked" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to unlink Spotify" });
+  }
+};
+
+export const unlinkAppleMusic = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    await unlinkMusicService(userId, "apple");
+    res.status(200).json({ status: "success", message: "Apple Music unlinked" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to unlink Apple Music" });
   }
 };

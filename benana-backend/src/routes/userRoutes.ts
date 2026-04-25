@@ -7,6 +7,8 @@ import {
   searchUsersAutoComplete,
   updateUserProfile,
   uploadProfilePicture,
+  unlinkSpotify,
+  unlinkAppleMusic,
 } from "../controllers/userController.js";
 import { uploadAvatar } from "../middlewares/uploadMiddleware.js";
 
@@ -16,6 +18,8 @@ router.use(protect);
 
 router.get("/me", getMyUserProfile);
 router.patch("/me", updateUserProfile);
+router.delete("/me/spotify", unlinkSpotify);
+router.delete("/me/apple", unlinkAppleMusic);
 router.get("/id/:userId", getUserProfile);
 router.get("/name/:username", getUserProfile);
 router.get("/names", searchUsersAutoComplete);
