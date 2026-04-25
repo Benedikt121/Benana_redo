@@ -6,12 +6,14 @@ interface MusicState {
   currentSong: SongInfo | null;
   preferedPlatform: MusicPlatform | null;
   listeningToHostId: string | null;
+  expandedPlayerVisible: boolean;
 
   // Aktionen
   setCurrentSong: (song: SongInfo | null) => void;
   clearSong: () => void;
   setPreferedPlatform: (platform: MusicPlatform) => Promise<void>;
   setListeningToHostId: (hostId: string | null) => void;
+  setExpandedPlayerVisible: (visible: boolean) => void;
   hydrate: () => Promise<void>;
 }
 
@@ -19,6 +21,7 @@ export const useMusicStore = create<MusicState>((set) => ({
   currentSong: null,
   preferedPlatform: null,
   listeningToHostId: null,
+  expandedPlayerVisible: false,
 
   setCurrentSong: (song) => set({ currentSong: song }),
   clearSong: () => set({ currentSong: null }),
@@ -27,6 +30,7 @@ export const useMusicStore = create<MusicState>((set) => ({
     set({ preferedPlatform: platform });
   },
   setListeningToHostId: (hostId) => set({ listeningToHostId: hostId }),
+  setExpandedPlayerVisible: (visible) => set({ expandedPlayerVisible: visible }),
   hydrate: async () => {
     try {
       const platform = await AsyncStorage.getItem("preferedPlatform");

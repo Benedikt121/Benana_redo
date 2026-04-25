@@ -14,6 +14,10 @@ import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useMusicColors } from "@/utils/useMusicColors";
 import { Toaster } from "sonner-native";
+import { WebDynamicIsland } from "@/components/music/WebDynamicIsland";
+import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
+import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
+import { useMusicLiveActivity } from "@/hooks/music/useMusicLiveActivity";
 
 export const queryClient = new QueryClient();
 
@@ -81,8 +85,15 @@ function RootLayoutContent() {
   const usedBackground = useUserStore(
     (state) => state.profile?.preferedBackground,
   );
+  const expandedPlayerVisible = useMusicStore(
+    (state) => state.expandedPlayerVisible,
+  );
+  const setExpandedPlayerVisible = useMusicStore(
+    (state) => state.setExpandedPlayerVisible,
+  );
 
   useMusicSync();
+  useMusicLiveActivity();
 
   return (
     <View className="flex-1 bg-transparent">
@@ -91,11 +102,17 @@ function RootLayoutContent() {
       ) : (
         <RainyWindowBackground />
       )}
+      <WebDynamicIsland />
+      <MobileFloatingIsland />
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: "transparent" },
         }}
+      />
+      <MusicPlayerExpanded
+        visible={expandedPlayerVisible}
+        onClose={() => setExpandedPlayerVisible(false)}
       />
     </View>
   );

@@ -3,8 +3,12 @@ import {
   APPLE_TOKEN_SAVE_PATH,
   SPOTIFY_CURRENT_PATH,
   SPOTIFY_EXCHANGE_PATH,
+  SPOTIFY_NEXT_PATH,
+  SPOTIFY_PAUSE_PATH,
   SPOTIFY_PLAY_PATH,
+  SPOTIFY_PREVIOUS_PATH,
   SPOTIFY_REFRESH_PATH,
+  SPOTIFY_RESUME_PATH,
 } from "@/constants/API_CONSTANTS";
 import { useAuthStore } from "@/store/auth.store";
 import axios from "axios";
@@ -83,4 +87,54 @@ export const forcePlaySpotify = async (trackId: string, positionMs: number) => {
     },
   );
   return response;
+};
+
+// --- Spotify Playback Control APIs ---
+
+export const resumeSpotify = async () => {
+  const { token } = useAuthStore.getState();
+  return axios.put(
+    SPOTIFY_RESUME_PATH,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
+};
+
+export const pauseSpotify = async () => {
+  const { token } = useAuthStore.getState();
+  return axios.put(
+    SPOTIFY_PAUSE_PATH,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
+};
+
+export const skipNextSpotify = async () => {
+  const { token } = useAuthStore.getState();
+  return axios.post(
+    SPOTIFY_NEXT_PATH,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
+};
+
+export const skipPreviousSpotify = async () => {
+  const { token } = useAuthStore.getState();
+  return axios.post(
+    SPOTIFY_PREVIOUS_PATH,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
 };

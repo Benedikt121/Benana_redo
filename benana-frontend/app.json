@@ -11,7 +11,10 @@
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.notbene.benanafrontend",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppleMusicUsageDescription": "Benana uses Apple Music to play and control your music.",
+        "NSSupportsLiveActivities": true,
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
@@ -44,7 +47,26 @@
       "expo-video",
       "expo-sharing",
       "expo-web-browser",
-      "expo-widgets"
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "NowPlayingActivity",
+              "displayName": "Now Playing",
+              "description": "Shows the currently playing song on the Lock Screen and Dynamic Island",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "systemLarge",
+                "accessoryRectangular",
+                "accessoryCircular",
+                "accessoryInline"
+              ]
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

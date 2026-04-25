@@ -379,3 +379,80 @@ export const forcePlaySpotify = async (req: any, res: any) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+// --- Spotify Playback Control Endpoints ---
+
+export const resumeSpotify = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const token = await getValidSpotifyToken(userId);
+    if (!token)
+      return res.status(401).json({ message: "No Spotify token available" });
+
+    await fetch("https://api.spotify.com/v1/me/player/play", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status(200).json({ message: "Playback resumed" });
+  } catch (error) {
+    console.error("Spotify resume error:", error);
+    return res.status(500).json({ message: "Failed to resume playback" });
+  }
+};
+
+export const pauseSpotify = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const token = await getValidSpotifyToken(userId);
+    if (!token)
+      return res.status(401).json({ message: "No Spotify token available" });
+
+    await fetch("https://api.spotify.com/v1/me/player/pause", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status(200).json({ message: "Playback paused" });
+  } catch (error) {
+    console.error("Spotify pause error:", error);
+    return res.status(500).json({ message: "Failed to pause playback" });
+  }
+};
+
+export const skipNextSpotify = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const token = await getValidSpotifyToken(userId);
+    if (!token)
+      return res.status(401).json({ message: "No Spotify token available" });
+
+    await fetch("https://api.spotify.com/v1/me/player/next", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status(200).json({ message: "Skipped to next track" });
+  } catch (error) {
+    console.error("Spotify skip next error:", error);
+    return res.status(500).json({ message: "Failed to skip to next track" });
+  }
+};
+
+export const skipPreviousSpotify = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const token = await getValidSpotifyToken(userId);
+    if (!token)
+      return res.status(401).json({ message: "No Spotify token available" });
+
+    await fetch("https://api.spotify.com/v1/me/player/previous", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status(200).json({ message: "Skipped to previous track" });
+  } catch (error) {
+    console.error("Spotify skip previous error:", error);
+    return res
+      .status(500)
+      .json({ message: "Failed to skip to previous track" });
+  }
+};
+
