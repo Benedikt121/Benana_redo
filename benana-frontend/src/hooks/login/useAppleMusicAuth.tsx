@@ -3,10 +3,12 @@ import { useMusicStore } from "@/store/music.store";
 import { useUserStore } from "@/store/user.store";
 import { useState } from "react";
 import { Platform } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { APPLE_MOBILE_LOGIN_PATH } from "@/constants/API_CONSTANTS";
 import { Buffer } from "buffer";
+import { QUERY_KEYS } from "@/constants/QueryKeys";
 
 declare global {
   interface Window {
@@ -20,6 +22,7 @@ export const useAppleMusicAuth = () => {
     (state) => state.setPreferedPlatform,
   );
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const queryClient = useQueryClient();
 
   const loginWithAppleMusic = async () => {
     try {
@@ -90,6 +93,7 @@ export const useAppleMusicAuth = () => {
       console.error("Apple auth error:", error);
     } finally {
       setIsAuthenticating(false);
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.ME });
     }
   };
 

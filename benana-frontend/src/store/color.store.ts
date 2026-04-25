@@ -38,6 +38,8 @@ export const useColorStore = create<ColorState>((set) => ({
         detail: result.muted || null,
       };
     }
+
+    set(newColors);
   },
   resetColors: () =>
     set({ dominant: null, vibrant: null, secondary: null, detail: null }),

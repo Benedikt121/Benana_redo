@@ -16,7 +16,7 @@ import Animated, {
   FadeOutUp,
   LinearTransition,
 } from "react-native-reanimated";
-import LoginMobile from "./login";
+import LoginMobile from "./LoginMobileView";
 
 export default function LoginWeb() {
   type AuthFormValues = z.infer<typeof registerSchema>;

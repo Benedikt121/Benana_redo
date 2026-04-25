@@ -1,4 +1,4 @@
-import { ProfileCircle } from "@/components/profileCircle";
+import { ProfileCircle } from "@/components/profile/profileCircle";
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useAuthStore } from "@/store/auth.store";
@@ -14,16 +14,12 @@ import {
 } from "react-native";
 
 export default function DashboardScreen() {
-  const { isLoading } = useInitialData();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const handleLogout = () => {
     logout();
     router.replace("/login");
   };
-  const handleAuthTestingRedirect = () => router.navigate("/authTesting");
-  useGlobalSocket();
-  useMusicColors();
 
   const { width } = useWindowDimensions();
 
@@ -35,32 +31,11 @@ export default function DashboardScreen() {
       <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">
         Hauptseite
       </Text>
-      <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">
-        {useMusicStore((state) => state.preferedPlatform)}
-      </Text>
-      <Pressable
-        onPress={handleLogout}
-        className="text-white text-3xl font-bold mb-8"
-      >
-        <Text className="text-white font-bold text-lg text-shadow-glow">
-          Auslogen
-        </Text>
-      </Pressable>
-
       <ProfileCircle
         onClick={() => {
           router.navigate("/profile");
         }}
       />
-
-      <Pressable
-        onPress={handleAuthTestingRedirect}
-        className="text-white text-3xl font-bold mb-8"
-      >
-        <Text className="text-white font-bold text-lg text-shadow-glow">
-          Auth Test
-        </Text>
-      </Pressable>
     </View>
   );
 }

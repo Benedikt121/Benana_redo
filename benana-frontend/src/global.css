@@ -1,8 +1,13 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
+@import "nativewind/theme";
 @import "tailwindcss/utilities.css";
 
-@import "nativewind/theme";
+@theme {
+}
+
+:root {
+}
 
 @layer base {
   div[style*="background-color: rgb(242, 242, 242)"],

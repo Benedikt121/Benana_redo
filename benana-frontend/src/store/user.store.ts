@@ -24,6 +24,7 @@ interface UserState {
   setProfile: (profile: UserProfile | null) => Promise<void>;
   setSpotifyAccessToken: (spotifyAccessToken: string) => void;
   setAppleMusicToken: (appleMusicUserToken: string) => void;
+  setPreferedBackgound: (background: Backgrounds) => void;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -57,6 +58,14 @@ export const useUserStore = create<UserState>((set, get) => ({
         profile: { ...profile, appleMusicUserToken, isAppleLinked: true },
       });
     }
+  },
+
+  setPreferedBackgound: async (background) => {
+    const profile = get().profile;
+    if (profile) {
+      set({ profile: { ...profile, preferedBackground: background } });
+    }
+    await AsyncStorage.setItem("background", background as string);
   },
 }));
 

@@ -22,6 +22,11 @@ export const LOGOUT_PATH = `${AUTH_PATH}logout`;
 
 export const USER_PATH = `${API_PREFIX}users/`;
 export const ME_PATH = `${USER_PATH}me`;
+export const SPOTIFY_UNLINK_PATH = `${ME_PATH}/spotify`;
+export const APPLE_UNLINK_PATH = `${ME_PATH}/apple`;
+export const USER_BY_ID_PATH = (id: string) => `${USER_PATH}id/${id}`;
+export const USER_BY_NAME_PATH = (username: string) =>
+  `${USER_PATH}name/${username}`;
 
 export const FRIEND_PATH = `${API_PREFIX}friends/`;
 export const FRIEND_REQUESTS_PATH = `${FRIEND_PATH}requests`;

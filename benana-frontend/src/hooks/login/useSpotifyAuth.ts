@@ -6,6 +6,8 @@ import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect } from "react";
 import { Platform } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/constants/QueryKeys";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -22,6 +24,7 @@ export const useSpotifyAuth = () => {
     (state) => state.setPreferedPlatform,
   );
   const token = useAuthStore((state) => state.token);
+  const queryClient = useQueryClient();
 
   const redirectUri = makeRedirectUri({
     scheme: "benanafrontend",
@@ -67,6 +70,7 @@ export const useSpotifyAuth = () => {
       if (response.status === 200) {
         setSpotifyAccessToken(data.access_token);
         setPreferedPlatform("SPOTIFY");
+        await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.ME });
         console.log("Spotify login success", data.access_token);
       }
     } catch (error) {

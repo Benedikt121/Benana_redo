@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import {
   getUserById,
   getUserByUsername,
   getAllUsernams,
   getUsersByUsernameQuery,
   updateUserColorOrAvatar,
+  unlinkMusicService,
 } from "../services/userService.js";
 import { getValidSpotifyToken } from "../services/musicService.js";
 
@@ -110,6 +113,7 @@ export const searchUsersAutoComplete = async (req: Request, res: Response) => {
       .json({ status: "error", message: "Failed to search users" });
   }
 };
+
 export const uploadProfilePicture = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
@@ -121,8 +125,19 @@ export const uploadProfilePicture = async (req: Request, res: Response) => {
         .json({ status: "error", message: "No file uploaded" });
     }
 
-    // The path should be relative to the public folder
     const profilePictureUrl = `/public/uploads/${file.filename}`;
+
+    const user = (req as any).user;
+    if (user.profilePictureUrl) {
+      const oldPath = path.join(process.cwd(), user.profilePictureUrl);
+      try {
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      } catch (err) {
+        console.error("Error deleting old profile picture:", err);
+      }
+    }
 
     const updatedUser = await updateUserColorOrAvatar(
       userId,
@@ -136,5 +151,29 @@ export const uploadProfilePicture = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ status: "error", message: "Failed to upload profile picture" });
+  }
+};
+
+export const unlinkSpotify = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    await unlinkMusicService(userId, "spotify");
+    res.status(200).json({ status: "success", message: "Spotify unlinked" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to unlink Spotify" });
+  }
+};
+
+export const unlinkAppleMusic = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    await unlinkMusicService(userId, "apple");
+    res.status(200).json({ status: "success", message: "Apple Music unlinked" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to unlink Apple Music" });
   }
 };
