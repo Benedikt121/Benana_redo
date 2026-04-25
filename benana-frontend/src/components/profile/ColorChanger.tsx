@@ -10,11 +10,7 @@ import ColorPicker, {
 } from "reanimated-color-picker";
 import { toast } from "@/utils/toast";
 
-export function ColorChanger({
-  onEditingChange,
-}: {
-  onEditingChange?: (isEditing: boolean) => void;
-}) {
+export function ColorChanger() {
   const { profile } = useUserStore();
   const [color, setColor] = useState<string | undefined>(profile?.color);
 
@@ -49,13 +45,11 @@ export function ColorChanger({
               handleColorChange(color);
               setProfile({ ...profile!, color: color.hex });
               toast.success("Farbe erfolgreich geändert!", `${color.hex}`);
-              onEditingChange?.(false);
             } catch (error) {
               console.error(error);
               toast.error("Farbe konnte nicht geändert werden!");
             }
           }}
-          onChange={() => onEditingChange?.(true)}
         >
           <Preview style={styles.preview} />
           <Panel1 style={styles.panel} />
@@ -75,9 +69,7 @@ export function ColorChanger({
           value={profile?.color}
           onCompleteJS={(color) => {
             handleColorChangeMobile(color);
-            onEditingChange?.(false);
           }}
-          onChangeJS={() => onEditingChange?.(true)}
         >
           <Preview style={styles.preview} />
           <Panel1 style={styles.panel} />

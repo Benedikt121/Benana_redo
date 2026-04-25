@@ -4,11 +4,7 @@ import { useUserStore } from "@/store/user.store";
 import { Backgrounds } from "@/types/UserTypes";
 import { toast } from "@/utils/toast";
 
-export function BackgroundChanger({
-  onEditingChange,
-}: {
-  onEditingChange?: (isEditing: boolean) => void;
-}) {
+export function BackgroundChanger() {
   const { profile, setPreferedBackgound } = useUserStore();
 
   const backgrounds: { id: Backgrounds; name: string }[] = [
