@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
 import { useMusicColors } from "@/utils/useMusicColors";
+import { Toaster } from "sonner-native";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,19 @@ export default function RootLayout() {
           <RootLayoutContent />
         </AppInitializer>
       </QueryClientProvider>
+      <Toaster
+        theme="dark"
+        position="top-center"
+        visibleToasts={3}
+        duration={5000}
+        swipeToDismissDirection="left"
+        richColors
+        toastOptions={{
+          style: {
+            maxWidth: 350,
+          },
+        }}
+      />
     </GestureHandlerRootView>
   );
 }

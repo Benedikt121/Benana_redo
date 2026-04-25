@@ -32,6 +32,7 @@ export default function DashboardScreen() {
         Hauptseite
       </Text>
       <ProfileCircle
+        className="absolute top-16 right-16"
         onClick={() => {
           router.navigate("/profile");
         }}

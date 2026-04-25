@@ -10,6 +10,7 @@ export interface ProfileCircleProps {
   me?: boolean;
   userId?: string;
   size?: number;
+  className?: string;
 }
 
 export function ProfileCircle({
@@ -17,6 +18,7 @@ export function ProfileCircle({
   me = true,
   userId,
   size = 48,
+  className,
 }: ProfileCircleProps) {
   const { displayedUser } = useProfile(userId);
 
@@ -51,7 +53,11 @@ export function ProfileCircle({
   );
 
   if (onClick) {
-    return <Pressable onPress={onClick}>{imageContent}</Pressable>;
+    return (
+      <Pressable onPress={onClick} className={className}>
+        {imageContent}
+      </Pressable>
+    );
   }
 
   return imageContent;

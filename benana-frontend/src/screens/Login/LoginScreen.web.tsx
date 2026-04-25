@@ -1,6 +1,6 @@
 import { useLogin } from "@/hooks/login/useLogin";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   TouchableOpacity,
@@ -22,10 +22,6 @@ export default function LoginWeb() {
   type AuthFormValues = z.infer<typeof registerSchema>;
 
   const { width } = useWindowDimensions();
-
-  if (width < 768) {
-    return <LoginMobile />;
-  }
 
   const {
     handleLogin,
@@ -71,6 +67,11 @@ export default function LoginWeb() {
     if (mode === wordMode) return "text-6xl opacity-100 mb-6";
     return "text-4xl opacity-40 hover:opacity-80";
   };
+
+  if (width < 768) {
+    return <LoginMobile />;
+  }
+
   return (
     <View className="flex-1 justify-center items-center px-4">
       <Animated.View
@@ -169,17 +170,6 @@ export default function LoginWeb() {
                 </Text>
               )}
             </View>
-
-            {mode === "login" && isLoginError && (
-              <Text className="text-red-400 text-center mb-4">
-                Fehler beim Anmelden. Bitte überprüfe deine Daten.
-              </Text>
-            )}
-            {mode === "register" && isRegisterError && (
-              <Text className="text-red-400 text-center mb-4">
-                Fehler bei der Registrierung.
-              </Text>
-            )}
 
             <TouchableOpacity
               onPress={handleSubmit(onSubmit)}
