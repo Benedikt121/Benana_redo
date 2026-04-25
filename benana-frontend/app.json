@@ -43,7 +43,8 @@
       "expo-secure-store",
       "expo-video",
       "expo-sharing",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-widgets"
     ],
     "experiments": {
       "typedRoutes": true,
