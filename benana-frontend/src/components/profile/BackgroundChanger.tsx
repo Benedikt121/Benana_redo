@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useUserStore } from "@/store/user.store";
 import { Backgrounds } from "@/types/UserTypes";
+import { toast } from "@/utils/toast";
 
 export function BackgroundChanger({
   onEditingChange,
@@ -24,7 +25,10 @@ export function BackgroundChanger({
         {backgrounds.map((bg) => (
           <Pressable
             key={bg.id}
-            onPress={() => setPreferedBackgound(bg.id)}
+            onPress={async () => {
+              setPreferedBackgound(bg.id);
+              toast.success("Hintergrund erfolgreich geändert!", `${bg.name}`);
+            }}
             className={`p-4 rounded-2xl border-2 transition-all ${
               profile?.preferedBackground === bg.id
                 ? "border-white bg-white/20"

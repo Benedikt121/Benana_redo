@@ -64,7 +64,7 @@ export default function RootLayout() {
         theme="dark"
         position="top-center"
         visibleToasts={3}
-        duration={5000}
+        duration={3000}
         swipeToDismissDirection="left"
         richColors
         toastOptions={{
