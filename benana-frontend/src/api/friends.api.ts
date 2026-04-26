@@ -4,6 +4,7 @@ import {
 } from "./../constants/API_CONSTANTS";
 import { FRIEND_PATH } from "@/constants/API_CONSTANTS";
 import {
+  FriendActionResponse,
   GetFriendRequestsResponse,
   getFriendsResponse,
 } from "@/types/FriendTypes";
@@ -24,3 +25,37 @@ export const getFriendRequests =
     );
     return reponse.data;
   };
+
+export const sendFriendRequest = async (
+  username: string,
+): Promise<FriendActionResponse> => {
+  const response = await axios.post<FriendActionResponse>(
+    `${FRIEND_PATH}request`,
+    { username },
+    { headers: getAuthHeaders() },
+  );
+  return response.data;
+};
+
+export const acceptFriendRequest = async (
+  friendshipId: string,
+): Promise<FriendActionResponse> => {
+  const response = await axios.patch<FriendActionResponse>(
+    `${FRIEND_PATH}accept/${friendshipId}`,
+    {},
+    { headers: getAuthHeaders() },
+  );
+  return response.data;
+};
+
+export const removeFriend = async (
+  friendshipId: string,
+): Promise<FriendActionResponse> => {
+  const response = await axios.delete<FriendActionResponse>(
+    `${FRIEND_PATH}remove/${friendshipId}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return response.data;
+};

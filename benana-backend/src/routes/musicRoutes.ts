@@ -5,9 +5,15 @@ import {
   forcePlaySpotify,
   getAppleToken,
   getCurrentSpotifySong,
+  pauseSpotify,
   refreshSpotifyToken,
   renderAppleMobileLogin,
+  resumeSpotify,
   saveAppleMusicToken,
+  skipNextSpotify,
+  skipPreviousSpotify,
+  getSpotifyPlaylists,
+  playSpotifyPlaylist,
   testAppleMusicConnection,
 } from "../controllers/musicController.js";
 
@@ -19,6 +25,12 @@ router.get("/spotify/refresh", protect, refreshSpotifyToken);
 router.post("/spotify/exchange", protect, exchangeSpotifyToken);
 router.get("/spotify/current", protect, getCurrentSpotifySong);
 router.post("/spotify/play", protect, forcePlaySpotify);
+router.put("/spotify/resume", protect, resumeSpotify);
+router.put("/spotify/pause", protect, pauseSpotify);
+router.post("/spotify/next", protect, skipNextSpotify);
+router.post("/spotify/previous", protect, skipPreviousSpotify);
+router.get("/spotify/playlists", protect, getSpotifyPlaylists);
+router.post("/spotify/play-playlist", protect, playSpotifyPlaylist);
 router.get("/test-apple", protect, testAppleMusicConnection);
 router.get("/apple/mobile-login", renderAppleMobileLogin);
 

@@ -15,6 +15,7 @@ import { unlinkSpotify, unlinkAppleMusic } from "@/api/user.api";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
 import { MusicPlatform } from "@/types/MusicTypes";
+import { toast } from "@/utils/toast";
 
 export const MusicServiceManager = () => {
   const { displayedUser, isMe, refetch } = useProfile();
@@ -39,9 +40,11 @@ export const MusicServiceManager = () => {
       if (isAppleLinked) {
         setPreferedPlatform("APPLE_MUSIC");
       }
+      toast.success("Spotify erfolgreich entkoppelt!");
       refetch();
     } catch (error) {
       console.error("Failed to unlink Spotify:", error);
+      toast.error("Spotify konnte nicht entkoppelt werden!");
     } finally {
       setIsUnlinking(null);
     }
@@ -55,9 +58,11 @@ export const MusicServiceManager = () => {
       if (isSpotifyLinked) {
         setPreferedPlatform("SPOTIFY");
       }
+      toast.success("Apple Music erfolgreich entkoppelt!");
       refetch();
     } catch (error) {
       console.error("Failed to unlink Apple Music:", error);
+      toast.error("Apple Music konnte nicht entkoppelt werden!");
     } finally {
       setIsUnlinking(null);
     }
@@ -172,7 +177,13 @@ export const MusicServiceManager = () => {
             {platforms.map((p) => (
               <Pressable
                 key={p.id}
-                onPress={() => p.enabled && setPreferedPlatform(p.id)}
+                onPress={() => {
+                  p.enabled && setPreferedPlatform(p.id);
+                  toast.success(
+                    "Bevorzugte Plattform erfolgreich geändert!",
+                    `${p.name}`,
+                  );
+                }}
                 className={`flex-1 flex-row items-center justify-center p-3 rounded-2xl border-2 transition-all ${
                   !p.enabled ? "opacity-30" : "opacity-100"
                 } ${

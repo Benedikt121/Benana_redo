@@ -70,10 +70,13 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
               .join(", ");
             const isPlaying = response.data.is_playing;
             const trackId = `spotify:track:${response.data.item.id}`;
+            const spotifyCoverUrl = response.data.item.album?.images?.[0]?.url;
+            const { appleTrackId, coverUrl: matchedCoverUrl } =
+              (await matchSpotifyToApple(response.data.item.id)) as {
+                appleTrackId: string;
+                coverUrl: string;
+              };
             const progressMs = response.data.progress_ms;
-            const { appleTrackId, coverUrl } = (await matchSpotifyToApple(
-              response.data.item.id,
-            )) as { appleTrackId: string; coverUrl: string };
 
             // Daten formatieren
             const statusData: UserMusicState = {
@@ -85,7 +88,7 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
               appleTrackId: appleTrackId,
               playbackState: isPlaying ? "PLAYING" : "PAUSED",
               timestamp: progressMs,
-              coverUrl: coverUrl,
+              coverUrl: spotifyCoverUrl ?? matchedCoverUrl,
               updatedAt: Date.now(),
             };
 
@@ -137,12 +140,12 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
       spotifyId = cleanSpotifyId;
       const match = await matchSpotifyToApple(cleanSpotifyId!);
       appleId = match?.appleTrackId ?? null;
-      coverUrl = match?.coverUrl ?? statusData.coverUrl ?? null;
+      coverUrl = statusData.coverUrl ?? match?.coverUrl ?? null;
     } else if (statusData.platform === "APPLE_MUSIC") {
       appleId = statusData.trackId;
       const match = await matchAppleToSpotify(appleId);
       spotifyId = match?.spotifyTrackId ?? null;
-      coverUrl = match?.coverUrl ?? statusData.coverUrl ?? null;
+      coverUrl = statusData.coverUrl ?? match?.coverUrl ?? null;
     }
 
     const updatedStatusData: UserMusicState = {

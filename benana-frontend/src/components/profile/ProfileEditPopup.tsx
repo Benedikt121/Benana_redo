@@ -76,11 +76,11 @@ export function ProfileEditPopup({
     },
     {
       title: "Farbe ändern",
-      content: <ColorChanger onEditingChange={setIsSwipingDisabled} />,
+      content: <ColorChanger />,
     },
     {
       title: "Hintergrund ändern",
-      content: <BackgroundChanger onEditingChange={setIsSwipingDisabled} />,
+      content: <BackgroundChanger />,
     },
     {
       title: "Dienste & Musik",

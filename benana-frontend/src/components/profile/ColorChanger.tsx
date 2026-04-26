@@ -8,12 +8,9 @@ import ColorPicker, {
   Panel1,
   Preview,
 } from "reanimated-color-picker";
+import { toast } from "@/utils/toast";
 
-export function ColorChanger({
-  onEditingChange,
-}: {
-  onEditingChange?: (isEditing: boolean) => void;
-}) {
+export function ColorChanger() {
   const { profile } = useUserStore();
   const [color, setColor] = useState<string | undefined>(profile?.color);
 
@@ -26,8 +23,14 @@ export function ColorChanger({
   const handleColorChangeMobile = async ({ hex }: { hex: string }) => {
     "worklet";
     setColor(hex);
-    await updateColor(hex);
-    setProfile({ ...profile!, color: hex });
+    try {
+      await updateColor(hex);
+      setProfile({ ...profile!, color: hex });
+      toast.success("Farbe erfolgreich geändert!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Farbe konnte nicht geändert werden!");
+    }
   };
 
   return (
@@ -36,11 +39,17 @@ export function ColorChanger({
         <ColorPicker
           style={{ width: "100%", gap: 15 }}
           value={profile?.color}
-          onComplete={(color) => {
-            handleColorChange(color);
-            onEditingChange?.(false);
+          onComplete={async (color) => {
+            try {
+              await updateColor(color.hex);
+              handleColorChange(color);
+              setProfile({ ...profile!, color: color.hex });
+              toast.success("Farbe erfolgreich geändert!", `${color.hex}`);
+            } catch (error) {
+              console.error(error);
+              toast.error("Farbe konnte nicht geändert werden!");
+            }
           }}
-          onChange={() => onEditingChange?.(true)}
         >
           <Preview style={styles.preview} />
           <Panel1 style={styles.panel} />
@@ -60,9 +69,7 @@ export function ColorChanger({
           value={profile?.color}
           onCompleteJS={(color) => {
             handleColorChangeMobile(color);
-            onEditingChange?.(false);
           }}
-          onChangeJS={() => onEditingChange?.(true)}
         >
           <Preview style={styles.preview} />
           <Panel1 style={styles.panel} />
@@ -75,20 +82,6 @@ export function ColorChanger({
             iconStyle={styles.icon}
           />
         </ColorPicker>
-      )}
-
-      {color !== profile?.color && Platform.OS === "web" && (
-        <Pressable
-          className="bg-white/20 px-6 py-2 rounded-xl items-center justify-center mt-4"
-          onPress={async () => {
-            if (profile && color) {
-              await updateColor(color);
-              setProfile({ ...profile, color: color });
-            }
-          }}
-        >
-          <Text className="text-white text-lg font-bold">Farbe bestätigen</Text>
-        </Pressable>
       )}
     </View>
   );

@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
+import { toast } from "@/utils/toast";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -42,6 +43,8 @@ export const useSpotifyAuth = () => {
         "streaming",
         "user-read-email",
         "user-read-private",
+        "playlist-read-private",
+        "playlist-read-collaborative",
       ],
       usePKCE: false,
       redirectUri,
@@ -71,10 +74,12 @@ export const useSpotifyAuth = () => {
         setSpotifyAccessToken(data.access_token);
         setPreferedPlatform("SPOTIFY");
         await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.ME });
+        toast.success("Spotify erfolgreich verknüpft!");
         console.log("Spotify login success", data.access_token);
       }
     } catch (error) {
       console.error("Spotify login Error:", error);
+      toast.error("Spotify konnte nicht verknüpft werden!");
     }
   };
 

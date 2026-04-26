@@ -9,6 +9,11 @@ import { useEffect, useRef } from "react";
 import { AppState, Platform } from "react-native";
 
 export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
+  let coverUrl = data.coverUrl ?? null;
+  if (coverUrl && coverUrl.includes("{w}") && coverUrl.includes("{h}")) {
+    coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
+  }
+
   return {
     trackId: data.trackId,
     title: data.trackName,
@@ -19,7 +24,7 @@ export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
     updatedAt: data.updatedAt,
     appleTrackId: data.appleTrackId,
     spotifyTrackId: data.spotifyTrackId,
-    albumCoverUrl: data.coverUrl ?? null,
+    albumCoverUrl: coverUrl,
   };
 };
 
@@ -46,6 +51,7 @@ export function useMusicSync() {
   const preferedPlatform = useMusicStore((state) => state.preferedPlatform);
   const lastEmittedState = useRef<string | null>(null);
   const appState = useRef(AppState.currentState);
+  const hostId = useMusicStore((state) => state.listeningToHostId);
 
   useEffect(() => {
     const socket = socketService.connect();
@@ -53,6 +59,7 @@ export function useMusicSync() {
     const onHostSync = (data: BackendSongInfo) => {
       setCurrentSong(mapBackendSongToSongInfo(data));
       syncPlaybackToHost(data, preferedPlatform);
+      setFriendSong(hostId!, mapBackendSongToSongInfo(data));
     };
 
     const onFriendUpdate = (data: {
@@ -100,12 +107,12 @@ export function useMusicSync() {
               const backendSong: BackendSongInfo = {
                 platform: "APPLE_MUSIC",
                 trackId: item.id,
-                trackName: item.title,
-                artist: item.artistName,
+                trackName: item.attributes?.name || "Unknown",
+                artist: item.attributes?.artistName || "Unknown",
                 playbackState: isPlaying ? "PLAYING" : "PAUSED",
                 timestamp: currentPlaybackTime,
-                coverUrl: item.artworkURL
-                  ? item.artworkURL.replace("{w}", "600").replace("{h}", "600")
+                coverUrl: item.attributes?.artwork?.url
+                  ? item.attributes.artwork.url.replace("{w}", "600").replace("{h}", "600")
                   : null,
                 updatedAt: Date.now(),
               };
@@ -174,4 +181,34 @@ export function useMusicSync() {
       if (preferedPlatform === "SPOTIFY") socket.emit("STOP_SERVER_POLLING");
     };
   }, [preferedPlatform]);
+
+  useEffect(() => {
+    const STALE_THRESHOLD = 5 * 60 * 1000;
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+
+      const currentSong = useMusicStore.getState().currentSong;
+      if (
+        currentSong &&
+        currentSong.updatedAt &&
+        now - currentSong.updatedAt > STALE_THRESHOLD
+      ) {
+        clearSong();
+      }
+
+      const friends = useFriendsStore.getState().friends;
+      friends.forEach((friend) => {
+        if (
+          friend.musicState &&
+          friend.musicState.updatedAt &&
+          now - friend.musicState.updatedAt > STALE_THRESHOLD
+        ) {
+          clearFriendSong(friend.friend.id);
+        }
+      });
+    }, 60000); // check every minute
+
+    return () => clearInterval(intervalId);
+  }, [clearSong, clearFriendSong]);
 }

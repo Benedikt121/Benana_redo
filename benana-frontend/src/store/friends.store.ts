@@ -10,6 +10,7 @@ interface FriendsState {
   setFriendRequests: (requests: FriendRequest[]) => void;
   setFriendSong: (friendId: string, song: SongInfo) => void;
   clearFriendSong: (friendId: string) => void;
+  setFriendStatus: (friendId: string, isOnline: boolean) => void;
 }
 
 export const useFriendsStore = create<FriendsState>((set) => ({
@@ -23,14 +24,21 @@ export const useFriendsStore = create<FriendsState>((set) => ({
   setFriendSong: (friendId, song) =>
     set((state) => ({
       friends: state.friends.map((friend) =>
-        friend.friend.id === friendId ? { ...friend, SongInfo: song } : friend,
+        friend.friend.id === friendId ? { ...friend, musicState: song } : friend,
       ),
     })),
 
   clearFriendSong: (friendId) =>
     set((state) => ({
       friends: state.friends.map((friend) =>
-        friend.friend.id === friendId ? { ...friend, SongInfo: null } : friend,
+        friend.friend.id === friendId ? { ...friend, musicState: null } : friend,
+      ),
+    })),
+
+  setFriendStatus: (friendId, isOnline) =>
+    set((state) => ({
+      friends: state.friends.map((friend) =>
+        friend.friend.id === friendId ? { ...friend, isOnline } : friend,
       ),
     })),
 }));

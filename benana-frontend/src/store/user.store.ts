@@ -35,11 +35,17 @@ export const useUserStore = create<UserState>((set, get) => ({
       return;
     }
 
-    const preferedBackground =
-      ((await AsyncStorage.getItem("background")) as Backgrounds) ??
-      "rainyWindow";
-    const completeProfile: UserProfile = { ...profile, preferedBackground };
-    set({ profile: completeProfile });
+    try {
+      const preferedBackground =
+        ((await AsyncStorage.getItem("background")) as Backgrounds) ??
+        "rainyWindow";
+      const completeProfile: UserProfile = { ...profile, preferedBackground };
+      set({ profile: completeProfile });
+    } catch (error) {
+      console.error("Failed to load prefered background:", error);
+      // Fallback to default if storage fails
+      set({ profile: { ...profile, preferedBackground: "rainyWindow" } });
+    }
   },
 
   setSpotifyAccessToken: (spotifyAccessToken) => {
@@ -69,7 +75,6 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 }));
 
-// Subscribe to music store preferredPlatform changes
 useMusicStore.subscribe((state) => {
   useUserStore.setState((userState) => ({
     profile: userState.profile

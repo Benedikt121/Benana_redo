@@ -6,9 +6,11 @@ import { Platform } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import { Auth, AuthStatus } from "@lomray/react-native-apple-music";
 import { APPLE_MOBILE_LOGIN_PATH } from "@/constants/API_CONSTANTS";
 import { Buffer } from "buffer";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
+import { toast } from "@/utils/toast";
 
 declare global {
   interface Window {
@@ -29,7 +31,6 @@ export const useAppleMusicAuth = () => {
       setIsAuthenticating(true);
 
       if (Platform.OS === "web") {
-        // --- DER ALTE WEB FLOW (Der ja funktioniert hat) ---
         const devTokenRes = await getAppleDeveloperToken();
         const developerToken = devTokenRes.token;
 
@@ -62,35 +63,38 @@ export const useAppleMusicAuth = () => {
         if (instance.musicUserToken) {
           await handleTokenSave(instance.musicUserToken);
         }
+      } else if (Platform.OS === "ios") {
+        const status = await Auth.authorize();
+        if (status === AuthStatus.AUTHORIZED) {
+          await handleTokenSave("NATIVE_APPLE_MUSIC_AUTHORIZED");
+          toast.success("Apple Music erfolgreich verknüpft!");
+        } else {
+          toast.error("Apple Music konnte nicht verknüpft werden!");
+        }
       } else {
-        // --- DER NEUE MOBILE FLOW (System Browser + Deep Link) ---
-
-        // 1. Die URL zu unserer neuen Backend-HTML-Seite
         const backendLoginUrl = APPLE_MOBILE_LOGIN_PATH;
-
-        // 2. Wo soll der Browser uns nach dem Login hin zurückschicken?
         const redirectUrl = Linking.createURL("callback");
 
-        // 3. Öffnet Safari nativ! (Das unterbricht die App und zeigt die Webseite)
         const result = await WebBrowser.openAuthSessionAsync(
           backendLoginUrl,
           redirectUrl,
         );
-
-        // 4. Wenn der Deep-Link getriggert wird, fangen wir die URL ab
         if (result.type === "success" && result.url) {
           const parsedUrl = Linking.parse(result.url);
           const appleToken = parsedUrl.queryParams?.appleToken as string;
 
           if (appleToken) {
             await handleTokenSave(appleToken);
+            toast.success("Apple Music erfolgreich verknüpft!");
           } else {
             console.log("Login abgebrochen oder fehlgeschlagen.");
+            toast.error("Apple Music konnte nicht verknüpft werden!");
           }
         }
       }
     } catch (error) {
       console.error("Apple auth error:", error);
+      toast.error("Apple Music konnte nicht verknüpft werden!");
     } finally {
       setIsAuthenticating(false);
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.ME });

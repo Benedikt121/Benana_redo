@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Credentials } from "@/types/AuthTypes";
 import { loginUser, registerUser } from "@/api/auth.api";
 import { z } from "zod";
+import { toast } from "@/utils/toast";
 
 export function useLogin() {
   const login = useAuthStore((state) => state.login);
@@ -14,10 +15,12 @@ export function useLogin() {
   const loginMutation = useMutation({
     mutationFn: (credentials: Credentials) => loginUser(credentials),
     onSuccess: async (data) => {
+      toast.success("Erfolgreich angemeldet");
       await login(data.token, data.user);
       router.replace("/");
     },
     onError: (error: any) => {
+      toast.error("Fehler beim Anmelden", "Bitte überprüfe deine Daten.");
       console.error("Login failed:", error);
     },
   });
@@ -25,10 +28,15 @@ export function useLogin() {
   const registerMutation = useMutation({
     mutationFn: (credentials: Credentials) => registerUser(credentials),
     onSuccess: async (data) => {
+      toast.success("Erfolgreich registriert");
       await login(data.token, data.user);
       router.replace("/");
     },
     onError: (error: any) => {
+      toast.error(
+        "Fehler bei der Registrierung",
+        "Der Username ist wahrscheinlich schon vergeben.",
+      );
       console.error("Registration failed:", error);
     },
   });

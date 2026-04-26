@@ -14,6 +14,7 @@ import Animated, {
 } from "react-native-reanimated";
 import * as ImageManipulator from "expo-image-manipulator";
 import { uploadProfilePicture } from "@/api/user.api";
+import { toast } from "@/utils/toast";
 
 const CIRCLE_SIZE = 200;
 
@@ -190,17 +191,17 @@ export function ImageUploader({
       const updatedUser = await uploadProfilePicture(result.uri);
       await setProfile(updatedUser.data);
 
-      // Invalidate queries to sync the rest of the app
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.USER.ME });
 
-      // Update local state and add a cache-buster if it's a URL
       if (updatedUser.data.profilePictureUrl) {
         setImage(`${updatedUser.data.profilePictureUrl}?t=${Date.now()}`);
       }
 
+      toast.success("Profilbild erfolgreich aktualisiert!");
       setIsEditing(false);
     } catch (error) {
       console.error(error);
+      toast.error("Profilbild konnte nicht hochgeladen werden!");
     } finally {
       setIsUploading(false);
     }

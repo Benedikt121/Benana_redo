@@ -1,3 +1,4 @@
+import { FriendListSidebar } from "@/components/friends/FriendListSidebar";
 import { ProfileCircle } from "@/components/profile/profileCircle";
 import { useInitialData } from "@/hooks/login/useInitialData";
 import { useGlobalSocket } from "@/hooks/sockets/useGlobalSocket";
@@ -31,11 +32,15 @@ export default function DashboardScreen() {
       <Text className="text-white text-3xl font-bold mb-8 text-shadow-glow">
         Hauptseite
       </Text>
+      
       <ProfileCircle
+        className="absolute top-16 right-16"
         onClick={() => {
           router.navigate("/profile");
         }}
       />
+
+      <FriendListSidebar />
     </View>
   );
 }
