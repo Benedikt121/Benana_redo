@@ -1,0 +1,121 @@
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
+index 6c1b18c..f45edc4 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
++++ b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
+@@ -4,6 +4,7 @@
+ 
+ import Foundation
+ import MusicKit
++import MediaPlayer
+ import React
+ 
+ @available(iOS 15.0, *)
+@@ -97,20 +98,32 @@ final class MusicModule: RCTEventEmitter {
+     _ resolve: @escaping RCTPromiseResolveBlock,
+     rejecter reject: @escaping RCTPromiseRejectBlock
+   ) {
+-    // Use Task.detached to avoid inheriting main thread context from RN
+     Task.detached { [playbackController] in
+-      let state = playbackController.state
+-      let songInfo = await playbackController.fetchCurrentSongInfo()
++      let systemPlayer = MPMusicPlayerController.systemMusicPlayer
++      let pbState = systemPlayer.playbackState
++      
++      var statusString = "stopped"
++      if pbState == .playing { statusString = "playing" }
++      else if pbState == .paused { statusString = "paused" }
+       
+       var result: [String: Any] = [
+-        "playbackRate": state.playbackRate,
+-        "playbackStatus": MusicItemMapper.describePlaybackStatus(
+-          state.playbackStatus
+-        ),
+-        "playbackTime": playbackController.playbackTime,
++        "playbackRate": systemPlayer.currentPlaybackRate,
++        "playbackStatus": statusString,
++        "playbackTime": systemPlayer.currentPlaybackTime,
+       ]
+-      if let songInfo = songInfo {
+-        result["currentSong"] = songInfo
++      
++      if let item = systemPlayer.nowPlayingItem, !item.playbackStoreID.isEmpty {
++          // Fetch full song info (with artworkUrl) via MusicKit catalog request
++          if let songInfo = await playbackController.fetchSongDetails(by: item.playbackStoreID) {
++              result["currentSong"] = songInfo
++          } else {
++              result["currentSong"] = [
++                "id": item.playbackStoreID,
++                "title": item.title ?? "",
++                "artistName": item.artist ?? "",
++                "artworkUrl": ""
++              ]
++          }
+       }
+       resolve(result)
+     }
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift b/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
+index bc8133e..7b9ff01 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
++++ b/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
+@@ -14,8 +14,8 @@ final class PlaybackController {
+ 
+   // MARK: - Properties
+ 
+-  private var player: ApplicationMusicPlayer {
+-    ApplicationMusicPlayer.shared
++  private var player: SystemMusicPlayer {
++    SystemMusicPlayer.shared
+   }
+ 
+   var state: MusicKit.MusicPlayer.State {
+@@ -27,7 +27,7 @@ final class PlaybackController {
+     set { player.playbackTime = newValue }
+   }
+ 
+-  var currentEntry: ApplicationMusicPlayer.Queue.Entry? {
++  var currentEntry: SystemMusicPlayer.Queue.Entry? {
+     player.queue.currentEntry
+   }
+ 
+@@ -103,7 +103,7 @@ final class PlaybackController {
+   }
+ 
+   func setQueue<T: PlayableMusicItem>(_ items: [T], startingAt item: T) async throws {
+-    player.queue = ApplicationMusicPlayer.Queue(for: items, startingAt: item)
++    player.queue = SystemMusicPlayer.Queue(for: items, startingAt: item)
+     try await player.prepareToPlay()
+   }
+ 
+@@ -170,6 +170,10 @@ final class PlaybackController {
+     return songInfo ?? cachedSongInfo
+   }
+ 
++  func fetchSongDetails(by idString: String) async -> [String: Any]? {
++    return await fetchSongDetails(MusicItemID(idString))
++  }
++
+   private func fetchSongDetails(_ id: MusicItemID) async -> [String: Any]? {
+     let request = MusicCatalogResourceRequest<Song>(matching: \.id, equalTo: id)
+     do {
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/PlaybackObserver.swift b/node_modules/@lomray/react-native-apple-music/ios/PlaybackObserver.swift
+index 4849451..39abcc4 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/PlaybackObserver.swift
++++ b/node_modules/@lomray/react-native-apple-music/ios/PlaybackObserver.swift
+@@ -86,7 +86,7 @@ final class PlaybackObserver {
+     stateObservationTask = Task.detached {
+       // Use AsyncStream to bridge objectWillChange
+       let stateStream = AsyncStream<Void> { continuation in
+-        let cancellable = ApplicationMusicPlayer.shared.state.objectWillChange.sink { _ in
++        let cancellable = SystemMusicPlayer.shared.state.objectWillChange.sink { _ in
+           continuation.yield()
+         }
+         continuation.onTermination = { _ in
+@@ -139,7 +139,7 @@ final class PlaybackObserver {
+     
+     queueObservationTask = Task.detached {
+       let queueStream = AsyncStream<Void> { continuation in
+-        let cancellable = ApplicationMusicPlayer.shared.queue.objectWillChange.sink { _ in
++        let cancellable = SystemMusicPlayer.shared.queue.objectWillChange.sink { _ in
+           continuation.yield()
+         }
+         continuation.onTermination = { _ in

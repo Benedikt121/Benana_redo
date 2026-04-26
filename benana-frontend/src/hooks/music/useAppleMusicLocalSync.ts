@@ -22,10 +22,15 @@ export const useAppleMusicLocalSync = () => {
     }
 
     const syncToBackend = async () => {
+      console.log("🎵 Apple Music Sync: syncToBackend triggered! Socket exists:", !!socket);
       if (!socket) return;
       try {
         const state = await Player.getCurrentState();
-        if (!state || !state.currentSong) return;
+        console.log("🎵 Apple Music Sync: Fetched state:", state);
+        if (!state || !state.currentSong) {
+          console.log("🎵 Apple Music Sync: No currentSong found in state. Returning.");
+          return;
+        }
 
         const song = state.currentSong;
         const newPlaybackState =
@@ -83,13 +88,17 @@ export const useAppleMusicLocalSync = () => {
       }
     };
 
-    console.log("🎵 Apple Music Sync: Hook mounted, listening to events...");
+    console.log("🎵 Apple Music Sync: Hook mounted, listening to events and polling...");
     const subState = Player.addListener("onPlaybackStateChange", syncToBackend);
     const subSong = Player.addListener("onCurrentSongChange", syncToBackend);
+
+    // Fallback: Poll every 5 seconds because native events sometimes don't fire for external apps
+    const interval = setInterval(syncToBackend, 5000);
 
     return () => {
       subState?.remove();
       subSong?.remove();
+      clearInterval(interval);
     };
   }, [preferedPlatform]);
 };

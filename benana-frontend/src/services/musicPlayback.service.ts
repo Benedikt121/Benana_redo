@@ -4,6 +4,7 @@ import {
   pauseSpotify,
   skipNextSpotify,
   skipPreviousSpotify,
+  forcePlaySpotify,
 } from "@/api/music.api";
 import { useMusicStore } from "@/store/music.store";
 import type { MusicPlatform } from "@/types/MusicTypes";
@@ -30,11 +31,14 @@ const appleMusicWeb = {
       await window.MusicKit.getInstance().skipToPreviousItem();
     }
   },
-  playTrack: async (trackId: string) => {
+  playTrack: async (trackId: string, positionMs: number = 0) => {
     if (typeof window !== "undefined" && window.MusicKit) {
       const instance = window.MusicKit.getInstance();
       await instance.setQueue({ song: trackId });
       await instance.play();
+      if (positionMs > 0) {
+        await instance.seekToTime(positionMs / 1000);
+      }
     }
   },
 };
@@ -51,9 +55,12 @@ if (Platform.OS === "ios") {
       pause: () => Player.pause(),
       skipNext: () => Player.skipToNextEntry(),
       skipPrevious: () => Player.skipToPreviousEntry(),
-      playTrack: async (trackId: string) => {
+      playTrack: async (trackId: string, positionMs: number = 0) => {
         await MusicKit.setPlaybackQueue(trackId, "song");
-        Player.play();
+        await Player.play();
+        if (positionMs > 0) {
+          Player.seekToTime(positionMs / 1000);
+        }
       },
     };
   } catch {
@@ -75,8 +82,8 @@ const spotifyBackend = {
   skipPrevious: async () => {
     await skipPreviousSpotify();
   },
-  playTrack: async (trackId: string) => {
-    // Falls API vorhanden, hier einfügen
+  playTrack: async (trackId: string, positionMs: number) => {
+    await forcePlaySpotify(trackId, positionMs);
   },
 };
 
@@ -133,8 +140,8 @@ export const musicPlayback = {
     if (driver) await driver.skipPrevious();
   },
 
-  playTrack: async (trackId: string) => {
+  playTrack: async (trackId: string, positionMs: number = 0) => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
-    if (driver && driver.playTrack) await driver.playTrack(trackId);
+    if (driver && driver.playTrack) await driver.playTrack(trackId, positionMs);
   },
 };
