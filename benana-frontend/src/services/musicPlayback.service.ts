@@ -20,10 +20,22 @@ declare global {
     MusicKit: any;
   }
 }
+let isMusicKitConfiguring = false;
+let isMusicKitConfigured = false;
 
 const ensureMusicKitLoaded = async () => {
   if (typeof window === "undefined") return false;
-  if (window.MusicKit) return true;
+  if (isMusicKitConfigured) return true;
+  if (isMusicKitConfiguring) {
+    // Wait for existing configuration to finish
+    return new Promise((res) => {
+      window.addEventListener("musickitconfigured", () => res(true), {
+        once: true,
+      });
+    });
+  }
+
+  isMusicKitConfiguring = true;
 
   try {
     if (!(window as any).process) (window as any).process = {};
@@ -54,7 +66,8 @@ const ensureMusicKitLoaded = async () => {
       app: { name: "Benana", build: "1.0.0" },
     });
 
-    // Notify the frontend that MusicKit is now fully configured and getInstance() will work
+    isMusicKitConfigured = true;
+    isMusicKitConfiguring = false;
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("musickitconfigured"));
     }
@@ -123,6 +136,14 @@ const appleMusicWeb = {
   playPlaylist: async (playlistId: string) => {
     if (await ensureMusicKitLoaded()) {
       const instance = window.MusicKit.getInstance();
+      console.log("[DEBUG-MUSIC] MusicKit Instance:", instance);
+      console.log("[DEBUG-MUSIC] isAuthorized:", instance.isAuthorized);
+      console.log("[DEBUG-MUSIC] Storefront:", instance.storefrontId);
+
+      if (!instance.isAuthorized) {
+        console.log("[DEBUG-MUSIC] Not authorized, calling authorize()...");
+        await instance.authorize();
+      }
       try {
         console.log("[DEBUG-MUSIC] Manual fetch starting for:", playlistId);
 
@@ -130,22 +151,28 @@ const appleMusicWeb = {
           playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
 
         if (isLibrary) {
-          // This call MUST show up in the network tab
           const res = await instance.api.music(
             `v1/me/library/playlists/${playlistId}`,
             { include: "tracks" },
           );
+          console.log("[DEBUG-MUSIC] Library playlist response:", res);
           const playlistObj = res?.data?.data?.[0];
           const tracks = playlistObj?.relationships?.tracks?.data || [];
+          console.log("[DEBUG-MUSIC] Tracks count:", tracks.length);
 
           if (tracks.length > 0) {
-            console.log(
-              `[DEBUG-MUSIC] Queueing ${tracks.length} library tracks with startPlaying...`,
-            );
-            await instance.setQueue({
-              items: tracks,
-              startPlaying: true,
-            });
+            console.log("[DEBUG-MUSIC] Queueing hardcoded song 1499386008...");
+            try {
+              await instance.setQueue({
+                song: "1499386008",
+                startPlaying: true,
+              });
+              console.log("[DEBUG-MUSIC] setQueue success, calling play()");
+              await instance.play();
+              console.log("[DEBUG-MUSIC] play() called");
+            } catch (queueErr) {
+              console.error("[DEBUG-MUSIC] setQueue/play failed:", queueErr);
+            }
           } else {
             console.error(
               "[DEBUG-MUSIC] No tracks found in library playlist response",
@@ -157,6 +184,7 @@ const appleMusicWeb = {
             playlist: playlistId,
             startPlaying: true,
           });
+          await instance.play();
         }
 
         setTimeout(() => {
