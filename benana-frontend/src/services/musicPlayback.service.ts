@@ -61,6 +61,13 @@ const ensureMusicKitLoaded = async () => {
     });
 
     const devTokenRes = await getAppleDeveloperToken();
+    console.log(
+      "[DEBUG-MUSIC] Dev Token received, length:",
+      devTokenRes?.token?.length,
+    );
+    if (!devTokenRes?.token)
+      throw new Error("No developer token received from backend");
+
     await window.MusicKit.configure({
       developerToken: devTokenRes.token,
       app: { name: "Benana", build: "1.0.0" },
@@ -75,6 +82,7 @@ const ensureMusicKitLoaded = async () => {
     return true;
   } catch (e) {
     console.error("Failed to load MusicKit:", e);
+    isMusicKitConfiguring = false; // Fix: reset flag so next attempt can retry
     return false;
   }
 };
@@ -164,12 +172,15 @@ const appleMusicWeb = {
             console.log("[DEBUG-MUSIC] Queueing hardcoded song 1499386008...");
             try {
               await instance.setQueue({
-                song: "1499386008",
+                songs: ["1672243820"],
                 startPlaying: true,
               });
               console.log("[DEBUG-MUSIC] setQueue success, calling play()");
               await instance.play();
-              console.log("[DEBUG-MUSIC] play() called");
+              console.log(
+                "[DEBUG-MUSIC] play() called, playbackState:",
+                instance.playbackState,
+              );
             } catch (queueErr) {
               console.error("[DEBUG-MUSIC] setQueue/play failed:", queueErr);
             }
