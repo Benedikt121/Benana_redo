@@ -88,17 +88,13 @@ export const useAppleMusicLocalSync = () => {
       }
     };
 
-    console.log("🎵 Apple Music Sync: Hook mounted, listening to events and polling...");
+    console.log("🎵 Apple Music Sync: Hook mounted, listening to events...");
     const subState = Player.addListener("onPlaybackStateChange", syncToBackend);
     const subSong = Player.addListener("onCurrentSongChange", syncToBackend);
-
-    // Fallback: Poll every 5 seconds because native events sometimes don't fire for external apps
-    const interval = setInterval(syncToBackend, 5000);
 
     return () => {
       subState?.remove();
       subSong?.remove();
-      clearInterval(interval);
     };
   }, [preferedPlatform]);
 };

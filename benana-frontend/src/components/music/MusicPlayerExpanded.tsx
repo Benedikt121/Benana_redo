@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { PlayingIndicator } from "./PlayingIndicator";
 import { useColorStore } from "@/store/color.store";
-
+import { ScrollView, ActivityIndicator } from "react-native";
+import { musicPlayback } from "@/services/musicPlayback.service";
+import { useUserStore } from "@/store/user.store";
+import type { IPlaylist } from "@lomray/react-native-apple-music";
 
 interface MusicPlayerExpandedProps {
   visible: boolean;
@@ -31,23 +34,44 @@ export const MusicPlayerExpanded = ({
   visible,
   onClose,
 }: MusicPlayerExpandedProps) => {
-  const {
-    currentSong,
-    isPlaying,
-    togglePlayPause,
-    skipNext,
-    skipPrevious,
-  } = useMusicControls();
+  const { currentSong, isPlaying, togglePlayPause, skipNext, skipPrevious } =
+    useMusicControls();
 
   const dominant = useColorStore((s) => s.dominant) || "#1DB954";
   const vibrant = useColorStore((s) => s.vibrant) || "#1DB954";
 
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const appleMusicToken = useUserStore((s) => s.profile?.appleMusicUserToken);
+
+  React.useEffect(() => {
+    if (visible && appleMusicToken) {
+      loadPlaylists();
+    }
+  }, [visible, appleMusicToken]);
+
+  const loadPlaylists = async () => {
+    setIsLoading(true);
+    try {
+      const res = await musicPlayback.fetchPlaylists();
+      setPlaylists(res);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const playPlaylist = async (id: string) => {
+    await musicPlayback.playPlaylist(id);
+    onClose(); // Optional: close the library after playing
+  };
 
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const albumSize = Math.min(width - 80, 340);
 
-  if (!visible || !currentSong) return null;
+  if (!visible) return null;
 
   return (
     <Animated.View
@@ -68,115 +92,180 @@ export const MusicPlayerExpanded = ({
           styles.content,
           {
             paddingTop: insets.top + 16,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom,
           },
         ]}
       >
-        {/* Header — close button */}
-        <View style={styles.header}>
-          <Pressable onPress={onClose} style={styles.closeButton} hitSlop={16}>
-            <Ionicons name="chevron-down" size={28} color="#fff" />
-          </Pressable>
-          <Text style={styles.headerTitle}>Now Playing</Text>
-          <View style={{ width: 28 }} />
-        </View>
-
-        {/* Album Art */}
-        <View style={styles.albumContainer}>
-          {currentSong.albumCoverUrl ? (
-            <Image
-              source={{ uri: currentSong.albumCoverUrl }}
-              style={[
-                styles.albumArt,
-                { width: albumSize, height: albumSize },
-              ]}
-            />
-          ) : (
-            <View
-              style={[
-                styles.albumArt,
-                styles.albumPlaceholder,
-                { width: albumSize, height: albumSize },
-              ]}
+        <ScrollView
+          style={{ flex: 1, width: "100%" }}
+          contentContainerStyle={{ paddingBottom: 40, alignItems: "center" }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header — close button */}
+          <View style={styles.header}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeButton}
+              hitSlop={16}
             >
-              <Ionicons name="musical-notes" size={64} color="rgba(255,255,255,0.3)" />
-            </View>
+              <Ionicons name="chevron-down" size={28} color="#fff" />
+            </Pressable>
+            <Text style={styles.headerTitle}>Now Playing</Text>
+            <View style={{ width: 28 }} />
+          </View>
+
+          {currentSong && (
+            <>
+              {/* Album Art */}
+              <View style={styles.albumContainer}>
+                {currentSong.albumCoverUrl ? (
+                  <Image
+                    source={{ uri: currentSong.albumCoverUrl }}
+                    style={[
+                      styles.albumArt,
+                      { width: albumSize, height: albumSize },
+                    ]}
+                  />
+                ) : (
+                  <LinearGradient
+                    colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.02)"]}
+                    style={[
+                      styles.albumArt,
+                      styles.albumPlaceholder,
+                      { width: albumSize, height: albumSize },
+                    ]}
+                  >
+                    <Ionicons
+                      name="musical-notes"
+                      size={64}
+                      color="rgba(255,255,255,0.3)"
+                    />
+                  </LinearGradient>
+                )}
+              </View>
+
+              {/* Song Info */}
+              <View style={styles.songInfo}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.songTitle} numberOfLines={1}>
+                    {currentSong.title}
+                  </Text>
+                  <PlayingIndicator
+                    isPlaying={isPlaying}
+                    color1={vibrant}
+                    color2={dominant}
+                  />
+                </View>
+                <Text style={styles.songArtist} numberOfLines={1}>
+                  {currentSong.artist}
+                </Text>
+              </View>
+
+              {/* Progress indicator (visual only, based on current poll data) */}
+              <View style={styles.progressContainer}>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: "35%" }]} />
+                </View>
+              </View>
+
+              {/* Controls */}
+              <View style={styles.controls}>
+                <Pressable
+                  onPress={skipPrevious}
+                  style={styles.sideButton}
+                  hitSlop={16}
+                >
+                  <Ionicons name="play-skip-back" size={28} color="#fff" />
+                </Pressable>
+
+                <Pressable
+                  onPress={togglePlayPause}
+                  style={styles.playButton}
+                  hitSlop={16}
+                >
+                  <Ionicons
+                    name={isPlaying ? "pause" : "play"}
+                    size={32}
+                    color="#000"
+                  />
+                </Pressable>
+
+                <Pressable
+                  onPress={skipNext}
+                  style={styles.sideButton}
+                  hitSlop={16}
+                >
+                  <Ionicons name="play-skip-forward" size={28} color="#fff" />
+                </Pressable>
+              </View>
+
+              {/* Platform indicator */}
+              <View style={styles.platformBadge}>
+                <Ionicons
+                  name={
+                    currentSong.platform === "APPLE_MUSIC"
+                      ? "musical-note"
+                      : "logo-closed-captioning"
+                  }
+                  size={14}
+                  color="rgba(255,255,255,0.4)"
+                />
+                <Text style={styles.platformText}>
+                  {currentSong.platform === "APPLE_MUSIC"
+                    ? "Apple Music"
+                    : "Spotify"}
+                </Text>
+              </View>
+            </>
           )}
-        </View>
 
-        {/* Song Info */}
-        <View style={styles.songInfo}>
-          <View style={styles.titleRow}>
-            <Text style={styles.songTitle} numberOfLines={1}>
-              {currentSong.title}
+          {/* Library Section */}
+          <View style={styles.libraryHeader}>
+            <Text style={styles.libraryTitle}>Your Library</Text>
+            <Text style={styles.librarySubtitle}>Playlists</Text>
+          </View>
+
+          {isLoading ? (
+            <ActivityIndicator color={vibrant} style={{ marginTop: 40 }} />
+          ) : playlists.length > 0 ? (
+            <View style={styles.playlistGrid}>
+               {playlists.map((pl) => {
+                 // Format artwork URL for web if needed
+                 let artworkUrl = pl.attributes?.artwork?.url || pl.artworkUrl;
+                 let name = pl.attributes?.name || pl.name;
+                 
+                 if (artworkUrl && artworkUrl.includes("{w}")) {
+                    artworkUrl = artworkUrl.replace("{w}", "200").replace("{h}", "200");
+                 }
+                 return (
+                   <Pressable
+                      key={pl.id}
+                      style={styles.playlistCard}
+                      onPress={() => playPlaylist(pl.id)}
+                   >
+                      {artworkUrl ? (
+                         <Image source={{ uri: artworkUrl }} style={styles.playlistArt} />
+                      ) : (
+                         <LinearGradient 
+                            colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.02)"]}
+                            style={[styles.playlistArt, styles.albumPlaceholder]}
+                         >
+                            <Ionicons name="musical-notes" size={32} color="rgba(255,255,255,0.4)" />
+                         </LinearGradient>
+                      )}
+                      <Text style={styles.playlistName} numberOfLines={1}>{name}</Text>
+                   </Pressable>
+                 );
+              })}
+            </View>
+          ) : (
+            <Text style={styles.emptyText}>
+              {appleMusicToken
+                ? "No playlists found."
+                : "Connect Apple Music to see your library."}
             </Text>
-            <PlayingIndicator
-              isPlaying={isPlaying}
-              color1={vibrant}
-              color2={dominant}
-            />
-          </View>
-          <Text style={styles.songArtist} numberOfLines={1}>
-            {currentSong.artist}
-          </Text>
-
-        </View>
-
-        {/* Progress indicator (visual only, based on current poll data) */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: "35%" }]} />
-          </View>
-        </View>
-
-        {/* Controls */}
-        <View style={styles.controls}>
-          <Pressable
-            onPress={skipPrevious}
-            style={styles.sideButton}
-            hitSlop={16}
-          >
-            <Ionicons name="play-skip-back" size={28} color="#fff" />
-          </Pressable>
-
-          <Pressable
-            onPress={togglePlayPause}
-            style={styles.playButton}
-            hitSlop={16}
-          >
-            <Ionicons
-              name={isPlaying ? "pause" : "play"}
-              size={32}
-              color="#000"
-            />
-          </Pressable>
-
-          <Pressable
-            onPress={skipNext}
-            style={styles.sideButton}
-            hitSlop={16}
-          >
-            <Ionicons name="play-skip-forward" size={28} color="#fff" />
-          </Pressable>
-        </View>
-
-        {/* Platform indicator */}
-        <View style={styles.platformBadge}>
-          <Ionicons
-            name={
-              currentSong.platform === "APPLE_MUSIC"
-                ? "musical-note"
-                : "logo-closed-captioning"
-            }
-            size={14}
-            color="rgba(255,255,255,0.4)"
-          />
-          <Text style={styles.platformText}>
-            {currentSong.platform === "APPLE_MUSIC"
-              ? "Apple Music"
-              : "Spotify"}
-          </Text>
-        </View>
+          )}
+        </ScrollView>
       </Animated.View>
     </Animated.View>
   );
@@ -231,9 +320,10 @@ const styles = StyleSheet.create({
         }),
   } as any,
   albumPlaceholder: {
-    backgroundColor: "rgba(255,255,255,0.06)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
   songInfo: {
     width: "100%",
@@ -314,5 +404,54 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.4)",
     fontSize: 12,
     fontWeight: "500",
+  },
+  libraryHeader: {
+    width: "100%",
+    marginTop: 48,
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  libraryTitle: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 14,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+  },
+  librarySubtitle: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  playlistGrid: {
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+  playlistCard: {
+    width: "48%",
+    marginBottom: 24,
+    alignItems: "center",
+  },
+  playlistArt: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  playlistName: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  emptyText: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 14,
+    marginTop: 40,
+    textAlign: "center",
   },
 });

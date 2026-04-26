@@ -66,6 +66,9 @@ export const MobileFloatingIsland = () => {
     expansion.value = withSpring(next ? 1 : 0, SPRING_CONFIG);
   };
 
+  const IDLE_WIDTH = 64;
+  const IDLE_HEIGHT = 42;
+
   const containerStyle = useAnimatedStyle(() => ({
     width: interpolate(
       expansion.value,
@@ -76,7 +79,7 @@ export const MobileFloatingIsland = () => {
     height: interpolate(
       expansion.value,
       [0, 1],
-      [COMPACT_HEIGHT, dynamicExpandedHeight],
+      [hasSong ? COMPACT_HEIGHT : IDLE_HEIGHT, dynamicExpandedHeight],
       Extrapolation.CLAMP,
     ),
   }));
@@ -102,14 +105,9 @@ export const MobileFloatingIsland = () => {
     opacity: withTiming(expansion.value < 0.3 ? 1 : 0, { duration: 100 }),
   }));
 
-  // Only on mobile, only when there's a song
+  // Only on mobile
   // Hide on devices with a hardware Dynamic Island (proxied by insets.top > 50)
-  if (
-    Platform.OS === "web" ||
-    !hasSong ||
-    !currentSong ||
-    insets.top > 50
-  ) {
+  if (Platform.OS === "web") {
     return null;
   }
 
@@ -119,9 +117,9 @@ export const MobileFloatingIsland = () => {
       exiting={FadeOut.duration(200)}
       style={[styles.wrapper, { top: 10 }]}
     >
-      <StatusBar hidden={hasSong} />
+      <StatusBar hidden={true} />
       <Pressable
-        onPress={toggle}
+        onPress={hasSong ? toggle : () => setExpandedPlayerVisible(true)}
         onLongPress={() => setExpandedPlayerVisible(true)}
         delayLongPress={400}
         style={{ alignItems: "center" }}
@@ -130,34 +128,52 @@ export const MobileFloatingIsland = () => {
           {/* Background */}
           <View style={styles.background} />
 
-          {/* Compact View — album art on left, indicator on right */}
+          {/* Compact / Idle View */}
           <Animated.View style={[styles.compactContent, compactContentStyle]}>
-            <View style={styles.compactLeading}>
-              {currentSong.albumCoverUrl ? (
-                <Image
-                  source={{ uri: currentSong.albumCoverUrl }}
-                  style={styles.compactAlbumArt}
+            {!hasSong ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: "flex-start",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons
+                  name="musical-notes"
+                  size={20}
+                  color="rgba(255,255,255,0.8)"
                 />
-              ) : (
-                <View style={styles.compactAlbumPlaceholder}>
-                  <Ionicons name="musical-notes" size={16} color="#fff" />
+              </View>
+            ) : (
+              <>
+                <View style={styles.compactLeading}>
+                  {currentSong?.albumCoverUrl ? (
+                    <Image
+                      source={{ uri: currentSong.albumCoverUrl }}
+                      style={styles.compactAlbumArt}
+                    />
+                  ) : (
+                    <View style={styles.compactAlbumPlaceholder}>
+                      <Ionicons name="musical-notes" size={16} color="#fff" />
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
 
-            <View style={styles.compactTrailing}>
-              <PlayingIndicator
-                isPlaying={isPlaying}
-                color1={vibrant}
-                color2={dominant}
-              />
-            </View>
+                <View style={styles.compactTrailing}>
+                  <PlayingIndicator
+                    isPlaying={isPlaying}
+                    color1={vibrant}
+                    color2={dominant}
+                  />
+                </View>
+              </>
+            )}
           </Animated.View>
 
           {/* Expanded View — full controls */}
           <Animated.View style={[styles.expandedContent, expandedContentStyle]}>
             {/* Album Art */}
-            {currentSong.albumCoverUrl ? (
+            {currentSong?.albumCoverUrl ? (
               <Image
                 source={{ uri: currentSong.albumCoverUrl }}
                 style={styles.expandedAlbumArt}
@@ -174,10 +190,10 @@ export const MobileFloatingIsland = () => {
               style={styles.songInfo}
             >
               <Text style={styles.songTitle} numberOfLines={1}>
-                {currentSong.title}
+                {currentSong?.title}
               </Text>
               <Text style={styles.songArtist} numberOfLines={1}>
-                {currentSong.artist}
+                {currentSong?.artist}
               </Text>
             </Pressable>
 

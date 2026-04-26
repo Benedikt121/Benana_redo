@@ -41,6 +41,22 @@ const appleMusicWeb = {
       }
     }
   },
+  fetchPlaylists: async () => {
+    if (typeof window !== "undefined" && window.MusicKit) {
+      const instance = window.MusicKit.getInstance();
+      if (!instance.isAuthorized) await instance.authorize();
+      const response = await instance.api.library.playlists();
+      return response;
+    }
+    return [];
+  },
+  playPlaylist: async (playlistId: string) => {
+    if (typeof window !== "undefined" && window.MusicKit) {
+      const instance = window.MusicKit.getInstance();
+      await instance.setQueue({ playlist: playlistId });
+      await instance.play();
+    }
+  },
 };
 
 // --- Apple Music (iOS) via @lomray/react-native-apple-music ---
@@ -61,6 +77,19 @@ if (Platform.OS === "ios") {
         if (positionMs > 0) {
           Player.seekToTime(positionMs / 1000);
         }
+      },
+      fetchPlaylists: async () => {
+        try {
+          const res = await MusicKit.getUserPlaylists();
+          return res.playlists || [];
+        } catch (e) {
+          console.error("Native fetchPlaylists failed:", e);
+          return [];
+        }
+      },
+      playPlaylist: async (playlistId: string) => {
+        await MusicKit.playLibraryPlaylist(playlistId);
+        await Player.play();
       },
     };
   } catch {
@@ -84,6 +113,13 @@ const spotifyBackend = {
   },
   playTrack: async (trackId: string, positionMs: number) => {
     await forcePlaySpotify(trackId, positionMs);
+  },
+  fetchPlaylists: async () => {
+    console.warn("Spotify fetchPlaylists not implemented yet");
+    return [];
+  },
+  playPlaylist: async (playlistId: string) => {
+    console.warn("Spotify playPlaylist not implemented yet");
   },
 };
 
@@ -143,5 +179,20 @@ export const musicPlayback = {
   playTrack: async (trackId: string, positionMs: number = 0) => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
     if (driver && driver.playTrack) await driver.playTrack(trackId, positionMs);
+  },
+
+  fetchPlaylists: async () => {
+    const driver = getDriver(useMusicStore.getState().preferedPlatform);
+    if (driver && driver.fetchPlaylists) {
+      return await driver.fetchPlaylists();
+    }
+    return [];
+  },
+
+  playPlaylist: async (playlistId: string) => {
+    const driver = getDriver(useMusicStore.getState().preferedPlatform);
+    if (driver && driver.playPlaylist) {
+      await driver.playPlaylist(playlistId);
+    }
   },
 };

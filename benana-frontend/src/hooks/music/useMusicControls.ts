@@ -56,7 +56,11 @@ export function useMusicControls() {
     const newState = previousState === "PLAYING" ? "PAUSED" : "PLAYING";
     setPlaybackState(newState);
     try {
-      await musicPlayback.togglePlayPause();
+      if (previousState === "PLAYING") {
+        await musicPlayback.pause();
+      } else {
+        await musicPlayback.play();
+      }
       setTimeout(refreshSpotifyState, 500);
     } catch (e) {
       console.error("Toggle play/pause failed:", e);
