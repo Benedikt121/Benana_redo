@@ -126,7 +126,11 @@ const appleMusicWeb = {
       try {
         console.log("Playing playlist with ID:", playlistId);
 
-        // Fetch the playlist object first to get the most up-to-date playable data
+        // 1. Pre-emptively "play" to unlock the audio context on user gesture.
+        // This fails if the queue is empty, but satisfies the browser's requirement.
+        instance.play().catch(() => {});
+
+        // 2. Fetch the playlist object with tracks
         const isLibrary =
           playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
         const storefront = instance.storefrontId || "us";
@@ -139,11 +143,18 @@ const appleMusicWeb = {
         const playlistObj = response?.data?.data?.[0];
 
         if (playlistObj) {
-          console.log("Found playlist object, setting queue...");
-          await instance.setQueue({ playlist: playlistObj });
+          const tracks = playlistObj.relationships?.tracks?.data || [];
+          if (tracks.length > 0) {
+            console.log(`Found ${tracks.length} tracks, setting queue...`);
+            // Setting the queue with MediaItem objects is the most reliable way in V3
+            await instance.setQueue({ items: tracks });
+          } else {
+            console.warn("Playlist has no tracks, falling back to ID...");
+            await instance.setQueue({ playlist: playlistId });
+          }
         } else {
           console.warn(
-            "Could not find playlist object, falling back to ID string...",
+            "Could not fetch playlist object, falling back to ID...",
           );
           await instance.setQueue({ playlist: playlistId });
         }
@@ -176,10 +187,15 @@ const appleMusicWeb = {
             });
           }
         }, 1000);
-      } catch (err: any) {
-        console.error("Detailed Apple Music play error:", err);
-        if (err.description) console.error("Error description:", err.description);
-        if (err.message) console.error("Error message:", err.message);
+        setTimeout(() => {
+          console.log(
+            "Apple Music status 3s after play:",
+            instance.isPlaying,
+            instance.nowPlayingItem,
+          );
+        }, 3000);
+      } catch (err) {
+        console.error("Failed to play Apple Music web playlist:", err);
       }
     }
   },
