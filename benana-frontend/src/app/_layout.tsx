@@ -17,7 +17,6 @@ import { Toaster } from "sonner-native";
 import { WebDynamicIsland } from "@/components/music/WebDynamicIsland";
 import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
 import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
-import { useMusicLiveActivity } from "@/hooks/music/useMusicLiveActivity";
 
 export const queryClient = new QueryClient();
 
@@ -93,7 +92,6 @@ function RootLayoutContent() {
   );
 
   useMusicSync();
-  useMusicLiveActivity();
 
   return (
     <View className="flex-1 bg-transparent">

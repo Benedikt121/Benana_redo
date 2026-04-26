@@ -13,8 +13,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppleMusicUsageDescription": "Benana uses Apple Music to play and control your music.",
-        "NSSupportsLiveActivities": true,
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
@@ -47,20 +48,9 @@
       "expo-video",
       "expo-sharing",
       "expo-web-browser",
-      [
-        "expo-widgets",
-        {
-          "widgets": [
-            {
-              "name": "NowPlayingActivity",
-              "displayName": "Now Playing",
-              "description": "Shows the currently playing song on the Lock Screen and Dynamic Island",
-              "supportedFamilies": ["systemSmall", "systemMedium"]
-            }
-          ],
-          "groupId": "group.com.notbene.benanafrontend"
-        }
-      ]
+      "expo-audio",
+      "expo-font",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,
