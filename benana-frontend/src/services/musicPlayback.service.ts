@@ -124,49 +124,49 @@ const appleMusicWeb = {
     if (await ensureMusicKitLoaded()) {
       const instance = window.MusicKit.getInstance();
       try {
-        console.log("Playing playlist with ID:", playlistId);
+        console.log("[DEBUG-MUSIC] Manual fetch starting for:", playlistId);
 
-        // 1. Pre-emptively "play" to unlock the audio context on user gesture.
-        // This fails if the queue is empty, but satisfies the browser's requirement.
-        instance.play().catch(() => {});
-
-        // 2. Fetch the playlist object with tracks
         const isLibrary =
           playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
-        const storefront = instance.storefrontId || "us";
-        const url = isLibrary
-          ? `v1/me/library/playlists/${playlistId}`
-          : `v1/catalog/${storefront}/playlists/${playlistId}`;
 
-        console.log("Fetching playlist data from:", url);
-        const response = await instance.api.music(url, { include: "tracks" });
-        const playlistObj = response?.data?.data?.[0];
+        if (isLibrary) {
+          // This call MUST show up in the network tab
+          const res = await instance.api.music(
+            `v1/me/library/playlists/${playlistId}`,
+            { include: "tracks" },
+          );
+          const playlistObj = res?.data?.data?.[0];
+          const tracks = playlistObj?.relationships?.tracks?.data || [];
 
-        if (playlistObj) {
-          const tracks = playlistObj.relationships?.tracks?.data || [];
           if (tracks.length > 0) {
-            console.log(`Found ${tracks.length} tracks, setting queue...`);
-            // Setting the queue with MediaItem objects is the most reliable way in V3
-            await instance.setQueue({ items: tracks });
+            console.log(
+              `[DEBUG-MUSIC] Queueing ${tracks.length} library tracks with startPlaying...`,
+            );
+            await instance.setQueue({
+              items: tracks,
+              startPlaying: true,
+            });
           } else {
-            console.warn("Playlist has no tracks, falling back to ID...");
-            await instance.setQueue({ playlist: playlistId });
+            console.error(
+              "[DEBUG-MUSIC] No tracks found in library playlist response",
+            );
           }
         } else {
-          console.warn(
-            "Could not fetch playlist object, falling back to ID...",
-          );
-          await instance.setQueue({ playlist: playlistId });
+          console.log("[DEBUG-MUSIC] Queueing catalog playlist...");
+          await instance.setQueue({
+            playlist: playlistId,
+            startPlaying: true,
+          });
         }
-
-        await instance.play();
-        console.log("Playback started successfully!");
 
         setTimeout(() => {
           console.log(
-            "Apple Music status 1s after play:",
+            "[DEBUG-MUSIC] Apple Music status 2s after play:",
             instance.isPlaying,
-            instance.nowPlayingItem,
+            "Queue length:",
+            instance.queue.length,
+            "Now playing:",
+            instance.nowPlayingItem?.id,
           );
           if (instance.nowPlayingItem) {
             const item = instance.nowPlayingItem;
@@ -186,16 +186,11 @@ const appleMusicWeb = {
               updatedAt: Date.now(),
             });
           }
-        }, 1000);
-        setTimeout(() => {
-          console.log(
-            "Apple Music status 3s after play:",
-            instance.isPlaying,
-            instance.nowPlayingItem,
-          );
-        }, 3000);
-      } catch (err) {
-        console.error("Failed to play Apple Music web playlist:", err);
+        }, 2000);
+      } catch (err: any) {
+        console.error("[DEBUG-MUSIC] Play error:", err);
+        if (err.description)
+          console.error("Error description:", err.description);
       }
     }
   },
