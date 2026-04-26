@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   acceptFriendRequest,
   removeFriend,
@@ -6,9 +6,9 @@ import {
 } from "@/api/friends.api";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
 import { toast } from "sonner-native";
-import { queryClient } from "@/app/_layout";
 
 export function useFriendActions() {
+  const queryClient = useQueryClient();
   const acceptMutation = useMutation({
     mutationFn: (friendshipId: string) => acceptFriendRequest(friendshipId),
     onSuccess: () => {

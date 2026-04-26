@@ -107,12 +107,12 @@ export function useMusicSync() {
               const backendSong: BackendSongInfo = {
                 platform: "APPLE_MUSIC",
                 trackId: item.id,
-                trackName: item.title,
-                artist: item.artistName,
+                trackName: item.attributes?.name || "Unknown",
+                artist: item.attributes?.artistName || "Unknown",
                 playbackState: isPlaying ? "PLAYING" : "PAUSED",
                 timestamp: currentPlaybackTime,
-                coverUrl: item.artworkURL
-                  ? item.artworkURL.replace("{w}", "600").replace("{h}", "600")
+                coverUrl: item.attributes?.artwork?.url
+                  ? item.attributes.artwork.url.replace("{w}", "600").replace("{h}", "600")
                   : null,
                 updatedAt: Date.now(),
               };

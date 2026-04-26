@@ -9,6 +9,7 @@ import {
   Platform,
 } from "react-native";
 import Animated, {
+  Easing,
   FadeIn,
   FadeOut,
   SlideInDown,
@@ -45,10 +46,10 @@ export const MusicPlayerExpanded = ({
   const appleMusicToken = useUserStore((s) => s.profile?.appleMusicUserToken);
 
   React.useEffect(() => {
-    if (visible && appleMusicToken) {
+    if (visible) {
       loadPlaylists();
     }
-  }, [visible, appleMusicToken]);
+  }, [visible]);
 
   const loadPlaylists = async () => {
     setIsLoading(true);
@@ -86,7 +87,10 @@ export const MusicPlayerExpanded = ({
       />
 
       <Animated.View
-        entering={SlideInDown.springify().damping(20).stiffness(200)}
+        entering={SlideInDown.springify()
+          .stiffness(200)
+          .duration(200)
+          .easing(Easing.inOut(Easing.ease))}
         exiting={SlideOutDown.duration(200)}
         style={[
           styles.content,
@@ -229,33 +233,47 @@ export const MusicPlayerExpanded = ({
             <ActivityIndicator color={vibrant} style={{ marginTop: 40 }} />
           ) : playlists.length > 0 ? (
             <View style={styles.playlistGrid}>
-               {playlists.map((pl) => {
-                 // Format artwork URL for web if needed
-                 let artworkUrl = pl.attributes?.artwork?.url || pl.artworkUrl;
-                 let name = pl.attributes?.name || pl.name;
-                 
-                 if (artworkUrl && artworkUrl.includes("{w}")) {
-                    artworkUrl = artworkUrl.replace("{w}", "200").replace("{h}", "200");
-                 }
-                 return (
-                   <Pressable
-                      key={pl.id}
-                      style={styles.playlistCard}
-                      onPress={() => playPlaylist(pl.id)}
-                   >
-                      {artworkUrl ? (
-                         <Image source={{ uri: artworkUrl }} style={styles.playlistArt} />
-                      ) : (
-                         <LinearGradient 
-                            colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.02)"]}
-                            style={[styles.playlistArt, styles.albumPlaceholder]}
-                         >
-                            <Ionicons name="musical-notes" size={32} color="rgba(255,255,255,0.4)" />
-                         </LinearGradient>
-                      )}
-                      <Text style={styles.playlistName} numberOfLines={1}>{name}</Text>
-                   </Pressable>
-                 );
+              {playlists.map((pl) => {
+                // Format artwork URL for web if needed
+                let artworkUrl = pl.attributes?.artwork?.url || pl.artworkUrl;
+                let name = pl.attributes?.name || pl.name;
+
+                if (artworkUrl && artworkUrl.includes("{w}")) {
+                  artworkUrl = artworkUrl
+                    .replace("{w}", "200")
+                    .replace("{h}", "200");
+                }
+                return (
+                  <Pressable
+                    key={pl.id}
+                    style={styles.playlistCard}
+                    onPress={() => playPlaylist(pl.id)}
+                  >
+                    {artworkUrl ? (
+                      <Image
+                        source={{ uri: artworkUrl }}
+                        style={styles.playlistArt}
+                      />
+                    ) : (
+                      <LinearGradient
+                        colors={[
+                          "rgba(255,255,255,0.15)",
+                          "rgba(255,255,255,0.02)",
+                        ]}
+                        style={[styles.playlistArt, styles.albumPlaceholder]}
+                      >
+                        <Ionicons
+                          name="musical-notes"
+                          size={32}
+                          color="rgba(255,255,255,0.4)"
+                        />
+                      </LinearGradient>
+                    )}
+                    <Text style={styles.playlistName} numberOfLines={1}>
+                      {name}
+                    </Text>
+                  </Pressable>
+                );
               })}
             </View>
           ) : (

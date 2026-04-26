@@ -9,6 +9,8 @@ import {
   SPOTIFY_PREVIOUS_PATH,
   SPOTIFY_REFRESH_PATH,
   SPOTIFY_RESUME_PATH,
+  SPOTIFY_PLAYLISTS_PATH,
+  SPOTIFY_PLAY_PLAYLIST_PATH,
 } from "@/constants/API_CONSTANTS";
 import { useAuthStore } from "@/store/auth.store";
 import axios from "axios";
@@ -132,6 +134,27 @@ export const skipPreviousSpotify = async () => {
   return axios.post(
     SPOTIFY_PREVIOUS_PATH,
     {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
+};
+
+export const fetchSpotifyPlaylists = async () => {
+  const { token } = useAuthStore.getState();
+  const response = await axios.get(SPOTIFY_PLAYLISTS_PATH, {
+    headers: { Authorization: `Bearer ${token}` },
+    validateStatus: (status) => status >= 200 && status < 300,
+  });
+  return response.data;
+};
+
+export const playSpotifyPlaylistAPI = async (spotifyPlaylistId: string) => {
+  const { token } = useAuthStore.getState();
+  return axios.post(
+    SPOTIFY_PLAY_PLAYLIST_PATH,
+    { spotifyPlaylistId },
     {
       headers: { Authorization: `Bearer ${token}` },
       validateStatus: (status) => status >= 200 && status < 300,

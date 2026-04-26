@@ -5,34 +5,91 @@ import {
   skipNextSpotify,
   skipPreviousSpotify,
   forcePlaySpotify,
+  fetchSpotifyPlaylists,
+  playSpotifyPlaylistAPI,
+  getAppleDeveloperToken,
 } from "@/api/music.api";
 import { useMusicStore } from "@/store/music.store";
 import type { MusicPlatform } from "@/types/MusicTypes";
+import { toast } from "@/utils/toast";
+import { Buffer } from "buffer";
+import { useUserStore } from "@/store/user.store";
+
+declare global {
+  interface Window {
+    MusicKit: any;
+  }
+}
+
+const ensureMusicKitLoaded = async () => {
+  if (typeof window === "undefined") return false;
+  if (window.MusicKit) return true;
+
+  try {
+    if (!(window as any).process) (window as any).process = {};
+    if (!(window as any).process.versions)
+      (window as any).process.versions = {};
+    if (!(window as any).Buffer) (window as any).Buffer = Buffer;
+
+    await new Promise<void>((res, rej) => {
+      const existingScript = document.querySelector(
+        'script[src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"]',
+      );
+      if (existingScript) {
+        if (window.MusicKit) return res();
+        document.addEventListener("musickitloaded", () => res());
+        return;
+      }
+      document.addEventListener("musickitloaded", () => res());
+      const script = document.createElement("script");
+      script.src = "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
+      script.async = true;
+      script.onerror = rej;
+      document.head.appendChild(script);
+    });
+
+    const devTokenRes = await getAppleDeveloperToken();
+    await window.MusicKit.configure({
+      developerToken: devTokenRes.token,
+      app: { name: "Benana", build: "1.0.0" },
+    });
+
+    // Notify the frontend that MusicKit is now fully configured and getInstance() will work
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("musickitconfigured"));
+    }
+
+    return true;
+  } catch (e) {
+    console.error("Failed to load MusicKit:", e);
+    return false;
+  }
+};
 
 // --- Apple Music (Web) via MusicKit JS ---
 const appleMusicWeb = {
   play: async () => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       await window.MusicKit.getInstance().play();
     }
   },
   pause: async () => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       await window.MusicKit.getInstance().pause();
     }
   },
   skipNext: async () => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       await window.MusicKit.getInstance().skipToNextItem();
     }
   },
   skipPrevious: async () => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       await window.MusicKit.getInstance().skipToPreviousItem();
     }
   },
   playTrack: async (trackId: string, positionMs: number = 0) => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       const instance = window.MusicKit.getInstance();
       await instance.setQueue({ song: trackId });
       await instance.play();
@@ -42,19 +99,88 @@ const appleMusicWeb = {
     }
   },
   fetchPlaylists: async () => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       const instance = window.MusicKit.getInstance();
       if (!instance.isAuthorized) await instance.authorize();
-      const response = await instance.api.library.playlists();
-      return response;
+
+      try {
+        const response = await instance.api.music("v1/me/library/playlists");
+        console.log("Apple Music Playlists Response:", response);
+
+        if (response && response.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        } else if (response && Array.isArray(response.data)) {
+          return response.data;
+        }
+        return [];
+      } catch (err) {
+        console.error("MusicKit fetch error:", err);
+        return [];
+      }
     }
     return [];
   },
   playPlaylist: async (playlistId: string) => {
-    if (typeof window !== "undefined" && window.MusicKit) {
+    if (await ensureMusicKitLoaded()) {
       const instance = window.MusicKit.getInstance();
-      await instance.setQueue({ playlist: playlistId });
-      await instance.play();
+      try {
+        console.log("Playing playlist with ID:", playlistId);
+
+        // Fetch the playlist object first to get the most up-to-date playable data
+        const isLibrary =
+          playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
+        const storefront = instance.storefrontId || "us";
+        const url = isLibrary
+          ? `v1/me/library/playlists/${playlistId}`
+          : `v1/catalog/${storefront}/playlists/${playlistId}`;
+
+        console.log("Fetching playlist data from:", url);
+        const response = await instance.api.music(url, { include: "tracks" });
+        const playlistObj = response?.data?.data?.[0];
+
+        if (playlistObj) {
+          console.log("Found playlist object, setting queue...");
+          await instance.setQueue({ playlist: playlistObj });
+        } else {
+          console.warn(
+            "Could not find playlist object, falling back to ID string...",
+          );
+          await instance.setQueue({ playlist: playlistId });
+        }
+
+        await instance.play();
+        console.log("Playback started successfully!");
+
+        setTimeout(() => {
+          console.log(
+            "Apple Music status 1s after play:",
+            instance.isPlaying,
+            instance.nowPlayingItem,
+          );
+          if (instance.nowPlayingItem) {
+            const item = instance.nowPlayingItem;
+            useMusicStore.getState().setCurrentSong({
+              platform: "APPLE_MUSIC",
+              trackId: item.id,
+              appleTrackId: item.id,
+              title: item.attributes?.name || "Unknown",
+              artist: item.attributes?.artistName || "Unknown",
+              albumCoverUrl: item.attributes?.artwork?.url
+                ? item.attributes.artwork.url
+                    .replace("{w}", "600")
+                    .replace("{h}", "600")
+                : undefined,
+              playbackState: instance.isPlaying ? "PLAYING" : "PAUSED",
+              timestamp: (instance.currentPlaybackTime || 0) * 1000,
+              updatedAt: Date.now(),
+            });
+          }
+        }, 1000);
+      } catch (err: any) {
+        console.error("Detailed Apple Music play error:", err);
+        if (err.description) console.error("Error description:", err.description);
+        if (err.message) console.error("Error message:", err.message);
+      }
     }
   },
 };
@@ -115,11 +241,39 @@ const spotifyBackend = {
     await forcePlaySpotify(trackId, positionMs);
   },
   fetchPlaylists: async () => {
-    console.warn("Spotify fetchPlaylists not implemented yet");
-    return [];
+    try {
+      const response = await fetchSpotifyPlaylists();
+      console.log("Spotify Playlists Response:", response);
+      if (response && response.items) {
+        // Map Spotify format to the structure expected by the UI
+        return response.items.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          artworkUrl: item.images?.[0]?.url,
+        }));
+      }
+      return [];
+    } catch (e: any) {
+      console.error("Failed to fetch Spotify playlists:", e);
+      const msg =
+        e.response?.data?.message ||
+        e.message ||
+        "Failed to fetch Spotify playlists";
+      toast.error(msg);
+      return [];
+    }
   },
   playPlaylist: async (playlistId: string) => {
-    console.warn("Spotify playPlaylist not implemented yet");
+    try {
+      await playSpotifyPlaylistAPI(playlistId);
+    } catch (e: any) {
+      console.error("Failed to play Spotify playlist:", e);
+      const msg =
+        e.response?.data?.message ||
+        e.message ||
+        "Failed to play Spotify playlist";
+      toast.error(msg);
+    }
   },
 };
 

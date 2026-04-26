@@ -43,6 +43,8 @@ export const useSpotifyAuth = () => {
         "streaming",
         "user-read-email",
         "user-read-private",
+        "playlist-read-private",
+        "playlist-read-collaborative",
       ],
       usePKCE: false,
       redirectUri,

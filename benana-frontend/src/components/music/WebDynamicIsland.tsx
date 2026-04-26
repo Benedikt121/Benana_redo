@@ -51,8 +51,8 @@ export const WebDynamicIsland = () => {
   const expansion = useSharedValue(0);
 
   useEffect(() => {
-    expansion.value = withSpring(isHovered ? 1 : 0, SPRING_CONFIG);
-  }, [isHovered]);
+    expansion.value = withSpring(isHovered && hasSong ? 1 : 0, SPRING_CONFIG);
+  }, [isHovered, hasSong]);
 
   const containerStyle = useAnimatedStyle(() => ({
     width: interpolate(
@@ -87,7 +87,7 @@ export const WebDynamicIsland = () => {
     opacity: withTiming(expansion.value < 0.3 ? 1 : 0, { duration: 100 }),
   }));
 
-  if (Platform.OS !== "web" || !hasSong || !currentSong) return null;
+  if (Platform.OS !== "web") return null;
 
   return (
     <View
@@ -100,31 +100,58 @@ export const WebDynamicIsland = () => {
         {/* Background */}
         <View style={styles.background} />
 
-        {/* Compact View — album art only */}
-        <Animated.View style={[styles.compactContent, compactContentStyle]}>
-          {currentSong.albumCoverUrl ? (
-            <Image
-              source={{ uri: currentSong.albumCoverUrl }}
-              style={styles.compactAlbumArt}
-            />
+        {/* Compact View */}
+        <Animated.View 
+          style={[styles.compactContent, compactContentStyle]}
+          pointerEvents={isHovered && hasSong ? "none" : "auto"}
+        >
+          {!hasSong ? (
+            <Pressable
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                height: "100%",
+              }}
+              onPress={() => setExpandedPlayerVisible(true)}
+            >
+              <Ionicons
+                name="musical-notes"
+                size={20}
+                color="rgba(255,255,255,0.8)"
+              />
+            </Pressable>
           ) : (
-            <View style={styles.compactAlbumPlaceholder}>
-              <Ionicons name="musical-notes" size={18} color="#fff" />
-            </View>
-          )}
+            <>
+              {currentSong?.albumCoverUrl ? (
+                <Image
+                  source={{ uri: currentSong.albumCoverUrl }}
+                  style={styles.compactAlbumArt}
+                />
+              ) : (
+                <View style={styles.compactAlbumPlaceholder}>
+                  <Ionicons name="musical-notes" size={18} color="#fff" />
+                </View>
+              )}
 
-          {/* Playing indicator — now persistent for smooth animation on mount */}
-          <PlayingIndicator
-            isPlaying={isPlaying}
-            color1={vibrantColor}
-            color2={dominantColor}
-          />
+              {/* Playing indicator — now persistent for smooth animation on mount */}
+              <PlayingIndicator
+                isPlaying={isPlaying}
+                color1={vibrantColor}
+                color2={dominantColor}
+              />
+            </>
+          )}
         </Animated.View>
 
         {/* Expanded View — full controls */}
-        <Animated.View style={[styles.expandedContent, expandedContentStyle]}>
+        <Animated.View 
+          style={[styles.expandedContent, expandedContentStyle]}
+          pointerEvents={isHovered && hasSong ? "auto" : "none"}
+        >
           {/* Album Art */}
-          {currentSong.albumCoverUrl ? (
+          {currentSong?.albumCoverUrl ? (
             <Image
               source={{ uri: currentSong.albumCoverUrl }}
               style={styles.expandedAlbumArt}
@@ -141,10 +168,10 @@ export const WebDynamicIsland = () => {
             style={styles.songInfo}
           >
             <Text style={styles.songTitle} numberOfLines={1}>
-              {currentSong.title}
+              {currentSong?.title}
             </Text>
             <Text style={styles.songArtist} numberOfLines={1}>
-              {currentSong.artist}
+              {currentSong?.artist}
             </Text>
           </Pressable>
 

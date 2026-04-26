@@ -34,7 +34,6 @@ const COMPACT_HEIGHT = 42;
 const EXPANDED_WIDTH = 340;
 
 const SPRING_CONFIG = {
-  damping: 22,
   stiffness: 280,
   mass: 0.9,
 };
