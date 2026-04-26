@@ -30,6 +30,13 @@ const appleMusicWeb = {
       await window.MusicKit.getInstance().skipToPreviousItem();
     }
   },
+  playTrack: async (trackId: string) => {
+    if (typeof window !== "undefined" && window.MusicKit) {
+      const instance = window.MusicKit.getInstance();
+      await instance.setQueue({ song: trackId });
+      await instance.play();
+    }
+  },
 };
 
 // --- Apple Music (iOS) via @lomray/react-native-apple-music ---
@@ -38,12 +45,16 @@ let appleMusicNative: typeof appleMusicWeb | null = null;
 if (Platform.OS === "ios") {
   try {
     // Dynamic import to avoid crashing on web/android
-    const { Player } = require("@lomray/react-native-apple-music");
+    const { Player, MusicKit } = require("@lomray/react-native-apple-music");
     appleMusicNative = {
       play: () => Player.play(),
       pause: () => Player.pause(),
       skipNext: () => Player.skipToNextEntry(),
       skipPrevious: () => Player.skipToPreviousEntry(),
+      playTrack: async (trackId: string) => {
+        await MusicKit.setPlaybackQueue(trackId, "song");
+        Player.play();
+      },
     };
   } catch {
     console.warn("@lomray/react-native-apple-music not available");
@@ -63,6 +74,9 @@ const spotifyBackend = {
   },
   skipPrevious: async () => {
     await skipPreviousSpotify();
+  },
+  playTrack: async (trackId: string) => {
+    // Falls API vorhanden, hier einfügen
   },
 };
 
@@ -117,5 +131,10 @@ export const musicPlayback = {
   skipPrevious: async () => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
     if (driver) await driver.skipPrevious();
+  },
+
+  playTrack: async (trackId: string) => {
+    const driver = getDriver(useMusicStore.getState().preferedPlatform);
+    if (driver && driver.playTrack) await driver.playTrack(trackId);
   },
 };

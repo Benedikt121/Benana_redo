@@ -6,6 +6,7 @@ import { Platform } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import { Auth, AuthStatus } from "@lomray/react-native-apple-music";
 import { APPLE_MOBILE_LOGIN_PATH } from "@/constants/API_CONSTANTS";
 import { Buffer } from "buffer";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
@@ -61,6 +62,14 @@ export const useAppleMusicAuth = () => {
 
         if (instance.musicUserToken) {
           await handleTokenSave(instance.musicUserToken);
+        }
+      } else if (Platform.OS === "ios") {
+        const status = await Auth.authorize();
+        if (status === AuthStatus.AUTHORIZED) {
+          await handleTokenSave("NATIVE_APPLE_MUSIC_AUTHORIZED");
+          toast.success("Apple Music erfolgreich verknüpft!");
+        } else {
+          toast.error("Apple Music konnte nicht verknüpft werden!");
         }
       } else {
         const backendLoginUrl = APPLE_MOBILE_LOGIN_PATH;

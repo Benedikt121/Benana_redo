@@ -16,6 +16,9 @@
         "UIBackgroundModes": [
           "audio"
         ]
+      },
+      "entitlements": {
+        "com.apple.developer.play-interactivity": true
       }
     },
     "android": {

@@ -82,6 +82,15 @@ export function useMusicControls() {
     }
   }, [refreshSpotifyState]);
 
+  const playTrack = useCallback(async (trackId: string) => {
+    try {
+      await musicPlayback.playTrack(trackId);
+      setTimeout(refreshSpotifyState, 500);
+    } catch (e) {
+      console.error("Play track failed:", e);
+    }
+  }, [refreshSpotifyState]);
+
   return {
     currentSong,
     isPlaying,
@@ -92,5 +101,6 @@ export function useMusicControls() {
     togglePlayPause,
     skipNext,
     skipPrevious,
+    playTrack,
   };
 }
