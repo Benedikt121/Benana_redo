@@ -14,6 +14,7 @@ import type { MusicPlatform } from "@/types/MusicTypes";
 import { toast } from "@/utils/toast";
 import { Buffer } from "buffer";
 import { useUserStore } from "@/store/user.store";
+import { useAuthStore } from "@/store/auth.store";
 
 declare global {
   interface Window {
@@ -26,6 +27,13 @@ let isMusicKitConfigured = false;
 const ensureMusicKitLoaded = async () => {
   if (typeof window === "undefined") return false;
   if (isMusicKitConfigured) return true;
+
+  const { token } = useAuthStore.getState();
+  if (!token) {
+    console.log("[DEBUG-MUSIC] No auth token yet, delaying MusicKit init");
+    return false;
+  }
+
   if (isMusicKitConfiguring) {
     // Wait for existing configuration to finish
     return new Promise((res) => {
@@ -38,39 +46,54 @@ const ensureMusicKitLoaded = async () => {
   isMusicKitConfiguring = true;
 
   try {
-    if (!(window as any).process) (window as any).process = {};
-    if (!(window as any).process.versions)
-      (window as any).process.versions = {};
-    if (!(window as any).Buffer) (window as any).Buffer = Buffer;
-
     await new Promise<void>((res, rej) => {
+      const scriptUrl =
+        "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
+
+      // If valid, resolve immediately
+      if (window.MusicKit && typeof window.MusicKit.configure === "function") {
+        return res();
+      }
+
+      console.log(
+        "[DEBUG-MUSIC] MusicKit missing or invalid, setting up listeners...",
+      );
+
+      document.addEventListener(
+        "musickitloaded",
+        () => {
+          console.log("[DEBUG-MUSIC] musickitloaded event received!");
+          res();
+        },
+        { once: true },
+      );
+
       const existingScript = document.querySelector(
-        'script[src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"]',
+        `script[src="${scriptUrl}"]`,
       );
       if (existingScript) {
-        if (window.MusicKit) return res();
-        document.addEventListener("musickitloaded", () => res());
-        return;
+        existingScript.remove();
       }
-      document.addEventListener("musickitloaded", () => res());
+
       const script = document.createElement("script");
-      script.src = "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
+      script.src = scriptUrl;
       script.async = true;
-      script.onerror = rej;
+      script.onerror = (e) => {
+        console.error("[DEBUG-MUSIC] MusicKit script failed to load", e);
+        rej(e);
+      };
       document.head.appendChild(script);
     });
 
     const devTokenRes = await getAppleDeveloperToken();
-    console.log(
-      "[DEBUG-MUSIC] Dev Token received, length:",
-      devTokenRes?.token?.length,
-    );
-    if (!devTokenRes?.token)
-      throw new Error("No developer token received from backend");
+    const token = devTokenRes.token;
+    console.log("[DEBUG-MUSIC] Dev Token received, length:", token?.length);
+    if (!token) throw new Error("No developer token received from backend");
 
     await window.MusicKit.configure({
-      developerToken: devTokenRes.token,
+      developerToken: token,
       app: { name: "Benana", build: "1.0.0" },
+      storefrontId: "de",
     });
 
     isMusicKitConfigured = true;
@@ -78,7 +101,6 @@ const ensureMusicKitLoaded = async () => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("musickitconfigured"));
     }
-
     return true;
   } catch (e) {
     console.error("Failed to load MusicKit:", e);
@@ -143,93 +165,30 @@ const appleMusicWeb = {
   },
   playPlaylist: async (playlistId: string) => {
     if (await ensureMusicKitLoaded()) {
-      const instance = window.MusicKit.getInstance();
-      console.log("[DEBUG-MUSIC] MusicKit Instance:", instance);
-      console.log("[DEBUG-MUSIC] isAuthorized:", instance.isAuthorized);
-      console.log("[DEBUG-MUSIC] Storefront:", instance.storefrontId);
+      const music = window.MusicKit.getInstance();
+      console.log("[DEBUG-MUSIC] playPlaylist called for ID:", playlistId);
+      console.log("[DEBUG-MUSIC] Current Instance:", music);
+      console.log("[DEBUG-MUSIC] isAuthorized:", music.isAuthorized);
 
-      if (!instance.isAuthorized) {
-        console.log("[DEBUG-MUSIC] Not authorized, calling authorize()...");
-        await instance.authorize();
-      }
       try {
-        console.log("[DEBUG-MUSIC] Manual fetch starting for:", playlistId);
-
-        const isLibrary =
-          playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
-
-        if (isLibrary) {
-          const res = await instance.api.music(
-            `v1/me/library/playlists/${playlistId}`,
-            { include: "tracks" },
-          );
-          console.log("[DEBUG-MUSIC] Library playlist response:", res);
-          const playlistObj = res?.data?.data?.[0];
-          const tracks = playlistObj?.relationships?.tracks?.data || [];
-          console.log("[DEBUG-MUSIC] Tracks count:", tracks.length);
-
-          if (tracks.length > 0) {
-            console.log("[DEBUG-MUSIC] Queueing hardcoded song 1499386008...");
-            try {
-              await instance.setQueue({
-                songs: ["1672243820"],
-                startPlaying: true,
-              });
-              console.log("[DEBUG-MUSIC] setQueue success, calling play()");
-              await instance.play();
-              console.log(
-                "[DEBUG-MUSIC] play() called, playbackState:",
-                instance.playbackState,
-              );
-            } catch (queueErr) {
-              console.error("[DEBUG-MUSIC] setQueue/play failed:", queueErr);
-            }
-          } else {
-            console.error(
-              "[DEBUG-MUSIC] No tracks found in library playlist response",
-            );
-          }
-        } else {
-          console.log("[DEBUG-MUSIC] Queueing catalog playlist...");
-          await instance.setQueue({
-            playlist: playlistId,
-            startPlaying: true,
-          });
-          await instance.play();
+        if (!music.isAuthorized) {
+          console.log("[DEBUG-MUSIC] Not authorized, calling authorize()...");
+          await music.authorize();
         }
 
-        setTimeout(() => {
-          console.log(
-            "[DEBUG-MUSIC] Apple Music status 2s after play:",
-            instance.isPlaying,
-            "Queue length:",
-            instance.queue.length,
-            "Now playing:",
-            instance.nowPlayingItem?.id,
-          );
-          if (instance.nowPlayingItem) {
-            const item = instance.nowPlayingItem;
-            useMusicStore.getState().setCurrentSong({
-              platform: "APPLE_MUSIC",
-              trackId: item.id,
-              appleTrackId: item.id,
-              title: item.attributes?.name || "Unknown",
-              artist: item.attributes?.artistName || "Unknown",
-              albumCoverUrl: item.attributes?.artwork?.url
-                ? item.attributes.artwork.url
-                    .replace("{w}", "600")
-                    .replace("{h}", "600")
-                : undefined,
-              playbackState: instance.isPlaying ? "PLAYING" : "PAUSED",
-              timestamp: (instance.currentPlaybackTime || 0) * 1000,
-              updatedAt: Date.now(),
-            });
-          }
-        }, 2000);
-      } catch (err: any) {
-        console.error("[DEBUG-MUSIC] Play error:", err);
-        if (err.description)
-          console.error("Error description:", err.description);
+        console.log(
+          "[DEBUG-MUSIC] Attempting setQueue with songs: ['1672243820']",
+        );
+        await music.setQueue({ songs: ["1672243820"], startPlaying: true });
+
+        console.log("[DEBUG-MUSIC] setQueue success, calling play()");
+        await music.play();
+        console.log(
+          "[DEBUG-MUSIC] play() called, playbackState:",
+          music.playbackState,
+        );
+      } catch (err) {
+        console.error("[DEBUG-MUSIC] Playback failed in service:", err);
       }
     }
   },
@@ -399,4 +358,147 @@ export const musicPlayback = {
       await driver.playPlaylist(playlistId);
     }
   },
+
+  // Explicitly expose initialization for components that need it early
+  init: async () => {
+    return await ensureMusicKitLoaded();
+  },
 };
+
+if (typeof window !== "undefined") {
+  (window as any).musicPlayback = musicPlayback;
+
+  // Always expose debug function, but make it call init internally
+  (window as any).testAppleMusic = async () => {
+    console.log("[DEBUG-CONSOLE] Starting console test...");
+    console.log("[DEBUG-CONSOLE] Is Secure Context:", window.isSecureContext);
+    if (!window.isSecureContext) {
+      console.warn(
+        "[DEBUG-CONSOLE] WARNING: Not a secure context! Playback WILL fail on non-localhost IP addresses.",
+      );
+    }
+
+    const success = await musicPlayback.init();
+    if (!success) {
+      console.error("[DEBUG-CONSOLE] MusicKit initialization failed.");
+      return;
+    }
+    const music = window.MusicKit.getInstance();
+
+    console.log("[DEBUG-CONSOLE] Waiting 2 seconds for lazy-loading...");
+    await new Promise((r) => setTimeout(r, 2000));
+
+    console.log("[DEBUG-CONSOLE] Instance details:", {
+      version: (window as any).MusicKit.version,
+      isAuthorized: music.isAuthorized,
+      storefrontId: music.storefrontId,
+      hasPlayer: !!music.player,
+      bitrate: music.bitrate
+    });
+
+    const SIMPLE_ID = "1440935467"; // Taylor Swift
+    console.log(
+      `[DEBUG-CONSOLE] Trying simplest possible play: ${SIMPLE_ID}...`,
+    );
+    try {
+      await music.setQueue({ songs: [SIMPLE_ID] });
+      console.log(
+        "[DEBUG-CONSOLE] setQueue finished. nowPlayingItem:",
+        music.nowPlayingItem?.id,
+      );
+
+      if (music.nowPlayingItem) {
+        await music.play();
+        console.log(
+          "[DEBUG-CONSOLE] play() called, state:",
+          music.playbackState,
+        );
+      } else {
+        console.error(
+          "[DEBUG-CONSOLE] Even simplest play failed. Testing Token in test_musickit.html is now MANDATORY.",
+        );
+      }
+      // Diagnostic: Try a search to see if the token works at all
+      console.log(
+        "[DEBUG-CONSOLE] Testing API access: Fetching song metadata via v3 API...",
+      );
+      let fetchedSong = null;
+      try {
+        const response = await music.api.music(
+          "v1/catalog/de/songs/1672243820",
+        );
+        fetchedSong = response.data.data[0];
+        console.log(
+          "[DEBUG-CONSOLE] API Fetch Success:",
+          fetchedSong.attributes.name,
+        );
+      } catch (apiErr) {
+        console.error(
+          "[DEBUG-CONSOLE] API Fetch FAILED! Token or Origin is likely blocked:",
+          apiErr,
+        );
+      }
+
+      if (fetchedSong) {
+        console.log(
+          "[DEBUG-CONSOLE] Trying 'Full Object' format: { items: [songObject] }",
+        );
+        await music.setQueue({ items: [fetchedSong], startPlaying: true });
+        console.log(
+          "[DEBUG-CONSOLE] Full Object result - nowPlayingItem:",
+          music.nowPlayingItem?.id,
+        );
+      }
+
+      if (!music.nowPlayingItem) {
+        // Try format 1: songs array
+        console.log(
+          "[DEBUG-CONSOLE] Trying fallback format: { songs: ['1672243820'] }",
+        );
+        await music.setQueue({ songs: ["1672243820"], startPlaying: true });
+        console.log(
+          "[DEBUG-CONSOLE] Fallback result - nowPlayingItem:",
+          music.nowPlayingItem?.id,
+        );
+      }
+
+      if (!music.nowPlayingItem) {
+        // Try format 2: song singular
+        console.log(
+          "[DEBUG-CONSOLE] Format 1 failed, trying format: { song: '1672243820' }",
+        );
+        await music.setQueue({ song: "1672243820", startPlaying: true });
+        console.log(
+          "[DEBUG-CONSOLE] Format 2 result - nowPlayingItem:",
+          music.nowPlayingItem?.id,
+        );
+      }
+
+      if (music.nowPlayingItem) {
+        await music.play();
+        console.log(
+          "[DEBUG-CONSOLE] play() called, state:",
+          music.playbackState,
+        );
+      } else {
+        console.error(
+          "[DEBUG-CONSOLE] All setQueue formats failed to populate nowPlayingItem. This strongly suggests a Token or Storefront issue.",
+        );
+      }
+
+      // Monitor for 5 seconds
+      let count = 0;
+      const int = setInterval(() => {
+        console.log(
+          `[DEBUG-CONSOLE] Polling state (${count}):`,
+          music.playbackState,
+          "Playing:",
+          music.isPlaying,
+        );
+        if (++count > 5) clearInterval(int);
+      }, 1000);
+    } catch (e) {
+      console.error("[DEBUG-CONSOLE] setQueue/play failed:", e);
+    }
+  };
+}

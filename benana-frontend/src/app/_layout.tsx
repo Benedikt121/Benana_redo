@@ -1,4 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
+import Head from "expo-router/head";
+import { Platform } from "react-native";
+import { Buffer } from "buffer";
 import "../global.css";
 import { ActivityIndicator, View } from "react-native";
 import DeepWaterBackground from "@/components/background/deepWaterBackground/deepWaterBackground";
@@ -20,6 +23,21 @@ import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
 
 export const queryClient = new QueryClient();
+
+// Compatibility polyfill for MusicKit JS v3 in Metro/Expo web environment
+if (typeof window !== "undefined") {
+  const win = window as any;
+  if (!win.process) win.process = {};
+  win.process.browser = true;
+  win.process.env = win.process.env || {};
+  win.process.versions = win.process.versions || {};
+  // Explicitly delete node property to avoid tricking libraries
+  if (win.process.versions.node) delete win.process.versions.node;
+  
+  if (!win.Buffer) {
+    win.Buffer = Buffer;
+  }
+}
 
 function AppInitializer({ children }: { children: React.ReactNode }) {
   useInitialData();
@@ -94,6 +112,20 @@ function RootLayoutContent() {
 
   useMusicSync();
   useAppleMusicLocalSync();
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      // Use a specific, stable version instead of the 'prerelease' latest
+      const scriptUrl = "https://js-cdn.music.apple.com/musickit/v3/musickit.js"; 
+      // Note: We'll stick to the main URL but ensure we clear the cache if possible
+      if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
+        const script = document.createElement("script");
+        script.src = scriptUrl;
+        script.async = true;
+        document.head.appendChild(script);
+      }
+    }
+  }, []);
 
   return (
     <View className="flex-1 bg-transparent">

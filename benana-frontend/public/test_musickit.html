@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicKit JS v3 Test</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; line-height: 1.6; background-color: #f5f5f7; color: #1d1d1f; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { margin-top: 0; font-weight: 600; font-size: 24px; }
+        .section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 14px; margin-bottom: 10px; }
+        button { background-color: #0071e3; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-right: 10px; margin-bottom: 10px; transition: background 0.2s; }
+        button:hover { background-color: #0077ed; }
+        button:disabled { background-color: #d2d2d7; cursor: not-allowed; }
+        .status { margin-top: 20px; padding: 15px; border-radius: 8px; background-color: #f5f5f7; border: 1px solid #d2d2d7; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; font-size: 12px; }
+        .log-item { margin-bottom: 4px; }
+        .error { color: #d70015; }
+        .success { color: #248a3d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MusicKit JS v3 Test</h1>
+        
+        <p>Use this tool to verify your Developer Token and MusicKit integration.</p>
+
+        <div class="section">
+            <label for="devToken">Developer Token (JWT)</label>
+            <textarea id="devToken" rows="4" placeholder="Paste your Apple Music Developer Token here..."></textarea>
+            <button id="loadBtn">1. Load & Configure MusicKit</button>
+        </div>
+
+        <div class="section">
+            <button id="authBtn" disabled>2. Authorize</button>
+            <span id="authState">Not Authorized</span>
+        </div>
+
+        <div class="section">
+            <label for="songId">Song ID</label>
+            <input type="text" id="songId" value="1672243820">
+            <button id="playBtn" disabled>3. Set Queue & Play</button>
+            <button id="pauseBtn" disabled>Pause</button>
+        </div>
+
+        <div class="status" id="log">
+            <div class="log-item">Ready to test...</div>
+        </div>
+    </div>
+
+    <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"></script>
+    <script>
+        const devTokenInput = document.getElementById('devToken');
+        const songIdInput = document.getElementById('songId');
+        const loadBtn = document.getElementById('loadBtn');
+        const authBtn = document.getElementById('authBtn');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const logArea = document.getElementById('log');
+        const authStateLabel = document.getElementById('authState');
+
+        function log(msg, type = '') {
+            const div = document.createElement('div');
+            div.className = `log-item ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logArea.prepend(div);
+            console.log(`[MusicKit-Test] ${msg}`);
+        }
+
+        loadBtn.addEventListener('click', async () => {
+            const token = devTokenInput.value.trim();
+            if (!token) {
+                log('Please paste a developer token first!', 'error');
+                return;
+            }
+
+            try {
+                log('Configuring MusicKit...');
+                await MusicKit.configure({
+                    developerToken: token,
+                    app: { name: 'MusicKitTest', build: '1.0.0' }
+                });
+                log('MusicKit configured successfully', 'success');
+                authBtn.disabled = false;
+                loadBtn.disabled = true;
+            } catch (err) {
+                log(`Configuration failed: ${err.message}`, 'error');
+                console.error(err);
+            }
+        });
+
+        authBtn.addEventListener('click', async () => {
+            const music = MusicKit.getInstance();
+            try {
+                log('Opening authorization popup...');
+                await music.authorize();
+                log('Authorization successful', 'success');
+                authStateLabel.textContent = 'Authorized';
+                authStateLabel.className = 'success';
+                playBtn.disabled = false;
+                pauseBtn.disabled = false;
+            } catch (err) {
+                log(`Authorization failed: ${err.message}`, 'error');
+            }
+        });
+
+        playBtn.addEventListener('click', async () => {
+            const music = MusicKit.getInstance();
+            const sid = songIdInput.value.trim();
+            
+            try {
+                log(`Setting queue for song: ${sid}...`);
+                // Using the plural 'songs' format
+                await music.setQueue({ songs: [sid], startPlaying: true });
+                log('Queue set successfully', 'success');
+                
+                log('Calling music.play()...');
+                await music.play();
+                log(`Play called. Current State: ${music.playbackState}`, 'success');
+                
+                // Monitor state
+                const monitor = setInterval(() => {
+                    if (music.nowPlayingItem) {
+                        log(`Now playing: ${music.nowPlayingItem.attributes.name} by ${music.nowPlayingItem.attributes.artistName}`, 'success');
+                        clearInterval(monitor);
+                    }
+                }, 1000);
+                setTimeout(() => clearInterval(monitor), 10000);
+
+            } catch (err) {
+                log(`Playback failed: ${err.message}`, 'error');
+                console.error(err);
+            }
+        });
+
+        pauseBtn.addEventListener('click', async () => {
+            const music = MusicKit.getInstance();
+            await music.pause();
+            log('Paused');
+        });
+
+        window.addEventListener('musickitloaded', () => {
+            log('MusicKit JS library loaded');
+        });
+    </script>
+</body>
+</html>

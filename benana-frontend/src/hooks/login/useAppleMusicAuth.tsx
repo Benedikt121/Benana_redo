@@ -31,37 +31,18 @@ export const useAppleMusicAuth = () => {
       setIsAuthenticating(true);
 
       if (Platform.OS === "web") {
-        const devTokenRes = await getAppleDeveloperToken();
-        const developerToken = devTokenRes.token;
-
-        if (!window.MusicKit) {
-          if (typeof window !== "undefined") {
-            if (!(window as any).process) (window as any).process = {};
-            if (!(window as any).process.versions)
-              (window as any).process.versions = {};
-            if (!(window as any).Buffer) (window as any).Buffer = Buffer;
-          }
-          await new Promise<void>((res, rej) => {
-            document.addEventListener("musickitloaded", () => res());
-            const script = document.createElement("script");
-            script.src =
-              "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
-            script.async = true;
-            script.onerror = rej;
-            document.head.appendChild(script);
-          });
+        const { musicPlayback } = require("@/services/musicPlayback.service");
+        const ready = await musicPlayback.init();
+        if (!ready) {
+          toast.error("Apple Music konnte nicht geladen werden.");
+          return;
         }
 
-        const music = await window.MusicKit.configure({
-          developerToken: developerToken,
-          app: { name: "Benana", build: "1.0.0" },
-        });
+        const music = window.MusicKit.getInstance();
+        await music.authorize();
 
-        const instance = music || window.MusicKit.getInstance();
-        await instance.authorize();
-
-        if (instance.musicUserToken) {
-          await handleTokenSave(instance.musicUserToken);
+        if (music.musicUserToken) {
+          await handleTokenSave(music.musicUserToken);
         }
       } else if (Platform.OS === "ios") {
         const status = await Auth.authorize();

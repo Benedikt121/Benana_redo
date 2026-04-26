@@ -47,6 +47,7 @@ export const MusicPlayerExpanded = ({
 
   React.useEffect(() => {
     if (visible) {
+      musicPlayback.init(); // Pre-load MusicKit to preserve user gesture
       loadPlaylists();
     }
   }, [visible]);
