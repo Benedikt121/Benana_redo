@@ -21,56 +21,73 @@ declare global {
     MusicKit: any;
   }
 }
-let isMusicKitConfiguring = false;
-let isMusicKitConfigured = false;
+// Helper to safely stringify objects with circular references
+const safeStringify = (obj: any, indent = 2) => {
+  const cache = new Set();
+  return JSON.stringify(
+    obj,
+    (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (cache.has(value)) return "[Circular]";
+        cache.add(value);
+      }
+      return value;
+    },
+    indent,
+  );
+};
 
-let isConfiguring = false;
+let configurationPromise: Promise<boolean> | null = null;
 
-const ensureMusicKitLoaded = async () => {
-  // 1. Wait for the script to exist on the window
-  if (!window.MusicKit) {
-    console.error("[DEBUG-MUSIC] MusicKit script not found on window.");
-    return false;
-  }
+export const ensureMusicKitLoaded = async () => {
+  // If we already have a configuration in progress, wait for it
+  if (configurationPromise) return configurationPromise;
 
-  // 2. Check if it's already fully configured and ready
-  try {
-    const instance = window.MusicKit.getInstance();
-    if (instance) return true;
-  } catch (e) {
-    // getInstance() throws an error if it's not configured yet, which is fine.
-  }
-
-  // 3. Prevent multiple configure calls from running at the same time
-  if (isConfiguring) return false;
-  isConfiguring = true;
-
-  try {
-    console.log("[DEBUG-MUSIC] Configuring MusicKit for the first time...");
-    const musicUserToken = useUserStore.getState().profile?.appleMusicUserToken;
-    const developerToken = await getAppleDeveloperToken();
-
-    const config: any = {
-      developerToken: developerToken.token, // Make sure this is valid!
-      app: {
-        name: "Benana",
-        build: "1.0.0",
-      },
-    };
-
-    if (musicUserToken) {
-      config.musicUserToken = musicUserToken;
+  configurationPromise = (async () => {
+    // 1. Wait for the script to exist on the window
+    if (!window.MusicKit) {
+      console.warn("[DEBUG-MUSIC] MusicKit script not found on window yet.");
+      // We could wait a bit here if needed, but for now we assume it's in index.html
+      return false;
     }
 
-    await window.MusicKit.configure(config);
-    console.log("[DEBUG-MUSIC] MusicKit configured successfully!");
-    isConfiguring = false;
-    return true;
-  } catch (error) {
-    console.error("🚨 [DEBUG-MUSIC] Fatal Configure Error:", error);
-    isConfiguring = false;
-    return false;
-  }
+    // 2. Check if it's already fully configured and ready
+    try {
+      const instance = window.MusicKit.getInstance();
+      if (instance) return true;
+    } catch (e) {
+      // Not configured yet
+    }
+
+    try {
+      console.log("[DEBUG-MUSIC] Configuring MusicKit...");
+      const state = useUserStore.getState();
+      const musicUserToken = state.profile?.appleMusicUserToken;
+      const developerToken = await getAppleDeveloperToken();
+
+      const config: any = {
+        developerToken: developerToken.token,
+        app: {
+          name: "Benana",
+          build: "1.0.0",
+        },
+      };
+
+      if (musicUserToken) {
+        config.musicUserToken = musicUserToken;
+      }
+
+      await window.MusicKit.configure(config);
+      console.log("[DEBUG-MUSIC] MusicKit configured successfully!");
+      return true;
+    } catch (error) {
+      console.error("🚨 [DEBUG-MUSIC] Fatal Configure Error:", error);
+      configurationPromise = null; // Allow retry on failure
+      return false;
+    }
+  })();
+
+  return configurationPromise;
 };
 
 // --- Apple Music (Web) via MusicKit JS ---
@@ -106,54 +123,88 @@ const appleMusicWeb = {
     }
   },
   fetchPlaylists: async () => {
-    if (await ensureMusicKitLoaded()) {
-      const instance = window.MusicKit.getInstance();
-      if (!instance.isAuthorized) await instance.authorize();
+    const instance = window.MusicKit.getInstance();
+    if (!instance.isAuthorized) await instance.authorize();
 
-      try {
-        const response = await instance.api.music("v1/me/library/playlists");
-        console.log("Apple Music Playlists Response:", response);
+    try {
+      const response = await instance.api.music("v1/me/library/playlists");
+      console.log("Apple Music Playlists Response:", response);
 
-        if (response && response.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-        } else if (response && Array.isArray(response.data)) {
-          return response.data;
-        }
-        return [];
-      } catch (err) {
-        console.error("MusicKit fetch error:", err);
-        return [];
+      if (response && response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else if (response && Array.isArray(response.data)) {
+        return response.data;
       }
+      return [];
+    } catch (err) {
+      console.error("MusicKit fetch error:", err);
+      return [];
     }
-    return [];
   },
   playPlaylist: async (playlistId: string) => {
-    if (await ensureMusicKitLoaded()) {
-      const music = window.MusicKit.getInstance();
-      console.log("[DEBUG-MUSIC] playPlaylist called for ID:", playlistId);
-      console.log("[DEBUG-MUSIC] Current Instance:", music);
-      console.log("[DEBUG-MUSIC] isAuthorized:", music.isAuthorized);
+    let instance: any = null;
 
-      try {
-        if (!music.isAuthorized) {
-          console.log("[DEBUG-MUSIC] Not authorized, calling authorize()...");
-          await music.authorize();
-        }
-
-        console.log(
-          "[DEBUG-MUSIC] Attempting setQueue with songs: ['1672243820']",
-        );
-        await music.setQueue({ songs: ["1672243820"], startPlaying: true });
-
-        console.log("[DEBUG-MUSIC] setQueue success, calling play()");
-        await music.play();
-        console.log(
-          "[DEBUG-MUSIC] play() called, playbackState:",
-          music.playbackState,
-        );
-      } catch (err) {
-        console.error("[DEBUG-MUSIC] Playback failed in service:", err);
+    // 1. THE SYNCHRONOUS PRIMER
+    // Grab the instance directly and fire the play command WITHOUT awaiting anything first.
+    // This perfectly satisfies the browser's strict click-to-play requirement.
+    try {
+      if (window.MusicKit) {
+        instance = window.MusicKit.getInstance();
+        instance.play().catch(() => {});
+        instance.pause();
+        console.log("[DEBUG MUSIC] Instance fetched", safeStringify(instance));
       }
+    } catch (e) {
+      // getInstance() throws if it hasn't finished configuring yet, which is fine to catch.
+    }
+
+    // 2. Now we can safely do our async checks
+    if (!instance) instance = window.MusicKit.getInstance();
+
+    if (!instance.isAuthorized) {
+      console.warn("[DEBUG-MUSIC] Not authorized. Prompting login...");
+      await instance.authorize();
+    }
+
+    try {
+      console.log("[DEBUG-MUSIC] Starting fetch for:", playlistId);
+      const isLibrary =
+        playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
+
+      if (isLibrary) {
+        const res = await instance.api.music(
+          `v1/me/library/playlists/${playlistId}`,
+          { include: "tracks" },
+        );
+
+        const tracks = res?.data?.data?.[0]?.relationships?.tracks?.data || [];
+
+        const catalogIds = tracks
+          .map((track: any) => track.attributes?.playParams?.catalogId)
+          .filter(
+            (id: any) => id && typeof id === "string" && !id.startsWith("i."),
+          );
+
+        if (catalogIds.length > 0) {
+          console.log(
+            `[DEBUG-MUSIC] Queueing ${catalogIds.length} safe catalog tracks...`,
+          );
+          await instance.setQueue({ songs: ["1672243820"] });
+          await instance.play();
+          console.log(
+            "[DEBUG MUSIC] Instance fetched",
+            safeStringify(instance),
+          );
+        } else {
+          console.error("[DEBUG-MUSIC] No valid global catalog tracks found.");
+        }
+      } else {
+        console.log("[DEBUG-MUSIC] Queueing catalog playlist...");
+        await instance.setQueue({ playlist: playlistId });
+        await instance.play();
+      }
+    } catch (err) {
+      console.error("[DEBUG-MUSIC] Playback failed in service:", err);
     }
   },
 };

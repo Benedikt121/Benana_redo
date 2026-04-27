@@ -21,6 +21,7 @@ import { WebDynamicIsland } from "@/components/music/WebDynamicIsland";
 import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
 import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
+import { ensureMusicKitLoaded } from "@/services/musicPlayback.service";
 
 export const queryClient = new QueryClient();
 
@@ -40,9 +41,18 @@ if (typeof window !== "undefined") {
 }
 
 function AppInitializer({ children }: { children: React.ReactNode }) {
+  const user = useUserStore((s) => s.profile);
   useInitialData();
   useGlobalSocket();
   useMusicColors();
+
+  useEffect(() => {
+    if (user && Platform.OS === "web") {
+      console.log("[DEBUG-MUSIC] User hydrated, initializing MusicKit...");
+      ensureMusicKitLoaded();
+    }
+  }, [user]);
+
   return <>{children}</>;
 }
 
