@@ -24,87 +24,51 @@ declare global {
 let isMusicKitConfiguring = false;
 let isMusicKitConfigured = false;
 
-const ensureMusicKitLoaded = async () => {
-  if (typeof window === "undefined") return false;
-  if (isMusicKitConfigured) return true;
+let isConfiguring = false;
 
-  const { token } = useAuthStore.getState();
-  if (!token) {
-    console.log("[DEBUG-MUSIC] No auth token yet, delaying MusicKit init");
+const ensureMusicKitLoaded = async () => {
+  // 1. Wait for the script to exist on the window
+  if (!window.MusicKit) {
+    console.error("[DEBUG-MUSIC] MusicKit script not found on window.");
     return false;
   }
 
-  if (isMusicKitConfiguring) {
-    // Wait for existing configuration to finish
-    return new Promise((res) => {
-      window.addEventListener("musickitconfigured", () => res(true), {
-        once: true,
-      });
-    });
+  // 2. Check if it's already fully configured and ready
+  try {
+    const instance = window.MusicKit.getInstance();
+    if (instance) return true;
+  } catch (e) {
+    // getInstance() throws an error if it's not configured yet, which is fine.
   }
 
-  isMusicKitConfiguring = true;
+  // 3. Prevent multiple configure calls from running at the same time
+  if (isConfiguring) return false;
+  isConfiguring = true;
 
   try {
-    await new Promise<void>((res, rej) => {
-      const scriptUrl =
-        "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
+    console.log("[DEBUG-MUSIC] Configuring MusicKit for the first time...");
+    const musicUserToken = useUserStore.getState().profile?.appleMusicUserToken;
+    const developerToken = await getAppleDeveloperToken();
 
-      // If valid, resolve immediately
-      if (window.MusicKit && typeof window.MusicKit.configure === "function") {
-        return res();
-      }
+    const config: any = {
+      developerToken: developerToken.token, // Make sure this is valid!
+      app: {
+        name: "Benana",
+        build: "1.0.0",
+      },
+    };
 
-      console.log(
-        "[DEBUG-MUSIC] MusicKit missing or invalid, setting up listeners...",
-      );
-
-      document.addEventListener(
-        "musickitloaded",
-        () => {
-          console.log("[DEBUG-MUSIC] musickitloaded event received!");
-          res();
-        },
-        { once: true },
-      );
-
-      const existingScript = document.querySelector(
-        `script[src="${scriptUrl}"]`,
-      );
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      const script = document.createElement("script");
-      script.src = scriptUrl;
-      script.async = true;
-      script.onerror = (e) => {
-        console.error("[DEBUG-MUSIC] MusicKit script failed to load", e);
-        rej(e);
-      };
-      document.head.appendChild(script);
-    });
-
-    const devTokenRes = await getAppleDeveloperToken();
-    const token = devTokenRes.token;
-    console.log("[DEBUG-MUSIC] Dev Token received, length:", token?.length);
-    if (!token) throw new Error("No developer token received from backend");
-
-    await window.MusicKit.configure({
-      developerToken: token,
-      app: { name: "Benana", build: "1.0.0" },
-      storefrontId: "de",
-    });
-
-    isMusicKitConfigured = true;
-    isMusicKitConfiguring = false;
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("musickitconfigured"));
+    if (musicUserToken) {
+      config.musicUserToken = musicUserToken;
     }
+
+    await window.MusicKit.configure(config);
+    console.log("[DEBUG-MUSIC] MusicKit configured successfully!");
+    isConfiguring = false;
     return true;
-  } catch (e) {
-    console.error("Failed to load MusicKit:", e);
-    isMusicKitConfiguring = false; // Fix: reset flag so next attempt can retry
+  } catch (error) {
+    console.error("🚨 [DEBUG-MUSIC] Fatal Configure Error:", error);
+    isConfiguring = false;
     return false;
   }
 };
@@ -393,7 +357,7 @@ if (typeof window !== "undefined") {
       isAuthorized: music.isAuthorized,
       storefrontId: music.storefrontId,
       hasPlayer: !!music.player,
-      bitrate: music.bitrate
+      bitrate: music.bitrate,
     });
 
     const SIMPLE_ID = "1440935467"; // Taylor Swift
