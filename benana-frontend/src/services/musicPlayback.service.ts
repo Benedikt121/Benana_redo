@@ -44,11 +44,28 @@ export const ensureMusicKitLoaded = async () => {
   if (configurationPromise) return configurationPromise;
 
   configurationPromise = (async () => {
-    // 1. Wait for the script to exist on the window
+    // 1. Wait up to 10s for the MusicKit script to finish loading
     if (!window.MusicKit) {
-      console.warn("[DEBUG-MUSIC] MusicKit script not found on window yet.");
-      // We could wait a bit here if needed, but for now we assume it's in index.html
-      return false;
+      console.log("[DEBUG-MUSIC] Waiting for MusicKit script to load...");
+      const loaded = await new Promise<boolean>((resolve) => {
+        const deadline = Date.now() + 10_000;
+        const check = setInterval(() => {
+          if (window.MusicKit) {
+            clearInterval(check);
+            resolve(true);
+          } else if (Date.now() > deadline) {
+            clearInterval(check);
+            console.error(
+              "[DEBUG-MUSIC] MusicKit script never loaded (timeout).",
+            );
+            resolve(false);
+          }
+        }, 100);
+      });
+      if (!loaded) {
+        configurationPromise = null;
+        return false;
+      }
     }
 
     // 2. Check if it's already fully configured and ready
@@ -68,17 +85,18 @@ export const ensureMusicKitLoaded = async () => {
       const config: any = {
         developerToken: developerToken.token,
         app: {
-          name: "Benana",
+          name: "MusicKitTest",
           build: "1.0.0",
         },
       };
 
-      if (musicUserToken) {
-        config.musicUserToken = musicUserToken;
-      }
+      console.log("[DEBUG-MUSIC] Configuring MusicKit as 'MusicKitTest'...");
 
       await window.MusicKit.configure(config);
-      console.log("[DEBUG-MUSIC] MusicKit configured successfully!");
+      console.log(
+        "[DEBUG-MUSIC] MusicKit configured successfully! Version:",
+        window.MusicKit.version,
+      );
       return true;
     } catch (error) {
       console.error("🚨 [DEBUG-MUSIC] Fatal Configure Error:", error);
@@ -123,7 +141,15 @@ const appleMusicWeb = {
     }
   },
   fetchPlaylists: async () => {
-    const instance = window.MusicKit.getInstance();
+    if (!(await ensureMusicKitLoaded())) return [];
+
+    let instance = window.MusicKit.getInstance();
+    if (!instance) {
+      await new Promise((r) => setTimeout(r, 500));
+      instance = window.MusicKit.getInstance();
+    }
+    if (!instance) return [];
+
     if (!instance.isAuthorized) await instance.authorize();
 
     try {
@@ -141,70 +167,75 @@ const appleMusicWeb = {
       return [];
     }
   },
-  playPlaylist: async (playlistId: string) => {
-    let instance: any = null;
+  playPlaylist: async (_playlistId: string) => {
+    const HARDCODED_SONG = "1672243820";
+    console.log("[DEBUG-MUSIC] ▶ playPlaylist triggered");
 
-    // 1. THE SYNCHRONOUS PRIMER
-    // Grab the instance directly and fire the play command WITHOUT awaiting anything first.
-    // This perfectly satisfies the browser's strict click-to-play requirement.
+    // 1. AudioContext unlock
     try {
-      if (window.MusicKit) {
-        instance = window.MusicKit.getInstance();
-        instance.play().catch(() => {});
-        instance.pause();
-        console.log("[DEBUG MUSIC] Instance fetched", safeStringify(instance));
-      }
-    } catch (e) {
-      // getInstance() throws if it hasn't finished configuring yet, which is fine to catch.
+      const AudioCtx =
+        (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) new AudioCtx().resume().catch(() => {});
+    } catch (e) {}
+
+    // 2. Ensure MusicKit is configured & authorized (all in one gesture path)
+    if (!(await ensureMusicKitLoaded())) {
+      console.error("[DEBUG-MUSIC] MusicKit load/config failed");
+      return;
     }
 
-    // 2. Now we can safely do our async checks
-    if (!instance) instance = window.MusicKit.getInstance();
+    let instance = window.MusicKit.getInstance();
+    if (!instance) {
+      console.warn(
+        "[DEBUG-MUSIC] Instance was null after config, waiting 100ms...",
+      );
+      await new Promise((r) => setTimeout(r, 100));
+      instance = window.MusicKit.getInstance();
+    }
+
+    if (!instance) {
+      console.error(
+        "[DEBUG-MUSIC] MusicKit instance is still null after configuration.",
+      );
+      return;
+    }
 
     if (!instance.isAuthorized) {
-      console.warn("[DEBUG-MUSIC] Not authorized. Prompting login...");
+      console.log("[DEBUG-MUSIC] Prompting authorization...");
       await instance.authorize();
+      // Wait for auth to settle
+      await new Promise((r) => setTimeout(r, 1000));
     }
 
     try {
-      console.log("[DEBUG-MUSIC] Starting fetch for:", playlistId);
-      const isLibrary =
-        playlistId.startsWith("p.") || playlistId.startsWith("pl.u-");
+      console.log("[DEBUG-MUSIC] Setting queue and playing:", HARDCODED_SONG);
 
-      if (isLibrary) {
-        const res = await instance.api.music(
-          `v1/me/library/playlists/${playlistId}`,
-          { include: "tracks" },
+      // Use chained calls to keep the execution as tight as possible
+      await instance.setQueue({ songs: [HARDCODED_SONG], startPlaying: true });
+
+      if (!instance.nowPlayingItem) {
+        console.warn(
+          "[DEBUG-MUSIC] songs array failed, trying singular song...",
         );
-
-        const tracks = res?.data?.data?.[0]?.relationships?.tracks?.data || [];
-
-        const catalogIds = tracks
-          .map((track: any) => track.attributes?.playParams?.catalogId)
-          .filter(
-            (id: any) => id && typeof id === "string" && !id.startsWith("i."),
-          );
-
-        if (catalogIds.length > 0) {
-          console.log(
-            `[DEBUG-MUSIC] Queueing ${catalogIds.length} safe catalog tracks...`,
-          );
-          await instance.setQueue({ songs: ["1672243820"] });
-          await instance.play();
-          console.log(
-            "[DEBUG MUSIC] Instance fetched",
-            safeStringify(instance),
-          );
-        } else {
-          console.error("[DEBUG-MUSIC] No valid global catalog tracks found.");
-        }
-      } else {
-        console.log("[DEBUG-MUSIC] Queueing catalog playlist...");
-        await instance.setQueue({ playlist: playlistId });
-        await instance.play();
+        await instance.setQueue({ song: HARDCODED_SONG, startPlaying: true });
       }
+
+      console.log("[DEBUG-MUSIC] Calling play()...");
+      await instance.play();
+
+      console.log("[DEBUG-MUSIC] Playback state:", instance.playbackState);
+
+      // Check if audio tag appeared
+      setTimeout(() => {
+        const audio = document.getElementById("apple-music-player");
+        console.log(
+          "[DEBUG-MUSIC] Audio tag found?",
+          !!audio,
+          audio?.getAttribute("src"),
+        );
+      }, 1000);
     } catch (err) {
-      console.error("[DEBUG-MUSIC] Playback failed in service:", err);
+      console.error("[DEBUG-MUSIC] ❌ Final failure:", err);
     }
   },
 };
