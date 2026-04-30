@@ -511,12 +511,16 @@ export const playSpotifyPlaylist = async (req: any, res: any) => {
     if (!response.ok) {
       const err = (await response.json()) as any;
       console.error("Spotify play playlist error response:", err);
-      throw new Error(`Failed to play Spotify playlist: ${err.error?.message || response.statusText}`);
+      throw new Error(
+        `Failed to play Spotify playlist: ${err.error?.message || response.statusText}`,
+      );
     }
 
     return res.status(200).json({ message: "Started playing playlist" });
   } catch (error: any) {
     console.error("Spotify play playlist error:", error);
-    return res.status(500).json({ message: error.message || "Failed to play Spotify playlist" });
+    return res
+      .status(500)
+      .json({ message: error.message || "Failed to play Spotify playlist" });
   }
 };

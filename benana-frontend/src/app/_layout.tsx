@@ -21,21 +21,13 @@ import { WebDynamicIsland } from "@/components/music/WebDynamicIsland";
 import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
 import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
-import { ensureMusicKitLoaded } from "@/services/musicPlayback.service";
+import HeadlessMusicPlayer from "@/components/music/HeadlessMusicPlayer.web";
 
 export const queryClient = new QueryClient();
-
-// MusicKit JS v3 polyfills removed to avoid environment misidentification
-
 function AppInitializer({ children }: { children: React.ReactNode }) {
-  const user = useUserStore((s) => s.profile);
   useInitialData();
   useGlobalSocket();
   useMusicColors();
-
-  useEffect(() => {
-    // MusicKit initialization moved to playPlaylist to ensure it happens on user gesture
-  }, [user]);
 
   return <>{children}</>;
 }
@@ -107,8 +99,6 @@ function RootLayoutContent() {
   useMusicSync();
   useAppleMusicLocalSync();
 
-
-
   return (
     <View className="flex-1 bg-transparent">
       {usedBackground === "deepWater" ? (
@@ -128,6 +118,7 @@ function RootLayoutContent() {
         visible={expandedPlayerVisible}
         onClose={() => setExpandedPlayerVisible(false)}
       />
+      <HeadlessMusicPlayer />
     </View>
   );
 }

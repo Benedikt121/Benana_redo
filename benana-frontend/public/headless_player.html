@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Headless MusicKit</title>
+    <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js"></script>
+  </head>
+  <body>
+    <script>
+      let music;
+      console.log("[MusicKit-Iframe] Script starting...");
+      window.parent.postMessage({ type: "IFRAME_PING" }, "*");
+
+      let musickitLoadedSent = false;
+      const sendLoaded = () => {
+        if (musickitLoadedSent) return;
+        musickitLoadedSent = true;
+        console.log("[MusicKit-Iframe] Sending MUSICKIT_LOADED");
+        window.parent.postMessage({ type: "MUSICKIT_LOADED" }, "*");
+      };
+
+      window.addEventListener("musickitloaded", () => {
+        console.log("[MusicKit-Iframe] musickitloaded event fired");
+        sendLoaded();
+      });
+
+      // Check if already loaded
+      if (window.MusicKit) {
+        console.log("[MusicKit-Iframe] MusicKit already loaded, checking...");
+        sendLoaded();
+      }
+
+      window.addEventListener("message", async (event) => {
+        const { type, payload } = event.data;
+
+        try {
+          if (type === "CONFIGURE") {
+            console.log("[MusicKit-Iframe] Configuring MusicKit...");
+            await MusicKit.configure({
+              developerToken: payload.token,
+              musicUserToken: payload.musicUserToken,
+              app: { name: "Benana", build: "1.0.0" },
+            });
+            music = MusicKit.getInstance();
+            console.log("[MusicKit-Iframe] MusicKit configured");
+            window.parent.postMessage({ type: "CONFIGURED" }, "*");
+
+            // Listen to native MusicKit events and forward them to React (Only Once!)
+            if (!window.listenersAdded && music) {
+              music.addEventListener(
+                MusicKit.Events.playbackStateDidChange,
+                (e) => {
+                  window.parent.postMessage(
+                    { type: "PLAYBACK_STATE_CHANGED", state: e.state },
+                    "*",
+                  );
+                },
+              );
+
+              music.addEventListener(
+                MusicKit.Events.nowPlayingItemDidChange,
+                () => {
+                  if (music.nowPlayingItem) {
+                    window.parent.postMessage(
+                      {
+                        type: "NOW_PLAYING",
+                        item: {
+                          id: music.nowPlayingItem.id,
+                          ...music.nowPlayingItem.attributes,
+                        },
+                      },
+                      "*",
+                    );
+                  }
+                },
+              );
+              window.listenersAdded = true;
+            }
+          }
+
+          if (type === "AUTHORIZE") {
+            await music.authorize();
+            window.parent.postMessage(
+              { type: "AUTHORIZED", token: music.musicUserToken },
+              "*",
+            );
+          }
+
+          if (type === "PLAY_SONG") {
+            await music.setQueue({
+              songs: [payload.songId],
+              startPlaying: true,
+            });
+            await music.play();
+          }
+
+          if (type === "PLAY_PLAYLIST") {
+            await music.setQueue({
+              playlist: payload.playlistId,
+              startPlaying: true,
+            });
+            await music.play();
+          }
+
+          if (type === "PAUSE") await music.pause();
+          if (type === "RESUME") await music.play();
+          if (type === "SKIP_NEXT") await music.skipToNextItem();
+          if (type === "SKIP_PREV") await music.skipToPreviousItem();
+          if (type === "SEEK") {
+            await music.seekToTime(payload.time);
+          }
+          if (type === "SET_VOLUME") {
+            music.volume = payload.volume;
+          }
+
+          if (type === "FETCH_PLAYLISTS") {
+            if (!music) throw new Error("MusicKit not configured");
+
+            // If not authorized, trigger the login popup
+            if (!music.musicUserToken || !music.isAuthorized) {
+              console.log(
+                "[MusicKit-Iframe] Not authorized. Triggering login...",
+              );
+              await music.authorize();
+              // After authorize, music.musicUserToken should be set
+              window.parent.postMessage(
+                { type: "AUTHORIZED", token: music.musicUserToken },
+                "*",
+              );
+            }
+
+            console.log("[MusicKit-Iframe] Fetching playlists...");
+
+            const response = await music.api.music("v1/me/library/playlists");
+            
+            // response.data is the JSON body, which contains a 'data' array of resources
+            const playlistArray = response.data.data || [];
+
+            window.parent.postMessage(
+              { type: "PLAYLISTS_FETCHED", playlists: playlistArray },
+              "*",
+            );
+          }
+        } catch (err) {
+          window.parent.postMessage(
+            { type: "ERROR", message: err.message },
+            "*",
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

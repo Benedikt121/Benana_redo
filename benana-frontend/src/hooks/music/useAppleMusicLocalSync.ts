@@ -19,7 +19,9 @@ export const useAppleMusicLocalSync = () => {
       const setupWebListeners = () => {
         if (typeof window === "undefined" || !window.MusicKit) return;
         try {
-          const instance = window.MusicKit.getInstance ? window.MusicKit.getInstance() : undefined;
+          const instance = window.MusicKit.getInstance
+            ? window.MusicKit.getInstance()
+            : undefined;
           if (!instance) return;
 
           const handleWebStateChange = async () => {
@@ -57,7 +59,7 @@ export const useAppleMusicLocalSync = () => {
 
             if (!isSame) {
               lastStateRef.current = statusData;
-              
+
               // Update local UI immediately so background covers work
               useMusicStore.getState().setCurrentSong({
                 platform: "APPLE_MUSIC",
@@ -113,7 +115,11 @@ export const useAppleMusicLocalSync = () => {
       };
 
       if (typeof window !== "undefined") {
-        if (window.MusicKit && window.MusicKit.getInstance && window.MusicKit.getInstance()) {
+        if (
+          window.MusicKit &&
+          window.MusicKit.getInstance &&
+          window.MusicKit.getInstance()
+        ) {
           setupWebListeners();
         }
         window.addEventListener("musickitconfigured", setupWebListeners);

@@ -101,7 +101,7 @@ export const WebDynamicIsland = () => {
         <View style={styles.background} />
 
         {/* Compact View */}
-        <Animated.View 
+        <Animated.View
           style={[styles.compactContent, compactContentStyle]}
           pointerEvents={isHovered && hasSong ? "none" : "auto"}
         >
@@ -146,7 +146,7 @@ export const WebDynamicIsland = () => {
         </Animated.View>
 
         {/* Expanded View — full controls */}
-        <Animated.View 
+        <Animated.View
           style={[styles.expandedContent, expandedContentStyle]}
           pointerEvents={isHovered && hasSong ? "auto" : "none"}
         >
