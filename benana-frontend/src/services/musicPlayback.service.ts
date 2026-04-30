@@ -84,6 +84,7 @@ export const ensureMusicKitLoaded = async () => {
 
       const config: any = {
         developerToken: developerToken.token,
+        musicUserToken: musicUserToken,
         app: {
           name: "MusicKitTest",
           build: "1.0.0",
