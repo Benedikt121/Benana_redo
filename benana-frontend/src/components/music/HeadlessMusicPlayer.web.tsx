@@ -27,11 +27,6 @@ export default function HeadlessMusicPlayer() {
 
   // Configure MusicKit when both the library is loaded and we have a token
   useEffect(() => {
-    console.log("[HeadlessMusicPlayer] Mounted");
-    return () => console.log("[HeadlessMusicPlayer] Unmounted");
-  }, []);
-
-  useEffect(() => {
     if (isLibraryLoaded && appleMusicUserToken) {
       const configure = async () => {
         try {
@@ -53,13 +48,8 @@ export default function HeadlessMusicPlayer() {
       const { type, item, state, message, token } = event.data;
 
       switch (type) {
-        case "IFRAME_PING":
-          console.log("[HeadlessMusicPlayer] Iframe Ping received");
-          break;
-
         case "MUSICKIT_LOADED":
           setIsLibraryLoaded(true);
-          console.log("MusicKit Loaded");
           break;
 
         case "NOW_PLAYING":
@@ -90,7 +80,6 @@ export default function HeadlessMusicPlayer() {
           break;
 
         case "AUTHORIZED":
-          console.log("MusicKit Authorized", token);
           if ((window as any).resolveAuth) {
             (window as any).resolveAuth(token);
             (window as any).resolveAuth = null;
@@ -99,7 +88,6 @@ export default function HeadlessMusicPlayer() {
           if (token) {
             saveAppleUserToken(token)
               .then(() => {
-                console.log("Apple Music token saved to backend");
                 // Re-fetch user profile to update the store
                 queryClient.invalidateQueries({
                   queryKey: QUERY_KEYS.USER.ME,
@@ -136,6 +124,10 @@ export default function HeadlessMusicPlayer() {
   useEffect(() => {
     // @ts-ignore
     window.sendMusicCommand = sendCommand;
+    return () => {
+      // @ts-ignore
+      delete window.sendMusicCommand;
+    };
   }, []);
 
   return (
@@ -149,6 +141,7 @@ export default function HeadlessMusicPlayer() {
         border: "none",
         position: "absolute",
         opacity: 0,
+        pointerEvents: "none",
       }}
       allow="autoplay; encrypted-media"
     />

@@ -42,12 +42,6 @@ const appleMusicWeb = {
   },
   fetchPlaylists: async () => {
     try {
-      const musicUserToken =
-        useUserStore.getState().profile?.appleMusicUserToken;
-
-      // If no token in store, we might need to authorize first
-      // But we can also check if the iframe thinks it's authorized
-      
       return new Promise((resolve) => {
         (window as any).resolvePlaylists = (playlists: any[]) => {
           if (!playlists) return resolve([]);
@@ -151,9 +145,7 @@ const spotifyBackend = {
   fetchPlaylists: async () => {
     try {
       const response = await fetchSpotifyPlaylists();
-      console.log("Spotify Playlists Response:", response);
       if (response && response.items) {
-        // Map Spotify format to the structure expected by the UI
         return response.items.map((item: any) => ({
           id: item.id,
           name: item.name,
@@ -163,10 +155,7 @@ const spotifyBackend = {
       return [];
     } catch (e: any) {
       console.error("Failed to fetch Spotify playlists:", e);
-      const msg =
-        e.response?.data?.message ||
-        e.message ||
-        "Failed to fetch Spotify playlists";
+      const msg = e.response?.data?.message || e.message || "Failed to fetch Spotify playlists";
       toast.error(msg);
       return [];
     }
@@ -268,10 +257,5 @@ export const musicPlayback = {
       return await (driver as any).authorize();
     }
     return null;
-  },
-
-  init: async () => {
-    // Initialization is now handled by the HeadlessMusicPlayer component
-    return true;
   },
 };

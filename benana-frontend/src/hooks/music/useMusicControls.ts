@@ -31,7 +31,7 @@ export function useMusicControls() {
     setPlaybackState("PLAYING");
     try {
       await musicPlayback.play();
-      // Kleine Verzögerung, damit Spotify Zeit hat zu aktualisieren
+      // Delay to allow platform state to update before refreshing
       setTimeout(refreshSpotifyState, 500);
     } catch (e) {
       console.error("Play failed:", e);
