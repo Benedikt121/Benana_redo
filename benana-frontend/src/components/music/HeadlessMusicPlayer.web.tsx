@@ -7,6 +7,9 @@ import {
 } from "../../api/music.api";
 import { toast } from "../../utils/toast";
 import { SongInfo, PlaybackState } from "../../types/MusicTypes";
+import { QueryClient } from "@tanstack/react-query";
+import { queryClient } from "@/app/_layout";
+import { QUERY_KEYS } from "@/constants/QueryKeys";
 
 export default function HeadlessMusicPlayer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -67,7 +70,7 @@ export default function HeadlessMusicPlayer() {
               title: item.name || "Unknown Title",
               artist: item.artistName || "Unknown Artist",
               albumCoverUrl: item.artwork?.url
-                ? item.artwork.url.replace("{w}", "300").replace("{h}", "300")
+                ? item.artwork.url.replace("{w}", "600").replace("{h}", "600")
                 : null,
               timestamp: Date.now(),
               playbackState:
@@ -98,7 +101,9 @@ export default function HeadlessMusicPlayer() {
               .then(() => {
                 console.log("Apple Music token saved to backend");
                 // Re-fetch user profile to update the store
-                useUserStore.getState().fetchProfile();
+                queryClient.invalidateQueries({
+                  queryKey: QUERY_KEYS.USER.ME,
+                });
               })
               .catch((err) => {
                 console.error("Failed to save Apple Music token:", err);

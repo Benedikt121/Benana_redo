@@ -121,6 +121,10 @@ if (Platform.OS === "ios") {
         await MusicKit.playLibraryPlaylist(playlistId);
         await Player.play();
       },
+      authorize: async () => {
+        // Native iOS authorization is handled by the system or internally
+        return null;
+      },
     };
   } catch {
     console.warn("@lomray/react-native-apple-music not available");
@@ -178,6 +182,10 @@ const spotifyBackend = {
         "Failed to play Spotify playlist";
       toast.error(msg);
     }
+  },
+  authorize: async () => {
+    // Spotify auth is handled via our custom backend flow
+    return null;
   },
 };
 
