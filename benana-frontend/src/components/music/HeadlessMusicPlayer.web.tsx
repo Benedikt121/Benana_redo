@@ -117,6 +117,13 @@ export default function HeadlessMusicPlayer() {
           }
           break;
 
+        case "PLAYLIST_TRACKS_FETCHED":
+          if ((window as any).resolvePlaylistTracks) {
+            (window as any).resolvePlaylistTracks(event.data.tracks);
+            (window as any).resolvePlaylistTracks = null;
+          }
+          break;
+
         case "ERROR":
           console.error("MusicKit Iframe Error:", message);
           toast.error(`Music Player Error: ${message}`);

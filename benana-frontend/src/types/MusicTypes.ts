@@ -1,5 +1,6 @@
 export type MusicPlatform = "SPOTIFY" | "APPLE_MUSIC";
 export type PlaybackState = "PLAYING" | "PAUSED";
+export type RepeatMode = "off" | "one" | "all";
 
 export interface SongInfo {
   trackId?: string;
@@ -13,6 +14,14 @@ export interface SongInfo {
   updatedAt: number;
   appleTrackId?: string | null;
   spotifyTrackId?: string | null;
+}
+
+export interface PlaylistTrack {
+  id: string;
+  name: string;
+  artist: string;
+  artworkUrl?: string;
+  durationMs: number;
 }
 
 export interface BackendSongInfo {

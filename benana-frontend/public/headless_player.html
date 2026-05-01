@@ -117,6 +117,18 @@
             music.volume = payload.volume;
           }
 
+          if (type === "SET_SHUFFLE") {
+            music.shuffleMode = payload.shuffle ? 1 : 0;
+          }
+          if (type === "SET_REPEAT_MODE") {
+            // off = 0, one = 1, all = 2
+            const modes = { off: 0, one: 1, all: 2 };
+            music.repeatMode = modes[payload.mode] ?? 0;
+          }
+          if (type === "SET_AUTOPLAY") {
+            music.autoplayEnabled = payload.autoplay;
+          }
+
           if (type === "FETCH_PLAYLISTS") {
             // If not authorized, trigger the login popup
             if (!music.musicUserToken || !music.isAuthorized) {
@@ -132,6 +144,22 @@
 
             window.parent.postMessage(
               { type: "PLAYLISTS_FETCHED", playlists: playlistArray },
+              "*",
+            );
+          }
+
+          if (type === "FETCH_PLAYLIST_TRACKS") {
+            const response = await music.api.music(`v1/me/library/playlists/${payload.playlistId}/tracks`);
+            const tracks = (response.data.data || []).map(t => ({
+              id: t.id,
+              name: t.attributes.name,
+              artist: t.attributes.artistName,
+              artworkUrl: t.attributes.artwork?.url?.replace("{w}", "300").replace("{h}", "300"),
+              durationMs: t.attributes.durationInMillis
+            }));
+
+            window.parent.postMessage(
+              { type: "PLAYLIST_TRACKS_FETCHED", playlistId: payload.playlistId, tracks },
               "*",
             );
           }
