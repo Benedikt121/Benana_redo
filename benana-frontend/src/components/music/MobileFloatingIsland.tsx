@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Platform,
-  Image,
-  StyleSheet,
-} from "react-native";
+import { View, Text, Pressable, Platform, Image } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -104,8 +97,6 @@ export const MobileFloatingIsland = () => {
     opacity: withTiming(expansion.value < 0.3 ? 1 : 0, { duration: 100 }),
   }));
 
-  // Only on mobile
-  // Hide on devices with a hardware Dynamic Island (proxied by insets.top > 50)
   if (Platform.OS === "web") {
     return null;
   }
@@ -114,7 +105,8 @@ export const MobileFloatingIsland = () => {
     <Animated.View
       entering={FadeIn.duration(300)}
       exiting={FadeOut.duration(200)}
-      style={[styles.wrapper, { top: 10 }]}
+      className="absolute left-0 right-0 z-9999 items-center top-[10px]"
+      pointerEvents="box-none"
     >
       <StatusBar hidden={true} />
       <Pressable
@@ -123,12 +115,18 @@ export const MobileFloatingIsland = () => {
         delayLongPress={400}
         style={{ alignItems: "center" }}
       >
-        <Animated.View style={[styles.island, containerStyle]}>
+        <Animated.View
+          className="rounded-[28px] overflow-hidden justify-center items-center bg-black/90"
+          style={[containerStyle, { backgroundColor: "rgba(0,0,0,0.9)" }]}
+        >
           {/* Background */}
-          <View style={styles.background} />
+          <View className="absolute inset-0 border border-white/5 rounded-[28px]" />
 
           {/* Compact / Idle View */}
-          <Animated.View style={[styles.compactContent, compactContentStyle]}>
+          <Animated.View
+            className="absolute inset-0 flex-row items-center justify-between px-3"
+            style={compactContentStyle}
+          >
             {!hasSong ? (
               <View
                 style={{
@@ -145,20 +143,20 @@ export const MobileFloatingIsland = () => {
               </View>
             ) : (
               <>
-                <View style={styles.compactLeading}>
+                <View className="flex-row items-center">
                   {currentSong?.albumCoverUrl ? (
                     <Image
                       source={{ uri: currentSong.albumCoverUrl }}
-                      style={styles.compactAlbumArt}
+                      className="w-7 h-7 rounded-lg"
                     />
                   ) : (
-                    <View style={styles.compactAlbumPlaceholder}>
+                    <View className="w-7 h-7 rounded-lg bg-white/10 items-center justify-center">
                       <Ionicons name="musical-notes" size={16} color="#fff" />
                     </View>
                   )}
                 </View>
 
-                <View style={styles.compactTrailing}>
+                <View className="flex-row items-center">
                   <PlayingIndicator
                     isPlaying={isPlaying}
                     color1={vibrant}
@@ -170,15 +168,18 @@ export const MobileFloatingIsland = () => {
           </Animated.View>
 
           {/* Expanded View — full controls */}
-          <Animated.View style={[styles.expandedContent, expandedContentStyle]}>
+          <Animated.View
+            className="absolute inset-0 flex-row items-center px-[14px] py-1 gap-2.5"
+            style={expandedContentStyle}
+          >
             {/* Album Art */}
             {currentSong?.albumCoverUrl ? (
               <Image
                 source={{ uri: currentSong.albumCoverUrl }}
-                style={styles.expandedAlbumArt}
+                className="w-12 h-12 rounded-[10px]"
               />
             ) : (
-              <View style={[styles.expandedAlbumArt, styles.albumPlaceholder]}>
+              <View className="w-12 h-12 rounded-[10px] bg-white/10 items-center justify-center">
                 <Ionicons name="musical-notes" size={24} color="#fff" />
               </View>
             )}
@@ -186,21 +187,24 @@ export const MobileFloatingIsland = () => {
             {/* Song Info — tap to open expanded player */}
             <Pressable
               onPress={() => setExpandedPlayerVisible(true)}
-              style={styles.songInfo}
+              className="flex-1 gap-[2px] overflow-hidden"
             >
-              <Text style={styles.songTitle} numberOfLines={1}>
+              <Text
+                className="text-white text-[14px] font-semibold"
+                numberOfLines={1}
+              >
                 {currentSong?.title}
               </Text>
-              <Text style={styles.songArtist} numberOfLines={1}>
+              <Text className="text-white/55 text-[12px]" numberOfLines={1}>
                 {currentSong?.artist}
               </Text>
             </Pressable>
 
             {/* Controls */}
-            <View style={styles.controls}>
+            <View className="flex-row items-center gap-[2px]">
               <Pressable
                 onPress={skipPrevious}
-                style={styles.controlButton}
+                className="w-[34px] h-[34px] rounded-full items-center justify-center"
                 hitSlop={12}
               >
                 <Ionicons name="play-skip-back" size={16} color="#fff" />
@@ -208,7 +212,7 @@ export const MobileFloatingIsland = () => {
 
               <Pressable
                 onPress={togglePlayPause}
-                style={styles.playButton}
+                className="w-[34px] h-[34px] rounded-full bg-white items-center justify-center"
                 hitSlop={12}
               >
                 <Ionicons
@@ -220,7 +224,7 @@ export const MobileFloatingIsland = () => {
 
               <Pressable
                 onPress={skipNext}
-                style={styles.controlButton}
+                className="w-[34px] h-[34px] rounded-full items-center justify-center"
                 hitSlop={12}
               >
                 <Ionicons name="play-skip-forward" size={16} color="#fff" />
@@ -232,111 +236,3 @@ export const MobileFloatingIsland = () => {
     </Animated.View>
   );
 };
-
-const styles = StyleSheet.create({
-  wrapper: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    zIndex: 9999,
-    alignItems: "center",
-    pointerEvents: "box-none",
-  },
-  island: {
-    borderRadius: 28,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.92)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.06)",
-    borderRadius: 28,
-  },
-  // --- Compact ---
-  compactContent: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 12,
-  },
-  compactLeading: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  compactTrailing: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  compactAlbumArt: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-  },
-  compactAlbumPlaceholder: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  // --- Expanded ---
-  expandedContent: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    gap: 10,
-  },
-  expandedAlbumArt: {
-    width: 48,
-    height: 48,
-    borderRadius: 10,
-  },
-  albumPlaceholder: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  songInfo: {
-    flex: 1,
-    gap: 2,
-    overflow: "hidden",
-  },
-  songTitle: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  songArtist: {
-    color: "rgba(255,255,255,0.55)",
-    fontSize: 12,
-  },
-  controls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 2,
-  },
-  controlButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
