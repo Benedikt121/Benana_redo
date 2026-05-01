@@ -87,7 +87,12 @@ export const MusicPlayerExpanded = ({
 
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const albumSize = Math.min(width - 80, 340);
+  
+  // Responsive album size: larger on web/desktop
+  const isLargeScreen = width > 768;
+  const albumSize = isLargeScreen 
+    ? Math.min(width * 0.45, 480) 
+    : Math.min(width - 80, 340);
 
   if (!visible) return null;
 
@@ -186,10 +191,10 @@ export const MusicPlayerExpanded = ({
               </View>
 
               {/* Song Info */}
-              <View className="w-full mt-8 gap-1">
+              <View className="w-full md:max-w-[500px] mt-8 gap-1">
                 <View className="flex-row items-center justify-between gap-3">
                   <Text
-                    className="text-white text-[22px] font-bold flex-1 web:font-sans"
+                    className="text-white text-[22px] md:text-[26px] font-bold flex-1 web:font-sans"
                     numberOfLines={1}
                   >
                     {currentSong.title}
@@ -201,7 +206,7 @@ export const MusicPlayerExpanded = ({
                   />
                 </View>
                 <Text
-                  className="text-white/55 text-base web:font-sans"
+                  className="text-white/55 text-base md:text-lg web:font-sans"
                   numberOfLines={1}
                 >
                   {currentSong.artist}
@@ -209,7 +214,7 @@ export const MusicPlayerExpanded = ({
               </View>
 
               {/* Progress indicator */}
-              <View className="w-full mt-6 px-1">
+              <View className="w-full md:max-w-[500px] mt-6 px-1">
                 <View className="w-full h-1 rounded-sm bg-white/10 overflow-hidden">
                   <Animated.View
                     className="h-full rounded-sm bg-white"
@@ -227,33 +232,33 @@ export const MusicPlayerExpanded = ({
               </View>
 
               {/* Controls */}
-              <View className="flex-row items-center justify-center gap-10 mt-7 mb-2">
+              <View className="flex-row items-center justify-center gap-10 md:gap-8 mt-7 mb-2">
                 <Pressable
                   onPress={skipPrevious}
-                  className="w-12 h-12 rounded-full items-center justify-center"
+                  className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
                   hitSlop={16}
                 >
-                  <Ionicons name="play-skip-back" size={28} color="#fff" />
+                  <Ionicons name="play-skip-back" size={isLargeScreen ? 24 : 28} color="#fff" />
                 </Pressable>
 
                 <Pressable
                   onPress={togglePlayPause}
-                  className="w-16 h-16 rounded-full bg-white items-center justify-center"
+                  className="w-16 h-16 md:w-14 md:h-14 rounded-full bg-white items-center justify-center"
                   hitSlop={16}
                 >
                   <Ionicons
                     name={isPlaying ? "pause" : "play"}
-                    size={32}
+                    size={isLargeScreen ? 28 : 32}
                     color="#000"
                   />
                 </Pressable>
 
                 <Pressable
                   onPress={skipNext}
-                  className="w-12 h-12 rounded-full items-center justify-center"
+                  className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
                   hitSlop={16}
                 >
-                  <Ionicons name="play-skip-forward" size={28} color="#fff" />
+                  <Ionicons name="play-skip-forward" size={isLargeScreen ? 24 : 28} color="#fff" />
                 </Pressable>
               </View>
 
@@ -285,7 +290,7 @@ export const MusicPlayerExpanded = ({
           )}
 
           {/* Library Section */}
-          <View className="w-full mt-12 mb-5 px-2">
+          <View className="w-full md:max-w-[1200px] mt-12 mb-5 px-2">
             <Text className="text-white/50 text-[14px] font-semibold uppercase tracking-[1.5px]">
               Your Library
             </Text>
@@ -297,7 +302,7 @@ export const MusicPlayerExpanded = ({
           {isLoading ? (
             <ActivityIndicator color={vibrant} style={{ marginTop: 40 }} />
           ) : playlists.length > 0 ? (
-            <View className="w-full flex-row flex-wrap justify-between px-1">
+            <View className="w-full md:max-w-[1200px] flex-row flex-wrap justify-between px-1">
               {playlists.map((pl) => {
                 let artworkUrl = pl.attributes?.artwork?.url || pl.artworkUrl;
                 let name = pl.attributes?.name || pl.name;
@@ -310,7 +315,7 @@ export const MusicPlayerExpanded = ({
                 return (
                   <Pressable
                     key={pl.id}
-                    className="w-[48%] mb-6 items-center"
+                    className="w-[48%] sm:w-[31%] md:w-[23%] lg:w-[18%] mb-6 items-center"
                     onPress={() => playPlaylist(pl.id)}
                   >
                     {artworkUrl ? (
