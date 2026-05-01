@@ -45,7 +45,11 @@
                 MusicKit.Events.playbackStateDidChange,
                 (e) => {
                   window.parent.postMessage(
-                    { type: "PLAYBACK_STATE_CHANGED", state: e.state },
+                    { 
+                      type: "PLAYBACK_STATE_CHANGED", 
+                      state: e.state,
+                      currentPlaybackTime: music.currentPlaybackTime
+                    },
                     "*",
                   );
                 },
@@ -62,6 +66,7 @@
                           id: music.nowPlayingItem.id,
                           ...music.nowPlayingItem.attributes,
                         },
+                        currentPlaybackTime: music.currentPlaybackTime
                       },
                       "*",
                     );

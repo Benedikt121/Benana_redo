@@ -14,6 +14,8 @@ import Animated, {
   FadeOut,
   SlideInDown,
   SlideOutDown,
+  useAnimatedStyle,
+  withTiming,
 } from "react-native-reanimated";
 import { useMusicControls } from "@/hooks/music/useMusicControls";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +27,8 @@ import { ScrollView, ActivityIndicator } from "react-native";
 import { musicPlayback } from "@/services/musicPlayback.service";
 import { useUserStore } from "@/store/user.store";
 import type { IPlaylist } from "@lomray/react-native-apple-music";
+import { useMusicProgress } from "@/hooks/music/useMusicProgress";
+import { formatTimeMs } from "@/utils/formatTimeMs";
 
 interface MusicPlayerExpandedProps {
   visible: boolean;
@@ -37,6 +41,18 @@ export const MusicPlayerExpanded = ({
 }: MusicPlayerExpandedProps) => {
   const { currentSong, isPlaying, togglePlayPause, skipNext, skipPrevious } =
     useMusicControls();
+  const currentProgress = useMusicProgress();
+
+  const progressPercent = currentSong?.length ? Math.min(100, Math.max(0, (currentProgress / currentSong.length) * 100)) : 0;
+  
+  const animatedProgressStyle = useAnimatedStyle(() => {
+    return {
+      width: withTiming(`${progressPercent}%`, {
+        duration: isPlaying ? 500 : 200,
+        easing: Easing.linear,
+      }),
+    };
+  }, [progressPercent, isPlaying]);
 
   const dominant = useColorStore((s) => s.dominant) || "#1DB954";
   const vibrant = useColorStore((s) => s.vibrant) || "#1DB954";
@@ -165,10 +181,19 @@ export const MusicPlayerExpanded = ({
                 </Text>
               </View>
 
-              {/* Progress indicator (visual only, based on current poll data) */}
+              {/* Progress indicator */}
               <View style={styles.progressContainer}>
                 <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: "35%" }]} />
+                  <Animated.View 
+                    style={[
+                      styles.progressFill, 
+                      animatedProgressStyle
+                    ]} 
+                  />
+                </View>
+                <View style={styles.timeRow}>
+                  <Text style={styles.timeText}>{formatTimeMs(currentProgress)}</Text>
+                  <Text style={styles.timeText}>{formatTimeMs(currentSong.length)}</Text>
                 </View>
               </View>
 
@@ -387,6 +412,16 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 2,
     backgroundColor: "#fff",
+  },
+  timeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  timeText: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    fontWeight: "500",
   },
   controls: {
     flexDirection: "row",

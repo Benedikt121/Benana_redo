@@ -62,7 +62,8 @@ export default function HeadlessMusicPlayer() {
               albumCoverUrl: item.artwork?.url
                 ? item.artwork.url.replace("{w}", "600").replace("{h}", "600")
                 : null,
-              timestamp: Date.now(),
+              timestamp: (event.data.currentPlaybackTime || 0) * 1000,
+              length: item.durationInMillis || 0,
               playbackState:
                 useMusicStore.getState().currentSong?.playbackState ||
                 "PLAYING",
@@ -76,7 +77,17 @@ export default function HeadlessMusicPlayer() {
         case "PLAYBACK_STATE_CHANGED":
           // MusicKit.PlaybackStates.playing is 2
           const mappedState: PlaybackState = state === 2 ? "PLAYING" : "PAUSED";
-          setPlaybackState(mappedState);
+          const current = useMusicStore.getState().currentSong;
+          if (current) {
+            setCurrentSong({
+              ...current,
+              playbackState: mappedState,
+              timestamp: (event.data.currentPlaybackTime || 0) * 1000,
+              updatedAt: Date.now()
+            });
+          } else {
+            setPlaybackState(mappedState);
+          }
           break;
 
         case "AUTHORIZED":
@@ -130,20 +141,18 @@ export default function HeadlessMusicPlayer() {
     };
   }, []);
 
-  return (
-    <iframe
-      id="headless-player"
-      ref={iframeRef}
-      src="/headless_player.html"
-      style={{
-        width: 0,
-        height: 0,
-        border: "none",
-        position: "absolute",
-        opacity: 0,
-        pointerEvents: "none",
-      }}
-      allow="autoplay; encrypted-media"
-    />
-  );
+  return React.createElement("iframe", {
+    id: "headless-player",
+    ref: iframeRef,
+    src: "/headless_player.html",
+    style: {
+      width: 0,
+      height: 0,
+      border: "none",
+      position: "absolute",
+      opacity: 0,
+      pointerEvents: "none",
+    },
+    allow: "autoplay; encrypted-media",
+  });
 }

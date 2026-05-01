@@ -5,8 +5,9 @@ import {
   syncSpotifyPlayback,
 } from "../services/musicService.js";
 import { prisma } from "../config/db.js";
-import crypto from "crypto";
-import { redisClient } from "../config/redis.js";
+import axios from "axios";
+import { matchSpotifyToApple } from "../services/songMatchingService.js";
+import { UserMusicState } from "../sockets/utility/userMusicState.js";
 
 interface SpotifyTokenResponse {
   access_token?: string;
@@ -189,10 +190,6 @@ export const exchangeSpotifyToken = async (req: Request, res: Response) => {
   }
 };
 
-import axios from "axios";
-import { matchSpotifyToApple } from "../services/songMatchingService.js";
-import { UserMusicState } from "../sockets/utility/userMusicState.js";
-
 export const testAppleMusicConnection = async (req: any, res: any) => {
   try {
     // 1. Hole den User (und seinen Apple Token) aus der DB
@@ -318,6 +315,7 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
       const isPlaying = response.data.is_playing;
       const trackId = `spotify:track:${response.data.item.id}`;
       const progressMs = response.data.progress_ms;
+      const lengthMs = response.data.item.duration_ms;
 
       const spotifyCoverUrl = response.data.item.album?.images?.[0]?.url;
       const { appleTrackId, coverUrl: matchedCoverUrl } =
@@ -330,6 +328,7 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
         artist,
         timestamp: progressMs,
         playbackState: isPlaying ? "PLAYING" : "PAUSED",
+        length: lengthMs,
         appleTrackId,
         spotifyTrackId: response.data.item.id,
         coverUrl: spotifyCoverUrl ?? matchedCoverUrl,

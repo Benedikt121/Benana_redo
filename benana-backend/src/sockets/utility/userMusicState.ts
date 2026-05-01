@@ -5,6 +5,7 @@ export interface UserMusicState {
   trackName: string;
   artist: string;
   playbackState: "PLAYING" | "PAUSED";
+  length: number;
   timestamp: number;
   platform: "SPOTIFY" | "APPLE_MUSIC";
   updatedAt: number;

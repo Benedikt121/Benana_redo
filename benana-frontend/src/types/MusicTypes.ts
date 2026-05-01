@@ -8,6 +8,7 @@ export interface SongInfo {
   albumCoverUrl?: string | null;
   timestamp: number;
   playbackState: PlaybackState;
+  length: number;
   platform: MusicPlatform;
   updatedAt: number;
   appleTrackId?: string | null;
@@ -19,6 +20,7 @@ export interface BackendSongInfo {
   trackName: string;
   artist: string;
   playbackState: PlaybackState;
+  length: number;
   timestamp: number;
   platform: MusicPlatform;
   updatedAt: number;

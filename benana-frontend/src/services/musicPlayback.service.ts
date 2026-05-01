@@ -89,7 +89,7 @@ let appleMusicNative: typeof appleMusicWeb | null = null;
 if (Platform.OS === "ios") {
   try {
     // Dynamic import to avoid crashing on web/android
-    const { Player, MusicKit } = require("@lomray/react-native-apple-music");
+    const { Player, MusicKit, Auth, AuthStatus } = require("@lomray/react-native-apple-music");
     appleMusicNative = {
       play: () => Player.play(),
       pause: () => Player.pause(),
@@ -104,6 +104,11 @@ if (Platform.OS === "ios") {
       },
       fetchPlaylists: async () => {
         try {
+          const status = await Auth.authorize();
+          if (status !== AuthStatus.AUTHORIZED) {
+             console.warn("Apple Music auth status:", status);
+             return [];
+          }
           const res = await MusicKit.getUserPlaylists();
           return res.playlists || [];
         } catch (e) {
@@ -112,6 +117,7 @@ if (Platform.OS === "ios") {
         }
       },
       playPlaylist: async (playlistId: string) => {
+        await Auth.authorize();
         await MusicKit.playLibraryPlaylist(playlistId);
         await Player.play();
       },

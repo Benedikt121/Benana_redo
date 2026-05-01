@@ -21,7 +21,7 @@ import { WebDynamicIsland } from "@/components/music/WebDynamicIsland";
 import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
 import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
-import HeadlessMusicPlayer from "@/components/music/HeadlessMusicPlayer.web";
+import HeadlessMusicPlayer from "@/components/music/HeadlessMusicPlayer";
 
 export const queryClient = new QueryClient();
 function AppInitializer({ children }: { children: React.ReactNode }) {

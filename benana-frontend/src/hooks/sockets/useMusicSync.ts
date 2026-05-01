@@ -19,6 +19,7 @@ export const mapBackendSongToSongInfo = (data: BackendSongInfo): SongInfo => {
     title: data.trackName,
     artist: data.artist,
     timestamp: data.timestamp,
+    length: data.length,
     playbackState: data.playbackState,
     platform: data.platform,
     updatedAt: data.updatedAt,
@@ -34,6 +35,7 @@ export const mapSongInfoToBackendSong = (data: SongInfo): BackendSongInfo => {
     trackName: data.title,
     artist: data.artist,
     timestamp: data.timestamp,
+    length: data.length,
     playbackState: data.playbackState,
     platform: data.platform,
     updatedAt: data.updatedAt,
@@ -111,6 +113,7 @@ export function useMusicSync() {
                 artist: item.attributes?.artistName || "Unknown",
                 playbackState: isPlaying ? "PLAYING" : "PAUSED",
                 timestamp: currentPlaybackTime,
+                length: item.attributes?.durationInMillis || 0,
                 coverUrl: item.attributes?.artwork?.url
                   ? item.attributes.artwork.url.replace("{w}", "600").replace("{h}", "600")
                   : null,
