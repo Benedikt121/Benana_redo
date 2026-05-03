@@ -2,7 +2,7 @@
   "expo": {
     "name": "benana-frontend",
     "slug": "benana-frontend",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "benanafrontend",
@@ -13,9 +13,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppleMusicUsageDescription": "Benana uses Apple Music to play and control your music.",
-        "UIBackgroundModes": [
-          "audio"
-        ]
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
@@ -33,7 +31,12 @@
       "favicon": "./assets/benana_logo.svg"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "origin": "https://v2.benana.me"
+        }
+      ],
       [
         "expo-splash-screen",
         {
