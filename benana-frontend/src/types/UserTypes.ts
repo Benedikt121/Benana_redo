@@ -1,4 +1,4 @@
-export type Backgrounds = "deepWater" | "rainyWindow";
+export type Backgrounds = "deepWater" | "rainyWindow" | "darkGreyGlass";
 
 export interface MeResponse {
   status: string;

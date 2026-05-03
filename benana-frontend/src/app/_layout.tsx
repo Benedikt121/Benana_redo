@@ -5,8 +5,9 @@ import { Buffer } from "buffer";
 import "../global.css";
 import { ActivityIndicator, View } from "react-native";
 import DeepWaterBackground from "@/components/background/deepWaterBackground/deepWaterBackground";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RainyWindowBackground from "@/components/background/rainyWindowBackground/rainyWindowBackground";
+import DarkGreyGlassBackground from "@/components/background/darkGreyGlassBackground/DarkGreyGlassBackground";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useUserStore } from "@/store/user.store";
@@ -103,6 +104,8 @@ function RootLayoutContent() {
     <View className="flex-1 bg-transparent">
       {usedBackground === "deepWater" ? (
         <DeepWaterBackground />
+      ) : usedBackground === "darkGreyGlass" ? (
+        <DarkGreyGlassBackground />
       ) : (
         <RainyWindowBackground />
       )}
