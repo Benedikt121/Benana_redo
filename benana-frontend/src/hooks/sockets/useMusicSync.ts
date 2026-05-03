@@ -98,36 +98,8 @@ export function useMusicSync() {
       intervalId = setInterval(async () => {
         try {
           if (preferedPlatform === "APPLE_MUSIC") {
-            if (typeof window !== "undefined" && window.MusicKit) {
-              const music = window.MusicKit.getInstance();
-              if (!music || !music.nowPlayingItem) return;
-
-              const isPlaying = music.isPlaying;
-              const currentPlaybackTime = music.currentPlaybackTime * 1000;
-              const item = music.nowPlayingItem;
-
-              const backendSong: BackendSongInfo = {
-                platform: "APPLE_MUSIC",
-                trackId: item.id,
-                trackName: item.attributes?.name || "Unknown",
-                artist: item.attributes?.artistName || "Unknown",
-                playbackState: isPlaying ? "PLAYING" : "PAUSED",
-                timestamp: currentPlaybackTime,
-                length: item.attributes?.durationInMillis || 0,
-                coverUrl: item.attributes?.artwork?.url
-                  ? item.attributes.artwork.url.replace("{w}", "600").replace("{h}", "600")
-                  : null,
-                updatedAt: Date.now(),
-              };
-
-              setCurrentSong(mapBackendSongToSongInfo(backendSong)); // UI SOFORT updaten!
-
-              const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
-              if (lastEmittedState.current !== stateString) {
-                socket.emit("music_status_update", backendSong);
-                lastEmittedState.current = stateString;
-              }
-            }
+            // Apple Music Web Sync is now handled by HeadlessMusicPlayer.web.tsx
+            // to support the iframe bridge architecture.
           } else if (preferedPlatform === "SPOTIFY") {
             // LOKALES POLLING FÜR SPOTIFY
             const response = await fetchCurrentSpotifySong();

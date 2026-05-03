@@ -7,9 +7,10 @@ import {
 } from "../../api/music.api";
 import { toast } from "../../utils/toast";
 import { SongInfo, PlaybackState } from "../../types/MusicTypes";
-import { QueryClient } from "@tanstack/react-query";
 import { queryClient } from "@/app/_layout";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
+import { socketService } from "../../services/sockets.service";
+import { mapSongInfoToBackendSong } from "../../hooks/sockets/useMusicSync";
 
 export default function HeadlessMusicPlayer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -18,6 +19,7 @@ export default function HeadlessMusicPlayer() {
   const appleMusicUserToken = useUserStore(
     (state) => state.profile?.appleMusicUserToken,
   );
+  const lastEmittedStateRef = useRef<string | null>(null);
 
   const sendCommand = (type: string, payload: any = {}) => {
     if (iframeRef.current && iframeRef.current.contentWindow) {
@@ -71,20 +73,38 @@ export default function HeadlessMusicPlayer() {
               updatedAt: Date.now(),
             };
             setCurrentSong(songInfo);
+
+            // Broadcast status to friends via socket
+            const socket = socketService.connect();
+            const backendSong = mapSongInfoToBackendSong(songInfo);
+            const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
+            if (lastEmittedStateRef.current !== stateString) {
+              socket.emit("music_status_update", backendSong);
+              lastEmittedStateRef.current = stateString;
+            }
           }
           break;
 
         case "PLAYBACK_STATE_CHANGED":
-          // MusicKit.PlaybackStates.playing is 2
           const mappedState: PlaybackState = state === 2 ? "PLAYING" : "PAUSED";
           const current = useMusicStore.getState().currentSong;
           if (current) {
-            setCurrentSong({
+            const updatedSong: SongInfo = {
               ...current,
               playbackState: mappedState,
               timestamp: (event.data.currentPlaybackTime || 0) * 1000,
-              updatedAt: Date.now()
-            });
+              updatedAt: Date.now(),
+            };
+            setCurrentSong(updatedSong);
+
+            // Broadcast status to friends via socket
+            const socket = socketService.connect();
+            const backendSong = mapSongInfoToBackendSong(updatedSong);
+            const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
+            if (lastEmittedStateRef.current !== stateString) {
+              socket.emit("music_status_update", backendSong);
+              lastEmittedStateRef.current = stateString;
+            }
           } else {
             setPlaybackState(mappedState);
           }
