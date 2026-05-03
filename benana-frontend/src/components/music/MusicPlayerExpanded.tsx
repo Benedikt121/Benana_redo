@@ -95,7 +95,7 @@ export const MusicPlayerExpanded = ({
   });
 
   const playPlaylist = async (id: string) => {
-    await musicPlayback.playPlaylist(id);
+    await musicPlayback.playPlaylist(id, undefined, playlistTracks);
     onClose();
   };
 
@@ -322,46 +322,45 @@ export const MusicPlayerExpanded = ({
                 <View className="flex-row items-center gap-6">
                   <>
                     <Pressable
-                        onPress={() => musicPlayback.setShuffle(!shuffle)}
-                        hitSlop={8}
-                      >
-                        <Ionicons
-                          name="shuffle"
-                          size={20}
-                          color={shuffle ? vibrant : "rgba(255,255,255,0.3)"}
-                        />
-                      </Pressable>
+                      onPress={() => musicPlayback.setShuffle(!shuffle)}
+                      hitSlop={8}
+                    >
+                      <Ionicons
+                        name="shuffle"
+                        size={20}
+                        color={shuffle ? vibrant : "rgba(255,255,255,0.3)"}
+                      />
+                    </Pressable>
 
-                      <Pressable
-                        onPress={() => {
-                          const modes: ("off" | "one" | "all")[] = [
-                            "off",
-                            "one",
-                            "all",
-                          ];
-                          const next =
-                            modes[(modes.indexOf(repeatMode) + 1) % 3];
-                          musicPlayback.setRepeatMode(next);
-                        }}
-                        hitSlop={8}
-                      >
-                        <View className="items-center justify-center">
-                          <Ionicons
-                            name={
-                              repeatMode === "one" ? "repeat-outline" : "repeat"
-                            }
-                            size={20}
-                            color={
-                              repeatMode !== "off"
-                                ? vibrant
-                                : "rgba(255,255,255,0.3)"
-                            }
-                          />
-                          {repeatMode === "one" && (
-                            <View className="absolute bg-white rounded-full w-1 h-1 bottom-[-4px]" />
-                          )}
-                        </View>
-                      </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        const modes: ("off" | "one" | "all")[] = [
+                          "off",
+                          "one",
+                          "all",
+                        ];
+                        const next = modes[(modes.indexOf(repeatMode) + 1) % 3];
+                        musicPlayback.setRepeatMode(next);
+                      }}
+                      hitSlop={8}
+                    >
+                      <View className="items-center justify-center">
+                        <Ionicons
+                          name={
+                            repeatMode === "one" ? "repeat-outline" : "repeat"
+                          }
+                          size={20}
+                          color={
+                            repeatMode !== "off"
+                              ? vibrant
+                              : "rgba(255,255,255,0.3)"
+                          }
+                        />
+                        {repeatMode === "one" && (
+                          <View className="absolute bg-white rounded-full w-1 h-1 bottom-[-4px]" />
+                        )}
+                      </View>
+                    </Pressable>
                   </>
 
                   {currentSong.platform === "APPLE_MUSIC" &&
@@ -395,7 +394,7 @@ export const MusicPlayerExpanded = ({
           {isLoading ? (
             <ActivityIndicator color={vibrant} style={{ marginTop: 40 }} />
           ) : playlists.length > 0 ? (
-            <View className="w-full md:max-w-[1200px] flex-row flex-wrap justify-between px-1">
+            <View className="w-full md:max-w-[1200px] flex-row flex-wrap justify-start gap-5">
               {playlists.map((pl, index) => {
                 let artworkUrl = pl.attributes?.artwork?.url || pl.artworkUrl;
                 let name = pl.attributes?.name || pl.name;
@@ -408,7 +407,7 @@ export const MusicPlayerExpanded = ({
                 return (
                   <Pressable
                     key={`${pl.id}-${index}`}
-                    className="w-[48%] sm:w-[31%] md:w-[23%] lg:w-[18%] mb-6 items-center"
+                    className="w-[47%] sm:w-[30%] md:w-[22%] lg:w-[18%] mb-6 items-center"
                     onPress={() => setSelectedPlaylist(pl)}
                   >
                     {artworkUrl ? (
@@ -512,7 +511,9 @@ export const MusicPlayerExpanded = ({
                     className="bg-white px-10 py-3 rounded-full active:opacity-80"
                     onPress={() => playPlaylist(selectedPlaylist.id)}
                   >
-                    <Text className="text-black font-bold text-lg">Play All</Text>
+                    <Text className="text-black font-bold text-lg">
+                      Play All
+                    </Text>
                   </Pressable>
                 </View>
               </View>

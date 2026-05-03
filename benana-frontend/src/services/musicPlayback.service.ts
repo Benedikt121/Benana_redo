@@ -55,11 +55,15 @@ const appleMusicWeb = {
     return new Promise((resolve) => {
       (window as any).resolvePlaylists = (playlists: any[]) => {
         if (!playlists) return resolve([]);
-        resolve(playlists.map((p: any) => ({
-          id: p.id,
-          name: p.attributes.name,
-          artworkUrl: p.attributes.artwork?.url?.replace("{w}", "600").replace("{h}", "600"),
-        })));
+        resolve(
+          playlists.map((p: any) => ({
+            id: p.id,
+            name: p.attributes.name,
+            artworkUrl: p.attributes.artwork?.url
+              ?.replace("{w}", "600")
+              .replace("{h}", "600"),
+          })),
+        );
       };
       (window as any).sendMusicCommand?.("FETCH_PLAYLISTS");
       setTimeout(() => {
@@ -71,7 +75,10 @@ const appleMusicWeb = {
     });
   },
   playPlaylist: async (playlistId: string, startTrackId?: string) => {
-    (window as any).sendMusicCommand?.("PLAY_PLAYLIST", { playlistId, startTrackId });
+    (window as any).sendMusicCommand?.("PLAY_PLAYLIST", {
+      playlistId,
+      startTrackId,
+    });
   },
   authorize: async () => {
     return new Promise((resolve) => {
@@ -79,13 +86,19 @@ const appleMusicWeb = {
       (window as any).sendMusicCommand?.("AUTHORIZE");
     });
   },
-  setShuffle: async (shuffle: boolean) => (window as any).sendMusicCommand?.("SET_SHUFFLE", { shuffle }),
-  setRepeatMode: async (mode: string) => (window as any).sendMusicCommand?.("SET_REPEAT_MODE", { mode }),
-  setAutoplay: async (autoplay: boolean) => (window as any).sendMusicCommand?.("SET_AUTOPLAY", { autoplay }),
+  setShuffle: async (shuffle: boolean) =>
+    (window as any).sendMusicCommand?.("SET_SHUFFLE", { shuffle }),
+  setRepeatMode: async (mode: string) =>
+    (window as any).sendMusicCommand?.("SET_REPEAT_MODE", { mode }),
+  setAutoplay: async (autoplay: boolean) =>
+    (window as any).sendMusicCommand?.("SET_AUTOPLAY", { autoplay }),
   fetchPlaylistTracks: async (playlistId: string) => {
     return new Promise((resolve) => {
-      (window as any).resolvePlaylistTracks = (tracks: any[]) => resolve(tracks);
-      (window as any).sendMusicCommand?.("FETCH_PLAYLIST_TRACKS", { playlistId });
+      (window as any).resolvePlaylistTracks = (tracks: any[]) =>
+        resolve(tracks);
+      (window as any).sendMusicCommand?.("FETCH_PLAYLIST_TRACKS", {
+        playlistId,
+      });
       setTimeout(() => resolve([]), 10000);
     });
   },
@@ -138,19 +151,21 @@ if (Platform.OS === "ios") {
           return [];
         }
       },
-      playPlaylist: async (playlistId: string, startTrackId?: string) => {
+      playPlaylist: async (
+        playlistId: string,
+        startTrackId?: string,
+        tracks?: any[],
+      ) => {
         try {
           await Auth.authorize();
-          // Native Apple Music doesn't easily support starting a library playlist
-          // with a specific track via a single command that populates the queue.
-          // However, setting the queue to the playlist will start at song 1.
-          await MusicKit.playLibraryPlaylist(playlistId);
 
-          if (startTrackId) {
-            // We could potentially skip to the track here, but it's complex
-            // without more native methods exposed.
-            // For now, the web implementation is more robust.
+          let startIndex = -1;
+          if (startTrackId && tracks) {
+            startIndex = tracks.findIndex((t) => t.id === startTrackId);
           }
+
+          // Native Apple Music uses MusicKit.playLibraryPlaylist(id, index)
+          await MusicKit.playLibraryPlaylist(playlistId, startIndex);
           await Player.play();
         } catch (e: any) {
           console.error("Native playPlaylist failed:", e);
@@ -363,16 +378,18 @@ export const musicPlayback = {
     return [];
   },
 
-  playPlaylist: async (playlistId: string, startTrackId?: string) => {
+  playPlaylist: async (
+    playlistId: string,
+    startTrackId?: string,
+    tracks?: any[],
+  ) => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
-    if (driver && driver.playPlaylist) {
-      await driver.playPlaylist(playlistId, startTrackId);
+    if (driver?.playPlaylist) {
+      await (driver as any).playPlaylist(playlistId, startTrackId, tracks);
     }
   },
 
   playPlaylistShuffled: async (playlistId: string, tracks?: any[]) => {
-    await musicPlayback.setShuffle(true);
-
     // For Apple Music, we pick a random starting track to ensure true randomness from the beginning
     if (
       useMusicStore.getState().preferedPlatform === "APPLE_MUSIC" &&
@@ -381,10 +398,13 @@ export const musicPlayback = {
     ) {
       const randomIndex = Math.floor(Math.random() * tracks.length);
       const startTrackId = tracks[randomIndex].id;
-      await musicPlayback.playPlaylist(playlistId, startTrackId);
+      await musicPlayback.playPlaylist(playlistId, startTrackId, tracks);
     } else {
       await musicPlayback.playPlaylist(playlistId);
     }
+
+    // Ensure shuffle is ON - call after playPlaylist to ensure it sticks for the new queue
+    await musicPlayback.setShuffle(true);
   },
 
   authorize: async (platform?: MusicPlatform) => {
@@ -401,15 +421,13 @@ export const musicPlayback = {
   setShuffle: async (shuffle: boolean) => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
     if (driver && (driver as any).setShuffle) {
-      const previousShuffle = useMusicStore.getState().shuffle;
-      if (previousShuffle === shuffle) return;
-
       // Optimistic update
       useMusicStore.getState().setShuffle(shuffle);
       try {
         await (driver as any).setShuffle(shuffle);
       } catch (e) {
         // Revert on error
+        const previousShuffle = !shuffle;
         useMusicStore.getState().setShuffle(previousShuffle);
       }
     }
