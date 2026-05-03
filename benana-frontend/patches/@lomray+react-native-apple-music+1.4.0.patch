@@ -1,0 +1,99 @@
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift b/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift
+index fd92ce8..d221408 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift
++++ b/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift
+@@ -95,10 +95,9 @@ enum MusicItemMapper {
+ 
+   // MARK: - Private Helpers
+ 
+-  private static func extractArtworkURL(_ artwork: Artwork?, width: Int = 200, height: Int = 200) -> String {
++  private static func extractArtworkURL(_ artwork: Artwork?, width: Int = 600, height: Int = 600) -> String {
+     guard let artwork = artwork,
+-          let url = artwork.url(width: width, height: height),
+-          url.scheme == "https" || url.scheme == "http"
++          let url = artwork.url(width: width, height: height)
+     else {
+       return ""
+     }
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m
+index 3ec62e2..4f7f7b5 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m
++++ b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m
+@@ -30,6 +30,10 @@ RCT_EXTERN_METHOD(seekToTime:(double)time)
+ RCT_EXTERN_METHOD(togglePlayerState)
+ RCT_EXTERN_METHOD(getCurrentState:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+ 
++RCT_EXTERN_METHOD(setRepeatMode:(NSString *)mode)
++RCT_EXTERN_METHOD(setShuffleMode:(BOOL)shuffle)
++RCT_EXTERN_METHOD(setAutoplay:(BOOL)autoPlay)
++
+ // Library access
+ RCT_EXTERN_METHOD(getUserPlaylists:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+ RCT_EXTERN_METHOD(getLibrarySongs:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
+index 6c1b18c..d91b7b6 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
++++ b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
+@@ -181,6 +181,27 @@ final class MusicModule: RCTEventEmitter {
+     playbackController.seek(to: time)
+   }
+ 
++  @objc(setRepeatMode:)
++  func setRepeatMode(_ mode: String) {
++    Task { @MainActor in
++      playbackController.setRepeatMode(mode)
++    }
++  }
++
++  @objc(setShuffleMode:)
++  func setShuffleMode(_ shuffle: Bool) {
++    Task { @MainActor in
++      playbackController.setShuffleMode(shuffle)
++    }
++  }
++
++  @objc(setAutoplay:)
++  func setAutoplay(_ autoPlay: Bool) {
++    Task { @MainActor in
++      playbackController.setAutoPlay(autoPlay)
++    }
++  }
++
+   // MARK: - Authorization
+ 
+   @objc(authorization:)
+diff --git a/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift b/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
+index bc8133e..2c7bad0 100644
+--- a/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
++++ b/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
+@@ -95,6 +95,30 @@ final class PlaybackController {
+     playbackTime = time
+   }
+ 
++  func setRepeatMode(_ mode: String) {
++    switch mode {
++    case "one":
++      player.state.repeatMode = .one
++    case "all":
++      player.state.repeatMode = .all
++    default:
++      player.state.repeatMode = .none
++    }
++  }
++
++  func setShuffleMode(_ shuffle: Bool) {
++    if shuffle {
++      player.state.shuffleMode = .songs
++    } else {
++      player.state.shuffleMode = .off
++    }
++  }
++
++  func setAutoPlay(_ autoPlay: Bool) {
++    // Autoplay is not directly supported via ApplicationMusicPlayer in iOS 15
++    print("[PlaybackController] Autoplay state set to \(autoPlay), but native continuous autoplay requires custom queue management.")
++  }
++
+   // MARK: - Queue Management
+ 
+   func setQueue<T: PlayableMusicItem>(_ item: T) async throws {

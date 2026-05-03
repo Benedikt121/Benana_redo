@@ -315,12 +315,8 @@ export const MusicPlayerExpanded = ({
                 </View>
 
                 <View className="flex-row items-center gap-6">
-                  {!(
-                    Platform.OS === "ios" &&
-                    currentSong.platform === "APPLE_MUSIC"
-                  ) && (
-                    <>
-                      <Pressable
+                  <>
+                    <Pressable
                         onPress={() => musicPlayback.setShuffle(!shuffle)}
                         hitSlop={8}
                       >
@@ -361,8 +357,7 @@ export const MusicPlayerExpanded = ({
                           )}
                         </View>
                       </Pressable>
-                    </>
-                  )}
+                  </>
 
                   {currentSong.platform === "APPLE_MUSIC" &&
                     Platform.OS === "web" && (

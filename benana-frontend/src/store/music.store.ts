@@ -1,4 +1,9 @@
-import { MusicPlatform, SongInfo, PlaybackState } from "@/types/MusicTypes";
+import {
+  MusicPlatform,
+  SongInfo,
+  PlaybackState,
+  RepeatMode,
+} from "@/types/MusicTypes";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 
@@ -40,7 +45,8 @@ export const useMusicStore = create<MusicState>((set) => ({
     set({ preferedPlatform: platform });
   },
   setListeningToHostId: (hostId) => set({ listeningToHostId: hostId }),
-  setExpandedPlayerVisible: (visible) => set({ expandedPlayerVisible: visible }),
+  setExpandedPlayerVisible: (visible) =>
+    set({ expandedPlayerVisible: visible }),
   setPlaybackState: (state) =>
     set((s) => ({
       currentSong: s.currentSong
@@ -61,4 +67,3 @@ export const useMusicStore = create<MusicState>((set) => ({
     }
   },
 }));
-

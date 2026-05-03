@@ -174,13 +174,16 @@ if (Platform.OS === "ios") {
         return null;
       },
       setShuffle: async (shuffle: boolean) => {
-        // Not supported on native
+        const { NativeModules } = require("react-native");
+        NativeModules.MusicModule?.setShuffleMode?.(shuffle);
       },
       setRepeatMode: async (mode: string) => {
-        // Not supported on native
+        const { NativeModules } = require("react-native");
+        NativeModules.MusicModule?.setRepeatMode?.(mode);
       },
       setAutoplay: async (autoplay: boolean) => {
-        // Not supported on native
+        const { NativeModules } = require("react-native");
+        NativeModules.MusicModule?.setAutoplay?.(autoplay);
       },
       fetchPlaylistTracks: async (playlistId: string) => {
         const res = await MusicKit.getPlaylistSongs(playlistId);
