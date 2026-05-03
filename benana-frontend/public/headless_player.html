@@ -17,92 +17,100 @@
         window.parent.postMessage({ type: "MUSICKIT_LOADED" }, "*");
       };
 
-      window.addEventListener("musickitloaded", () => {
-        sendLoaded();
-      });
-
-      // Check if already loaded
-      if (window.MusicKit) {
-        sendLoaded();
-      }
+      window.addEventListener("musickitloaded", () => sendLoaded());
+      if (window.MusicKit) sendLoaded();
 
       window.addEventListener("message", async (event) => {
         const { type, payload } = event.data;
 
         try {
+          const findTokenInLocalStorage = () => {
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith("music.") && key.endsWith(".media-user-token")) {
+                const val = localStorage.getItem(key);
+                if (val && !val.startsWith("http")) return val;
+              }
+            }
+            return null;
+          };
+
           if (type === "CONFIGURE") {
             await MusicKit.configure({
               developerToken: payload.token,
-              musicUserToken: payload.musicUserToken,
               app: { name: "Benana", build: "1.0.0" },
             });
             music = MusicKit.getInstance();
+
+            if (payload.musicUserToken && !payload.musicUserToken.startsWith("http")) {
+              music.musicUserToken = payload.musicUserToken;
+            } else {
+              const storedToken = findTokenInLocalStorage();
+              if (storedToken) {
+                music.musicUserToken = storedToken;
+              }
+            }
+
             window.parent.postMessage({ type: "CONFIGURED" }, "*");
 
-            // Listen to native MusicKit events and forward them to React
             if (!window.listenersAdded && music) {
-              music.addEventListener(
-                MusicKit.Events.playbackStateDidChange,
-                (e) => {
-                  window.parent.postMessage(
-                    { 
-                      type: "PLAYBACK_STATE_CHANGED", 
-                      state: e.state,
-                      currentPlaybackTime: music.currentPlaybackTime
-                    },
-                    "*",
-                  );
-                },
-              );
+              music.addEventListener(MusicKit.Events.playbackStateDidChange, (e) => {
+                window.parent.postMessage({
+                  type: "PLAYBACK_STATE_CHANGED",
+                  state: e.state,
+                  currentPlaybackTime: music.currentPlaybackTime,
+                }, "*");
+              });
 
-              music.addEventListener(
-                MusicKit.Events.nowPlayingItemDidChange,
-                () => {
-                  if (music.nowPlayingItem) {
-                    window.parent.postMessage(
-                      {
-                        type: "NOW_PLAYING",
-                        item: {
-                          id: music.nowPlayingItem.id,
-                          ...music.nowPlayingItem.attributes,
-                        },
-                        currentPlaybackTime: music.currentPlaybackTime
-                      },
-                      "*",
-                    );
-                  }
-                },
-              );
+              music.addEventListener(MusicKit.Events.nowPlayingItemDidChange, () => {
+                if (music.nowPlayingItem) {
+                  window.parent.postMessage({
+                    type: "NOW_PLAYING",
+                    item: { id: music.nowPlayingItem.id, ...music.nowPlayingItem.attributes },
+                    currentPlaybackTime: music.currentPlaybackTime,
+                  }, "*");
+                }
+              });
               window.listenersAdded = true;
             }
           }
 
-          if (!music && type !== "CONFIGURE") {
-             // Silently ignore or queue if not configured yet
-             return;
-          }
+          if (!music && type !== "CONFIGURE") return;
 
           if (type === "AUTHORIZE") {
-            await music.authorize();
-            window.parent.postMessage(
-              { type: "AUTHORIZED", token: music.musicUserToken },
-              "*",
-            );
+            try {
+              const token = await music.authorize();
+              let finalToken = token || music.musicUserToken;
+
+              if (!finalToken || finalToken.startsWith("http")) {
+                const storedToken = findTokenInLocalStorage();
+                if (storedToken) finalToken = storedToken;
+              }
+
+              if (finalToken && finalToken.startsWith("http")) {
+                window.parent.postMessage({
+                  type: "ERROR",
+                  message: "Subscription or valid account required",
+                }, "*");
+                return;
+              }
+
+              window.parent.postMessage({ type: "AUTHORIZED", token: finalToken }, "*");
+            } catch (err) {
+              console.error("[MusicKit Bridge Auth Error]", err);
+              window.parent.postMessage({ type: "ERROR", message: "Auth failed: " + err.message }, "*");
+            }
           }
 
           if (type === "PLAY_SONG") {
-            await music.setQueue({
-              songs: [payload.songId],
-              startPlaying: true,
-            });
+            await music.setQueue({ songs: [payload.songId], startPlaying: true });
             await music.play();
           }
 
           if (type === "PLAY_PLAYLIST") {
-            await music.setQueue({
-              playlist: payload.playlistId,
-              startPlaying: true,
-            });
+            const queueOptions = { playlist: payload.playlistId, startPlaying: true };
+            if (payload.startTrackId) queueOptions.startWith = payload.startTrackId;
+            await music.setQueue(queueOptions);
             await music.play();
           }
 
@@ -110,65 +118,64 @@
           if (type === "RESUME") await music.play();
           if (type === "SKIP_NEXT") await music.skipToNextItem();
           if (type === "SKIP_PREV") await music.skipToPreviousItem();
-          if (type === "SEEK") {
-            await music.seekToTime(payload.time);
-          }
-          if (type === "SET_VOLUME") {
-            music.volume = payload.volume;
-          }
-
-          if (type === "SET_SHUFFLE") {
-            music.shuffleMode = payload.shuffle ? 1 : 0;
-          }
+          if (type === "SEEK") await music.seekToTime(payload.time);
+          if (type === "SET_VOLUME") music.volume = payload.volume;
+          if (type === "SET_SHUFFLE") music.shuffleMode = payload.shuffle ? 1 : 0;
           if (type === "SET_REPEAT_MODE") {
-            // off = 0, one = 1, all = 2
             const modes = { off: 0, one: 1, all: 2 };
             music.repeatMode = modes[payload.mode] ?? 0;
           }
-          if (type === "SET_AUTOPLAY") {
-            music.autoplayEnabled = payload.autoplay;
-          }
+          if (type === "SET_AUTOPLAY") music.autoplayEnabled = payload.autoplay;
 
           if (type === "FETCH_PLAYLISTS") {
-            // If not authorized, trigger the login popup
-            if (!music.musicUserToken || !music.isAuthorized) {
-              await music.authorize();
-              window.parent.postMessage(
-                { type: "AUTHORIZED", token: music.musicUserToken },
-                "*",
-              );
-            }
-
-            const response = await music.api.music("v1/me/library/playlists");
-            const playlistArray = response.data.data || [];
-
-            window.parent.postMessage(
-              { type: "PLAYLISTS_FETCHED", playlists: playlistArray },
-              "*",
-            );
+            const fetchThem = async (retry = true) => {
+              try {
+                if (!music.musicUserToken || !music.isAuthorized) {
+                  await music.authorize();
+                  window.parent.postMessage({ type: "AUTHORIZED", token: music.musicUserToken }, "*");
+                }
+                const response = await music.api.music("v1/me/library/playlists");
+                window.parent.postMessage({ type: "PLAYLISTS_FETCHED", playlists: response.data.data || [] }, "*");
+              } catch (err) {
+                if (retry && (err.status === 403 || err.statusCode === 403)) {
+                  await music.authorize();
+                  return fetchThem(false);
+                }
+                throw err;
+              }
+            };
+            await fetchThem();
           }
 
           if (type === "FETCH_PLAYLIST_TRACKS") {
-            const response = await music.api.music(`v1/me/library/playlists/${payload.playlistId}/tracks`);
-            const tracks = (response.data.data || []).map(t => ({
-              id: t.id,
-              name: t.attributes.name,
-              artist: t.attributes.artistName,
-              artworkUrl: t.attributes.artwork?.url?.replace("{w}", "300").replace("{h}", "300"),
-              durationMs: t.attributes.durationInMillis
-            }));
-
-            window.parent.postMessage(
-              { type: "PLAYLIST_TRACKS_FETCHED", playlistId: payload.playlistId, tracks },
-              "*",
-            );
+            const fetchTracks = async (retry = true) => {
+              try {
+                const response = await music.api.music(`v1/me/library/playlists/${payload.playlistId}/tracks`);
+                const tracks = (response.data.data || []).map((t) => ({
+                  id: t.id,
+                  name: t.attributes.name,
+                  artist: t.attributes.artistName,
+                  artworkUrl: t.attributes.artwork?.url?.replace("{w}", "300").replace("{h}", "300"),
+                  durationMs: t.attributes.durationInMillis,
+                }));
+                window.parent.postMessage({
+                  type: "PLAYLIST_TRACKS_FETCHED",
+                  playlistId: payload.playlistId,
+                  tracks,
+                }, "*");
+              } catch (err) {
+                if (retry && (err.status === 403 || err.statusCode === 403)) {
+                  await music.authorize();
+                  return fetchTracks(false);
+                }
+                throw err;
+              }
+            };
+            await fetchTracks();
           }
         } catch (err) {
           console.error("[MusicKit Bridge Error]", err);
-          window.parent.postMessage(
-            { type: "ERROR", message: err.message },
-            "*",
-          );
+          window.parent.postMessage({ type: "ERROR", message: err.message }, "*");
         }
       });
     </script>

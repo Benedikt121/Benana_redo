@@ -91,11 +91,16 @@ export const MusicPlayerExpanded = ({
   const { data: playlistTracks, isLoading: isLoadingTracks } = useQuery({
     queryKey: ["playlist-tracks", selectedPlaylist?.id],
     queryFn: () => musicPlayback.fetchPlaylistTracks(selectedPlaylist!.id),
-    enabled: !!selectedPlaylist,
+    enabled: !!selectedPlaylist && preferedPlatform !== "SPOTIFY",
   });
 
   const playPlaylist = async (id: string) => {
     await musicPlayback.playPlaylist(id);
+    onClose();
+  };
+
+  const playPlaylistShuffled = async (id: string) => {
+    await musicPlayback.playPlaylistShuffled(id, playlistTracks);
     onClose();
   };
 
@@ -489,16 +494,27 @@ export const MusicPlayerExpanded = ({
                 <Text className="text-white text-2xl font-bold mt-6 text-center">
                   {selectedPlaylist.attributes?.name || selectedPlaylist.name}
                 </Text>
-                <Text className="text-white/50 text-sm mt-1">
-                  {playlistTracks?.length || 0} Songs
-                </Text>
+                {preferedPlatform !== "SPOTIFY" && (
+                  <Text className="text-white/50 text-sm mt-1">
+                    {playlistTracks?.length || 0} Songs
+                  </Text>
+                )}
 
-                <Pressable
-                  className="bg-white px-10 py-3 rounded-full mt-6 active:opacity-80"
-                  onPress={() => playPlaylist(selectedPlaylist.id)}
-                >
-                  <Text className="text-black font-bold text-lg">Play All</Text>
-                </Pressable>
+                <View className="flex-row items-center gap-4 mt-6">
+                  <Pressable
+                    className="w-12 h-12 rounded-full bg-white/10 items-center justify-center active:bg-white/20"
+                    onPress={() => playPlaylistShuffled(selectedPlaylist.id)}
+                  >
+                    <Ionicons name="shuffle" size={24} color="white" />
+                  </Pressable>
+
+                  <Pressable
+                    className="bg-white px-10 py-3 rounded-full active:opacity-80"
+                    onPress={() => playPlaylist(selectedPlaylist.id)}
+                  >
+                    <Text className="text-black font-bold text-lg">Play All</Text>
+                  </Pressable>
+                </View>
               </View>
 
               <View className="gap-4 pb-20">

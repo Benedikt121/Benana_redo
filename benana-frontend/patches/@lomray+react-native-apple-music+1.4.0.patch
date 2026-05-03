@@ -1,8 +1,8 @@
 diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift b/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift
-index fd92ce8..d221408 100644
+index fd92ce8..568491b 100644
 --- a/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift
 +++ b/node_modules/@lomray/react-native-apple-music/ios/MusicItemMapper.swift
-@@ -95,10 +95,9 @@ enum MusicItemMapper {
+@@ -95,13 +95,17 @@ enum MusicItemMapper {
  
    // MARK: - Private Helpers
  
@@ -15,11 +15,28 @@ index fd92ce8..d221408 100644
      else {
        return ""
      }
+-    return url.absoluteString
++    
++    if url.scheme == "https" || url.scheme == "http" {
++      return url.absoluteString
++    }
++    
++    return ""
+   }
+ }
 diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m
-index 3ec62e2..4f7f7b5 100644
+index 3ec62e2..39ab0ec 100644
 --- a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m
 +++ b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.m
-@@ -30,6 +30,10 @@ RCT_EXTERN_METHOD(seekToTime:(double)time)
+@@ -8,6 +8,7 @@ RCT_EXTERN_METHOD(addListener:(NSString *)eventName)
+ RCT_EXTERN_METHOD(removeListeners:(double)count)
+ 
+ RCT_EXTERN_METHOD(authorization:(RCTResponseSenderBlock)callback)
++RCT_EXTERN_METHOD(getUserToken:(NSString *)developerToken resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+ 
+ RCT_EXTERN_METHOD(checkSubscription:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+ 
+@@ -30,6 +31,10 @@ RCT_EXTERN_METHOD(seekToTime:(double)time)
  RCT_EXTERN_METHOD(togglePlayerState)
  RCT_EXTERN_METHOD(getCurrentState:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
  
@@ -31,10 +48,18 @@ index 3ec62e2..4f7f7b5 100644
  RCT_EXTERN_METHOD(getUserPlaylists:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
  RCT_EXTERN_METHOD(getLibrarySongs:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 diff --git a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
-index 6c1b18c..d91b7b6 100644
+index 6c1b18c..5264130 100644
 --- a/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
 +++ b/node_modules/@lomray/react-native-apple-music/ios/MusicModule.swift
-@@ -181,6 +181,27 @@ final class MusicModule: RCTEventEmitter {
+@@ -4,6 +4,7 @@
+ 
+ import Foundation
+ import MusicKit
++import StoreKit
+ import React
+ 
+ @available(iOS 15.0, *)
+@@ -181,6 +182,27 @@ final class MusicModule: RCTEventEmitter {
      playbackController.seek(to: time)
    }
  
@@ -62,6 +87,30 @@ index 6c1b18c..d91b7b6 100644
    // MARK: - Authorization
  
    @objc(authorization:)
+@@ -191,6 +213,23 @@ final class MusicModule: RCTEventEmitter {
+     }
+   }
+ 
++  @objc(getUserToken:resolver:rejecter:)
++  func getUserToken(
++    _ developerToken: String,
++    resolver resolve: @escaping RCTPromiseResolveBlock,
++    rejecter reject: @escaping RCTPromiseRejectBlock
++  ) {
++    SKCloudServiceController().requestUserToken(forDeveloperToken: developerToken) { (token, error) in
++      if let error = error {
++        reject("ERROR", "Failed to get user token: \(error.localizedDescription)", error)
++      } else if let token = token {
++        resolve(token)
++      } else {
++        reject("ERROR", "Token was nil", nil)
++      }
++    }
++  }
++
+   // MARK: - Subscription
+ 
+   @objc(checkSubscription:rejecter:)
 diff --git a/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift b/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
 index bc8133e..2c7bad0 100644
 --- a/node_modules/@lomray/react-native-apple-music/ios/PlaybackController.swift
@@ -97,3 +146,39 @@ index bc8133e..2c7bad0 100644
    // MARK: - Queue Management
  
    func setQueue<T: PlayableMusicItem>(_ item: T) async throws {
+diff --git a/node_modules/@lomray/react-native-apple-music/modules/auth.d.ts b/node_modules/@lomray/react-native-apple-music/modules/auth.d.ts
+index be33ae1..11512d9 100644
+--- a/node_modules/@lomray/react-native-apple-music/modules/auth.d.ts
++++ b/node_modules/@lomray/react-native-apple-music/modules/auth.d.ts
+@@ -23,5 +23,11 @@ declare class Auth {
+      * @throws {MusicSubscriptionError} On failure. Error.code is one of: 'unknown' | 'permissionDenied' | 'privacyAcknowledgementRequired'. Use isMusicSubscriptionError() to narrow.
+      */
+     static checkSubscription(): Promise<ICheckSubscription>;
++    /**
++     * Requests a user token for Apple Music using the provided developer token.
++     * @param {string} developerToken - The Apple Music developer token.
++     * @returns {Promise<string>} A promise that resolves to the user's Apple Music token.
++     */
++    static getUserToken(developerToken: string): Promise<string>;
+ }
+ export { Auth as default };
+diff --git a/node_modules/@lomray/react-native-apple-music/modules/auth.js b/node_modules/@lomray/react-native-apple-music/modules/auth.js
+index 169d818..db83dbb 100644
+--- a/node_modules/@lomray/react-native-apple-music/modules/auth.js
++++ b/node_modules/@lomray/react-native-apple-music/modules/auth.js
+@@ -27,6 +27,15 @@ class Auth {
+         const result = await MusicModule.checkSubscription();
+         return result;
+     }
++    /**
++     * Requests a user token for Apple Music using the provided developer token.
++     * @param {string} developerToken - The Apple Music developer token.
++     * @returns {Promise<string>} A promise that resolves to the user's Apple Music token.
++     */
++    static async getUserToken(developerToken) {
++        const result = await MusicModule.getUserToken(developerToken);
++        return result;
++    }
+ }
+ 
+ export { Auth as default };

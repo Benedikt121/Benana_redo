@@ -25,18 +25,18 @@ export default function HeadlessMusicPlayer() {
     }
   };
 
-  // Configure MusicKit when both the library is loaded and we have a token
+  // Configure MusicKit when the library is loaded
   useEffect(() => {
-    if (isLibraryLoaded && appleMusicUserToken) {
+    if (isLibraryLoaded) {
       const configure = async () => {
         try {
           const devToken = await getAppleDeveloperToken();
           sendCommand("CONFIGURE", {
             token: devToken.token,
-            musicUserToken: appleMusicUserToken,
+            musicUserToken: appleMusicUserToken, // Can be undefined
           });
         } catch (err) {
-          console.error("Failed to re-configure MusicKit:", err);
+          console.error("Failed to configure MusicKit:", err);
         }
       };
       configure();

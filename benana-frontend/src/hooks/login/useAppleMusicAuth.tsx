@@ -38,17 +38,35 @@ export const useAppleMusicAuth = () => {
           return;
         }
 
-        const music = window.MusicKit.getInstance();
-        await music.authorize();
+        const token = await musicPlayback.authorize("APPLE_MUSIC");
 
-        if (music.musicUserToken) {
-          await handleTokenSave(music.musicUserToken);
+        if (token) {
+          if (typeof token === "string" && token.startsWith("http")) {
+            toast.error("Apple Music Abonnement erforderlich oder Login fehlgeschlagen.");
+            console.error("Received URL instead of token:", token);
+            return;
+          }
+          await handleTokenSave(token);
+          toast.success("Apple Music erfolgreich verknüpft!");
         }
       } else if (Platform.OS === "ios") {
         const status = await Auth.authorize();
         if (status === AuthStatus.AUTHORIZED) {
-          await handleTokenSave("NATIVE_APPLE_MUSIC_AUTHORIZED");
-          toast.success("Apple Music erfolgreich verknüpft!");
+          try {
+            const devTokenRes = await getAppleDeveloperToken();
+            const userToken = await (Auth as any).getUserToken(
+              devTokenRes.token,
+            );
+            if (userToken) {
+              await handleTokenSave(userToken);
+              toast.success("Apple Music erfolgreich verknüpft!");
+            } else {
+              throw new Error("User token was empty");
+            }
+          } catch (e) {
+            console.error("Failed to get native user token:", e);
+            toast.error("Apple Music Token konnte nicht abgerufen werden.");
+          }
         } else {
           toast.error("Apple Music konnte nicht verknüpft werden!");
         }
