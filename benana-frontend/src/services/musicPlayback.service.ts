@@ -8,6 +8,8 @@ import {
   fetchSpotifyPlaylists,
   playSpotifyPlaylistAPI,
   getAppleDeveloperToken,
+  setSpotifyShuffleAPI,
+  setSpotifyRepeatAPI,
 } from "@/api/music.api";
 import { useMusicStore } from "@/store/music.store";
 import type { MusicPlatform } from "@/types/MusicTypes";
@@ -257,10 +259,21 @@ const spotifyBackend = {
     return null;
   },
   setShuffle: async (shuffle: boolean) => {
-    // placeholder for now
+    try {
+      await setSpotifyShuffleAPI(shuffle);
+    } catch (e: any) {
+      console.error("Failed to set Spotify shuffle:", e);
+      toast.error("Failed to shuffle Spotify");
+    }
   },
   setRepeatMode: async (mode: string) => {
-    // placeholder for now
+    try {
+      await setSpotifyRepeatAPI(mode);
+    } catch (e: any) {
+      console.error("Failed to set Spotify repeat:", e);
+      toast.error("Failed to set repeat mode for Spotify");
+      throw e;
+    }
   },
   setAutoplay: async (autoplay: boolean) => {
     // placeholder for now
@@ -354,16 +367,36 @@ export const musicPlayback = {
   setShuffle: async (shuffle: boolean) => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
     if (driver && (driver as any).setShuffle) {
-      await (driver as any).setShuffle(shuffle);
+      const previousShuffle = useMusicStore.getState().shuffle;
+      // Optimistic update
       useMusicStore.getState().setShuffle(shuffle);
+      try {
+        await (driver as any).setShuffle(shuffle);
+      } catch (e) {
+        // Revert on error
+        useMusicStore.getState().setShuffle(previousShuffle);
+      }
     }
   },
 
   setRepeatMode: async (mode: "off" | "one" | "all") => {
     const driver = getDriver(useMusicStore.getState().preferedPlatform);
     if (driver && (driver as any).setRepeatMode) {
-      await (driver as any).setRepeatMode(mode);
+      const previousMode = useMusicStore.getState().repeatMode;
+      // Optimistic update
       useMusicStore.getState().setRepeatMode(mode);
+      
+      let spotifyMode: string = mode;
+      if (useMusicStore.getState().preferedPlatform === "SPOTIFY") {
+         spotifyMode = mode === "all" ? "context" : mode === "one" ? "track" : "off";
+      }
+
+      try {
+        await (driver as any).setRepeatMode(spotifyMode);
+      } catch (e) {
+        // Revert on error
+        useMusicStore.getState().setRepeatMode(previousMode);
+      }
     }
   },
 

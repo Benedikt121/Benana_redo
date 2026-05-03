@@ -139,6 +139,17 @@ export function useMusicSync() {
 
               setCurrentSong(mapBackendSongToSongInfo(backendSong));
 
+              // Sync external Spotify state to our local UI store
+              if ((backendSong as any).shuffle !== undefined) {
+                useMusicStore.getState().setShuffle((backendSong as any).shuffle);
+              }
+              if ((backendSong as any).repeatMode !== undefined) {
+                let rMode = (backendSong as any).repeatMode;
+                if (rMode === "context") rMode = "all";
+                if (rMode === "track") rMode = "one";
+                useMusicStore.getState().setRepeatMode(rMode);
+              }
+
               const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
               if (lastEmittedState.current !== stateString) {
                 socket.emit("music_status_update", backendSong);

@@ -299,7 +299,7 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
       return res.status(401).json({ message: "No Spotify Token provided." });
 
     const response = await axios.get(
-      "https://api.spotify.com/v1/me/player/currently-playing",
+      "https://api.spotify.com/v1/me/player",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -316,12 +316,15 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
       const trackId = `spotify:track:${response.data.item.id}`;
       const progressMs = response.data.progress_ms;
       const lengthMs = response.data.item.duration_ms;
+      
+      const shuffleState = response.data.shuffle_state;
+      const repeatState = response.data.repeat_state;
 
       const spotifyCoverUrl = response.data.item.album?.images?.[0]?.url;
       const { appleTrackId, coverUrl: matchedCoverUrl } =
         (await matchSpotifyToApple(response.data.item.id)) as any;
 
-      const statusData: UserMusicState = {
+      const statusData: UserMusicState & { shuffle?: boolean, repeatMode?: string } = {
         platform: "SPOTIFY",
         trackId,
         trackName: title,
@@ -333,6 +336,8 @@ export const getCurrentSpotifySong = async (req: any, res: any) => {
         spotifyTrackId: response.data.item.id,
         coverUrl: spotifyCoverUrl ?? matchedCoverUrl,
         updatedAt: Date.now(),
+        shuffle: shuffleState,
+        repeatMode: repeatState,
       };
 
       return res.status(200).json({
@@ -451,6 +456,44 @@ export const skipPreviousSpotify = async (req: any, res: any) => {
     return res
       .status(500)
       .json({ message: "Failed to skip to previous track" });
+  }
+};
+
+export const setSpotifyShuffle = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const { state } = req.body;
+    const token = await getValidSpotifyToken(userId);
+    if (!token)
+      return res.status(401).json({ message: "No Spotify token available" });
+
+    await fetch(`https://api.spotify.com/v1/me/player/shuffle?state=${state}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status(200).json({ message: "Spotify shuffle updated" });
+  } catch (error) {
+    console.error("Spotify shuffle error:", error);
+    return res.status(500).json({ message: "Failed to update Spotify shuffle" });
+  }
+};
+
+export const setSpotifyRepeat = async (req: any, res: any) => {
+  try {
+    const userId = (req as any).user.id;
+    const { state } = req.body; // "track", "context", or "off"
+    const token = await getValidSpotifyToken(userId);
+    if (!token)
+      return res.status(401).json({ message: "No Spotify token available" });
+
+    await fetch(`https://api.spotify.com/v1/me/player/repeat?state=${state}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.status(200).json({ message: "Spotify repeat updated" });
+  } catch (error) {
+    console.error("Spotify repeat error:", error);
+    return res.status(500).json({ message: "Failed to update Spotify repeat" });
   }
 };
 

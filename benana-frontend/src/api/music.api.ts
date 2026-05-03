@@ -7,6 +7,8 @@ import {
   SPOTIFY_PAUSE_PATH,
   SPOTIFY_PLAY_PATH,
   SPOTIFY_PREVIOUS_PATH,
+  SPOTIFY_SHUFFLE_PATH,
+  SPOTIFY_REPEAT_PATH,
   SPOTIFY_REFRESH_PATH,
   SPOTIFY_RESUME_PATH,
   SPOTIFY_PLAYLISTS_PATH,
@@ -134,6 +136,30 @@ export const skipPreviousSpotify = async () => {
   return axios.post(
     SPOTIFY_PREVIOUS_PATH,
     {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
+};
+
+export const setSpotifyShuffleAPI = async (state: boolean) => {
+  const { token } = useAuthStore.getState();
+  return axios.put(
+    SPOTIFY_SHUFFLE_PATH,
+    { state },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status >= 200 && status < 300,
+    },
+  );
+};
+
+export const setSpotifyRepeatAPI = async (state: string) => {
+  const { token } = useAuthStore.getState();
+  return axios.put(
+    SPOTIFY_REPEAT_PATH,
+    { state },
     {
       headers: { Authorization: `Bearer ${token}` },
       validateStatus: (status) => status >= 200 && status < 300,
