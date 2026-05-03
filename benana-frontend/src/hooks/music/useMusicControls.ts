@@ -19,6 +19,15 @@ export function useMusicControls() {
         const response = await fetchCurrentSpotifySong();
         if (response && response.data) {
           setCurrentSong(mapBackendSongToSongInfo(response.data));
+          if (response.data.shuffle !== undefined) {
+             useMusicStore.getState().setShuffle(response.data.shuffle);
+          }
+          if (response.data.repeatMode !== undefined) {
+            let rMode = response.data.repeatMode;
+            if (rMode === "context") rMode = "all";
+            if (rMode === "track") rMode = "one";
+            useMusicStore.getState().setRepeatMode(rMode);
+          }
         }
       } catch (e) {
         console.error("Failed to refresh Spotify state:", e);
@@ -31,7 +40,7 @@ export function useMusicControls() {
     setPlaybackState("PLAYING");
     try {
       await musicPlayback.play();
-      // Kleine Verzögerung, damit Spotify Zeit hat zu aktualisieren
+      // Delay to allow platform state to update before refreshing
       setTimeout(refreshSpotifyState, 500);
     } catch (e) {
       console.error("Play failed:", e);

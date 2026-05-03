@@ -31,43 +31,42 @@ export const useAppleMusicAuth = () => {
       setIsAuthenticating(true);
 
       if (Platform.OS === "web") {
-        const devTokenRes = await getAppleDeveloperToken();
-        const developerToken = devTokenRes.token;
-
-        if (!window.MusicKit) {
-          if (typeof window !== "undefined") {
-            if (!(window as any).process) (window as any).process = {};
-            if (!(window as any).process.versions)
-              (window as any).process.versions = {};
-            if (!(window as any).Buffer) (window as any).Buffer = Buffer;
-          }
-          await new Promise<void>((res, rej) => {
-            document.addEventListener("musickitloaded", () => res());
-            const script = document.createElement("script");
-            script.src =
-              "https://js-cdn.music.apple.com/musickit/v3/musickit.js";
-            script.async = true;
-            script.onerror = rej;
-            document.head.appendChild(script);
-          });
+        const { musicPlayback } = require("@/services/musicPlayback.service");
+        const ready = await musicPlayback.init();
+        if (!ready) {
+          toast.error("Apple Music konnte nicht geladen werden.");
+          return;
         }
 
-        const music = await window.MusicKit.configure({
-          developerToken: developerToken,
-          app: { name: "Benana", build: "1.0.0" },
-        });
+        const token = await musicPlayback.authorize("APPLE_MUSIC");
 
-        const instance = music || window.MusicKit.getInstance();
-        await instance.authorize();
-
-        if (instance.musicUserToken) {
-          await handleTokenSave(instance.musicUserToken);
+        if (token) {
+          if (typeof token === "string" && token.startsWith("http")) {
+            toast.error("Apple Music Abonnement erforderlich oder Login fehlgeschlagen.");
+            console.error("Received URL instead of token:", token);
+            return;
+          }
+          await handleTokenSave(token);
+          toast.success("Apple Music erfolgreich verknüpft!");
         }
       } else if (Platform.OS === "ios") {
         const status = await Auth.authorize();
         if (status === AuthStatus.AUTHORIZED) {
-          await handleTokenSave("NATIVE_APPLE_MUSIC_AUTHORIZED");
-          toast.success("Apple Music erfolgreich verknüpft!");
+          try {
+            const devTokenRes = await getAppleDeveloperToken();
+            const userToken = await (Auth as any).getUserToken(
+              devTokenRes.token,
+            );
+            if (userToken) {
+              await handleTokenSave(userToken);
+              toast.success("Apple Music erfolgreich verknüpft!");
+            } else {
+              throw new Error("User token was empty");
+            }
+          } catch (e) {
+            console.error("Failed to get native user token:", e);
+            toast.error("Apple Music Token konnte nicht abgerufen werden.");
+          }
         } else {
           toast.error("Apple Music konnte nicht verknüpft werden!");
         }

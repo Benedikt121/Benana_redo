@@ -6,6 +6,7 @@ import type { BackendSongInfo } from "@/types/MusicTypes";
 
 export const useAppleMusicLocalSync = () => {
   const preferedPlatform = useMusicStore((s) => s.preferedPlatform);
+  const setCurrentSong = useMusicStore((s) => s.setCurrentSong);
 
   const lastStateRef = useRef<BackendSongInfo | null>(null);
 
@@ -19,7 +20,9 @@ export const useAppleMusicLocalSync = () => {
       const setupWebListeners = () => {
         if (typeof window === "undefined" || !window.MusicKit) return;
         try {
-          const instance = window.MusicKit.getInstance ? window.MusicKit.getInstance() : undefined;
+          const instance = window.MusicKit.getInstance
+            ? window.MusicKit.getInstance()
+            : undefined;
           if (!instance) return;
 
           const handleWebStateChange = async () => {
@@ -44,6 +47,7 @@ export const useAppleMusicLocalSync = () => {
               coverUrl: coverUrl || "",
               playbackState: playbackState,
               timestamp: instance.currentPlaybackTime * 1000,
+              length: item.attributes?.durationInMillis,
               updatedAt: Date.now(),
             };
 
@@ -57,9 +61,8 @@ export const useAppleMusicLocalSync = () => {
 
             if (!isSame) {
               lastStateRef.current = statusData;
-              
-              // Update local UI immediately so background covers work
-              useMusicStore.getState().setCurrentSong({
+
+              setCurrentSong({
                 platform: "APPLE_MUSIC",
                 trackId: statusData.trackId,
                 appleTrackId: statusData.appleTrackId,
@@ -68,6 +71,7 @@ export const useAppleMusicLocalSync = () => {
                 albumCoverUrl: statusData.coverUrl,
                 playbackState: statusData.playbackState,
                 timestamp: statusData.timestamp,
+                length: statusData.length,
                 updatedAt: statusData.updatedAt,
               });
 
@@ -113,7 +117,11 @@ export const useAppleMusicLocalSync = () => {
       };
 
       if (typeof window !== "undefined") {
-        if (window.MusicKit && window.MusicKit.getInstance && window.MusicKit.getInstance()) {
+        if (
+          window.MusicKit &&
+          window.MusicKit.getInstance &&
+          window.MusicKit.getInstance()
+        ) {
           setupWebListeners();
         }
         window.addEventListener("musickitconfigured", setupWebListeners);
@@ -153,12 +161,13 @@ export const useAppleMusicLocalSync = () => {
             state.playbackStatus === "playing" ? "PLAYING" : "PAUSED";
 
           let coverUrl = song.artworkUrl;
-          if (
-            coverUrl &&
-            coverUrl.includes("{w}") &&
-            coverUrl.includes("{h}")
-          ) {
-            coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
+          if (coverUrl) {
+            if (coverUrl.includes("{w}") && coverUrl.includes("{h}")) {
+              coverUrl = coverUrl.replace("{w}", "600").replace("{h}", "600");
+            } else {
+              // Replace pre-formatted resolutions like 200x200 with 600x600
+              coverUrl = coverUrl.replace(/\d+x\d+/, "600x600");
+            }
           }
 
           const statusData: BackendSongInfo = {
@@ -170,7 +179,8 @@ export const useAppleMusicLocalSync = () => {
             artist: song.artistName,
             coverUrl: coverUrl,
             playbackState: newPlaybackState,
-            timestamp: state.playbackTime * 1000,
+            timestamp: Number(state.playbackTime) * 1000,
+            length: Number(song.duration) * 1000,
             updatedAt: Date.now(),
           };
 
@@ -193,7 +203,8 @@ export const useAppleMusicLocalSync = () => {
               artist: song.artistName,
               albumCoverUrl: coverUrl,
               playbackState: newPlaybackState,
-              timestamp: state.playbackTime * 1000,
+              timestamp: Number(state.playbackTime) * 1000,
+              length: Number(song.duration) * 1000,
               updatedAt: Date.now(),
             });
 

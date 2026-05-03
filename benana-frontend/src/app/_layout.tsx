@@ -1,9 +1,13 @@
 import { Stack, useRouter, useSegments } from "expo-router";
+import Head from "expo-router/head";
+import { Platform } from "react-native";
+import { Buffer } from "buffer";
 import "../global.css";
 import { ActivityIndicator, View } from "react-native";
 import DeepWaterBackground from "@/components/background/deepWaterBackground/deepWaterBackground";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import RainyWindowBackground from "@/components/background/rainyWindowBackground/rainyWindowBackground";
+import DarkGreyGlassBackground from "@/components/background/darkGreyGlassBackground/DarkGreyGlassBackground";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useUserStore } from "@/store/user.store";
@@ -18,13 +22,14 @@ import { WebDynamicIsland } from "@/components/music/WebDynamicIsland";
 import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
 import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
+import HeadlessMusicPlayer from "@/components/music/HeadlessMusicPlayer";
 
 export const queryClient = new QueryClient();
-
 function AppInitializer({ children }: { children: React.ReactNode }) {
   useInitialData();
   useGlobalSocket();
   useMusicColors();
+
   return <>{children}</>;
 }
 
@@ -99,6 +104,8 @@ function RootLayoutContent() {
     <View className="flex-1 bg-transparent">
       {usedBackground === "deepWater" ? (
         <DeepWaterBackground />
+      ) : usedBackground === "darkGreyGlass" ? (
+        <DarkGreyGlassBackground />
       ) : (
         <RainyWindowBackground />
       )}
@@ -114,6 +121,7 @@ function RootLayoutContent() {
         visible={expandedPlayerVisible}
         onClose={() => setExpandedPlayerVisible(false)}
       />
+      <HeadlessMusicPlayer />
     </View>
   );
 }

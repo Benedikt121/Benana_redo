@@ -77,6 +77,7 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
                 coverUrl: string;
               };
             const progressMs = response.data.progress_ms;
+            const lengthMs = response.data.item.duration_ms;
 
             // Daten formatieren
             const statusData: UserMusicState = {
@@ -87,6 +88,7 @@ export const registerMusicHandlers = (io: Server, socket: Socket) => {
               spotifyTrackId: trackId,
               appleTrackId: appleTrackId,
               playbackState: isPlaying ? "PLAYING" : "PAUSED",
+              length: lengthMs,
               timestamp: progressMs,
               coverUrl: spotifyCoverUrl ?? matchedCoverUrl,
               updatedAt: Date.now(),

@@ -10,6 +10,7 @@ export function BackgroundChanger() {
   const backgrounds: { id: Backgrounds; name: string }[] = [
     { id: "deepWater", name: "Deep Water" },
     { id: "rainyWindow", name: "Rainy Window" },
+    { id: "darkGreyGlass", name: "Dark Grey Glass" },
   ];
 
   return (

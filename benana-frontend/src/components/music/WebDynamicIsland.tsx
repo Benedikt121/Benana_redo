@@ -5,7 +5,6 @@ import {
   Pressable,
   Platform,
   Image,
-  StyleSheet,
 } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -91,18 +90,18 @@ export const WebDynamicIsland = () => {
 
   return (
     <View
-      style={styles.wrapper}
+      className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] items-center"
       // @ts-ignore — web-only pointer events
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
     >
-      <Animated.View style={[styles.island, containerStyle]}>
+      <Animated.View className="rounded-[28px] overflow-hidden justify-center items-center" style={containerStyle}>
         {/* Background */}
-        <View style={styles.background} />
+        <View className="absolute inset-0 bg-black/90 border border-white/10 rounded-[28px]" style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)" }} />
 
         {/* Compact View */}
-        <Animated.View 
-          style={[styles.compactContent, compactContentStyle]}
+        <Animated.View
+          className="absolute inset-0 flex-row items-center justify-center gap-2 px-3" style={compactContentStyle}
           pointerEvents={isHovered && hasSong ? "none" : "auto"}
         >
           {!hasSong ? (
@@ -127,10 +126,10 @@ export const WebDynamicIsland = () => {
               {currentSong?.albumCoverUrl ? (
                 <Image
                   source={{ uri: currentSong.albumCoverUrl }}
-                  style={styles.compactAlbumArt}
+                  className="w-8 h-8 rounded-lg"
                 />
               ) : (
-                <View style={styles.compactAlbumPlaceholder}>
+                <View className="w-8 h-8 rounded-lg bg-white/10 items-center justify-center">
                   <Ionicons name="musical-notes" size={18} color="#fff" />
                 </View>
               )}
@@ -146,18 +145,18 @@ export const WebDynamicIsland = () => {
         </Animated.View>
 
         {/* Expanded View — full controls */}
-        <Animated.View 
-          style={[styles.expandedContent, expandedContentStyle]}
+        <Animated.View
+          className="absolute inset-0 flex-row items-center px-4 gap-3" style={expandedContentStyle}
           pointerEvents={isHovered && hasSong ? "auto" : "none"}
         >
           {/* Album Art */}
           {currentSong?.albumCoverUrl ? (
             <Image
               source={{ uri: currentSong.albumCoverUrl }}
-              style={styles.expandedAlbumArt}
+              className="w-[52px] h-[52px] rounded-xl"
             />
           ) : (
-            <View style={[styles.expandedAlbumArt, styles.albumPlaceholder]}>
+            <View className="w-[52px] h-[52px] rounded-xl bg-white/10 items-center justify-center">
               <Ionicons name="musical-notes" size={24} color="#fff" />
             </View>
           )}
@@ -165,21 +164,21 @@ export const WebDynamicIsland = () => {
           {/* Song Info — click to open expanded player */}
           <Pressable
             onPress={() => setExpandedPlayerVisible(true)}
-            style={styles.songInfo}
+            className="flex-1 gap-[2px] overflow-hidden"
           >
-            <Text style={styles.songTitle} numberOfLines={1}>
+            <Text className="text-white text-[14px] font-semibold font-sans" numberOfLines={1}>
               {currentSong?.title}
             </Text>
-            <Text style={styles.songArtist} numberOfLines={1}>
+            <Text className="text-white/55 text-[12px] font-sans" numberOfLines={1}>
               {currentSong?.artist}
             </Text>
           </Pressable>
 
           {/* Controls */}
-          <View style={styles.controls}>
+          <View className="flex-row items-center gap-1">
             <Pressable
               onPress={skipPrevious}
-              style={styles.controlButton}
+              className="w-9 h-9 rounded-full items-center justify-center"
               hitSlop={8}
             >
               <Ionicons name="play-skip-back" size={16} color="#fff" />
@@ -187,7 +186,7 @@ export const WebDynamicIsland = () => {
 
             <Pressable
               onPress={togglePlayPause}
-              style={styles.playButton}
+              className="w-9 h-9 rounded-full bg-white items-center justify-center"
               hitSlop={8}
             >
               <Ionicons
@@ -199,7 +198,7 @@ export const WebDynamicIsland = () => {
 
             <Pressable
               onPress={skipNext}
-              style={styles.controlButton}
+              className="w-9 h-9 rounded-full items-center justify-center"
               hitSlop={8}
             >
               <Ionicons name="play-skip-forward" size={16} color="#fff" />
@@ -211,109 +210,3 @@ export const WebDynamicIsland = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  wrapper: {
-    position: "absolute" as any,
-    top: 16,
-    left: "50%" as any,
-    transform: [{ translateX: "-50%" as any }],
-    zIndex: 9999,
-    alignItems: "center",
-  },
-  island: {
-    borderRadius: 28,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.88)",
-    // @ts-ignore — web-only
-    backdropFilter: "blur(20px)",
-    // @ts-ignore — web-only
-    WebkitBackdropFilter: "blur(20px)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 28,
-    // @ts-ignore — web-only
-    boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
-  },
-  // --- Compact ---
-  compactContent: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-  },
-  compactAlbumArt: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-  },
-  compactAlbumPlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  // --- Expanded ---
-  expandedContent: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  expandedAlbumArt: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-  },
-  albumPlaceholder: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  songInfo: {
-    flex: 1,
-    gap: 2,
-    overflow: "hidden",
-  },
-  songTitle: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-  },
-  songArtist: {
-    color: "rgba(255,255,255,0.55)",
-    fontSize: 12,
-    fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-  },
-  controls: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  controlButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
