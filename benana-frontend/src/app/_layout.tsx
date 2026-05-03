@@ -23,6 +23,7 @@ import { MobileFloatingIsland } from "@/components/music/MobileFloatingIsland";
 import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
 import HeadlessMusicPlayer from "@/components/music/HeadlessMusicPlayer";
+import HomeButton from "@/components/HomeButton";
 
 export const queryClient = new QueryClient();
 function AppInitializer({ children }: { children: React.ReactNode }) {
@@ -66,6 +67,10 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <AppInitializer>
+          <Head>
+            <title>Benana</title>
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          </Head>
           <RootLayoutContent />
         </AppInitializer>
         <Toaster
@@ -96,6 +101,8 @@ function RootLayoutContent() {
   const setExpandedPlayerVisible = useMusicStore(
     (state) => state.setExpandedPlayerVisible,
   );
+  const segments = useSegments();
+  const isLoginScreen = segments[0] === "login";
 
   useMusicSync();
   useAppleMusicLocalSync();
@@ -109,8 +116,13 @@ function RootLayoutContent() {
       ) : (
         <RainyWindowBackground />
       )}
-      <WebDynamicIsland />
-      <MobileFloatingIsland />
+      {!isLoginScreen && <WebDynamicIsland />}
+      {!isLoginScreen && <MobileFloatingIsland />}
+      {Platform.OS === "web" && !isLoginScreen && (
+        <View style={{ position: "absolute", top: 24, left: 24, zIndex: 10000 }}>
+          <HomeButton />
+        </View>
+      )}
       <Stack
         screenOptions={{
           headerShown: false,

@@ -7,7 +7,7 @@ export default function DarkGreyGlassBackground() {
   return (
     <View style={styles.container}>
       {/* Solid Dark Grey Base */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: "#121212" }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: "#2E2E2E" }]} />
 
       {/* Subtle Rim Highlight - Top Edge */}
       <View
