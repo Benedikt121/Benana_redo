@@ -1,5 +1,6 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import Head from "expo-router/head";
+import * as WebBrowser from "expo-web-browser";
 import { Platform } from "react-native";
 import { Buffer } from "buffer";
 import "../global.css";
@@ -24,6 +25,8 @@ import { MusicPlayerExpanded } from "@/components/music/MusicPlayerExpanded";
 import { useAppleMusicLocalSync } from "@/hooks/music/useAppleMusicLocalSync";
 import HeadlessMusicPlayer from "@/components/music/HeadlessMusicPlayer";
 import HomeButton from "@/components/HomeButton";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export const queryClient = new QueryClient();
 function AppInitializer({ children }: { children: React.ReactNode }) {

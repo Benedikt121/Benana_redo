@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/constants/QueryKeys";
 import { toast } from "@/utils/toast";
 
-WebBrowser.maybeCompleteAuthSession();
+
 
 const discovery = {
   authorizationEndpoint: "https://accounts.spotify.com/authorize",
