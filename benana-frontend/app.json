@@ -28,7 +28,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/benana_logo.svg"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       [
