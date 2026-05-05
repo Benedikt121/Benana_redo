@@ -59,8 +59,8 @@ export function useMusicSync() {
     const socket = socketService.connect();
 
     const onHostSync = (data: BackendSongInfo) => {
+      syncPlaybackToHost(data);
       setCurrentSong(mapBackendSongToSongInfo(data));
-      syncPlaybackToHost(data, preferedPlatform);
       setFriendSong(hostId!, mapBackendSongToSongInfo(data));
     };
 
@@ -113,7 +113,9 @@ export function useMusicSync() {
 
               // Sync external Spotify state to our local UI store
               if ((backendSong as any).shuffle !== undefined) {
-                useMusicStore.getState().setShuffle((backendSong as any).shuffle);
+                useMusicStore
+                  .getState()
+                  .setShuffle((backendSong as any).shuffle);
               }
               if ((backendSong as any).repeatMode !== undefined) {
                 let rMode = (backendSong as any).repeatMode;
