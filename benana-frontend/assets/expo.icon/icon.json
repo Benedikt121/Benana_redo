@@ -6,13 +6,21 @@
     {
       "layers": [
         {
-          "image-name": "icon.svg",
-          "name": "icon",
+          "image-name": "icon.png",
+          "name": "benana-logo",
           "position": {
-            "scale": 7
+            "scale": 1
           }
         }
-      ]
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
     }
   ],
   "supported-platforms": {
