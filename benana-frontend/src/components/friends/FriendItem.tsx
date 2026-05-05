@@ -16,6 +16,7 @@ import { useFriendActions } from "@/hooks/friends/useFriendActions";
 import { useListeningParty } from "@/hooks/sockets/useListeningParty";
 import { useMusicStore } from "@/store/music.store";
 import { BlurView } from "expo-blur";
+import { triggerHaptic } from "@/utils/haptics";
 
 interface FriendItemProps {
   friend: Friend;
@@ -34,7 +35,10 @@ export const FriendItem: React.FC<FriendItemProps> = ({
   const [menuVisible, setMenuVisible] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const openMenu = () => setMenuVisible(true);
+  const openMenu = () => {
+    setMenuVisible(true);
+    triggerHaptic("medium");
+  };
   const closeMenu = () => setMenuVisible(false);
 
   const { leaveParty } = useListeningParty();
@@ -42,8 +46,10 @@ export const FriendItem: React.FC<FriendItemProps> = ({
   const handleJoin = () => {
     if (isListeningToThisFriend) {
       leaveParty(friend.friend.id);
+      triggerHaptic("light");
     } else {
       joinParty(friend.friend.id);
+      triggerHaptic("success");
     }
     closeMenu();
   };
@@ -52,13 +58,16 @@ export const FriendItem: React.FC<FriendItemProps> = ({
     unfriend(friend.friendshipId);
     setConfirmDelete(false);
     closeMenu();
+    triggerHaptic("warning");
   };
 
   const onJoinPress = () => {
     if (isListeningToThisFriend) {
       leaveParty(friend.friend.id);
+      triggerHaptic("light");
     } else {
       joinParty(friend.friend.id);
+      triggerHaptic("success");
     }
   };
 
@@ -143,7 +152,15 @@ export const FriendItem: React.FC<FriendItemProps> = ({
 
   return (
     <>
-      <Pressable onLongPress={openMenu} delayLongPress={500}>
+      <Pressable
+        onLongPress={openMenu}
+        delayLongPress={500}
+        onPress={() => {
+          if (isPlaying) {
+            onJoinPress();
+          }
+        }}
+      >
         <View
           className={`flex-row items-center py-3 ${compact ? "px-2 justify-center" : "px-2"} hover:bg-gray-800/40`}
         >

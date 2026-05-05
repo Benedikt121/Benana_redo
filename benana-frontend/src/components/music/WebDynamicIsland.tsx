@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Platform,
-  Image,
-} from "react-native";
+import { View, Text, Pressable, Platform, Image } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -91,12 +85,15 @@ export const WebDynamicIsland = () => {
 
   return (
     <View
-      className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] items-center"
+      className="absolute top-4 left-1/2 -translate-x-1/2 z-9999 items-center"
       // @ts-ignore — web-only pointer events
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
     >
-      <Animated.View className="rounded-[28px] overflow-hidden justify-center items-center" style={containerStyle}>
+      <Animated.View
+        className="rounded-[28px] overflow-hidden justify-center items-center"
+        style={containerStyle}
+      >
         {/* Background */}
         <View
           className="absolute inset-0 bg-black/90 border border-white/10 rounded-[28px]"
@@ -112,7 +109,8 @@ export const WebDynamicIsland = () => {
 
         {/* Compact View */}
         <Animated.View
-          className="absolute inset-0 flex-row items-center justify-center gap-2 px-3" style={compactContentStyle}
+          className="absolute inset-0 flex-row items-center justify-center gap-2 px-3"
+          style={compactContentStyle}
           pointerEvents={isHovered && hasSong ? "none" : "auto"}
         >
           {!hasSong ? (
@@ -157,7 +155,8 @@ export const WebDynamicIsland = () => {
 
         {/* Expanded View — full controls */}
         <Animated.View
-          className="absolute inset-0 flex-row items-center px-4 gap-3" style={expandedContentStyle}
+          className="absolute inset-0 flex-row items-center px-4 gap-3"
+          style={expandedContentStyle}
           pointerEvents={isHovered && hasSong ? "auto" : "none"}
         >
           {/* Album Art */}
@@ -177,10 +176,16 @@ export const WebDynamicIsland = () => {
             onPress={() => setExpandedPlayerVisible(true)}
             className="flex-1 gap-[2px] overflow-hidden"
           >
-            <Text className="text-white text-[14px] font-semibold font-sans" numberOfLines={1}>
+            <Text
+              className="text-white text-[14px] font-semibold font-sans"
+              numberOfLines={1}
+            >
               {currentSong?.title}
             </Text>
-            <Text className="text-white/55 text-[12px] font-sans" numberOfLines={1}>
+            <Text
+              className="text-white/55 text-[12px] font-sans"
+              numberOfLines={1}
+            >
               {currentSong?.artist}
             </Text>
           </Pressable>
@@ -222,4 +227,3 @@ export const WebDynamicIsland = () => {
     </View>
   );
 };
-

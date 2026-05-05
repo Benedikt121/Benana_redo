@@ -34,6 +34,7 @@ import { useMusicStore } from "@/store/music.store";
 import { useFriendsStore } from "@/store/friends.store";
 import { useListeningParty } from "@/hooks/sockets/useListeningParty";
 import { ProfileCircle } from "../profile/profileCircle";
+import { triggerHaptic } from "@/utils/haptics";
 
 interface MusicPlayerExpandedProps {
   visible: boolean;
@@ -169,7 +170,10 @@ export const MusicPlayerExpanded = ({
           {/* Header — close button */}
           <View className="w-full flex-row items-center justify-between mb-6">
             <Pressable
-              onPress={onClose}
+              onPress={() => {
+                onClose();
+                triggerHaptic("light");
+              }}
               className="w-7 h-7 items-center justify-center"
               hitSlop={16}
             >
@@ -276,7 +280,10 @@ export const MusicPlayerExpanded = ({
                       </Text>
                     </View>
                     <Pressable
-                      onPress={() => leaveParty(listeningToHostId!)}
+                      onPress={() => {
+                        leaveParty(listeningToHostId!);
+                        triggerHaptic("light");
+                      }}
                       className="bg-red-500/20 p-2 rounded-xl active:bg-red-500/30"
                     >
                       <Ionicons name="log-out" size={20} color="#ef4444" />
@@ -286,7 +293,10 @@ export const MusicPlayerExpanded = ({
               ) : (
                 <View className="flex-row items-center justify-center gap-10 md:gap-8 mt-7 mb-2">
                   <Pressable
-                    onPress={skipPrevious}
+                    onPress={() => {
+                      skipPrevious();
+                      triggerHaptic("light");
+                    }}
                     className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
                     hitSlop={16}
                   >
@@ -298,7 +308,10 @@ export const MusicPlayerExpanded = ({
                   </Pressable>
 
                   <Pressable
-                    onPress={togglePlayPause}
+                    onPress={() => {
+                      togglePlayPause();
+                      triggerHaptic("medium");
+                    }}
                     className="w-16 h-16 md:w-14 md:h-14 rounded-full bg-white items-center justify-center"
                     hitSlop={16}
                   >
@@ -310,7 +323,10 @@ export const MusicPlayerExpanded = ({
                   </Pressable>
 
                   <Pressable
-                    onPress={skipNext}
+                    onPress={() => {
+                      skipNext();
+                      triggerHaptic("light");
+                    }}
                     className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
                     hitSlop={16}
                   >
@@ -352,7 +368,10 @@ export const MusicPlayerExpanded = ({
                   {!isListener && (
                     <>
                       <Pressable
-                        onPress={() => musicPlayback.setShuffle(!shuffle)}
+                        onPress={() => {
+                          musicPlayback.setShuffle(!shuffle);
+                          triggerHaptic("selection");
+                        }}
                         hitSlop={8}
                       >
                         <Ionicons
@@ -372,6 +391,7 @@ export const MusicPlayerExpanded = ({
                           const next =
                             modes[(modes.indexOf(repeatMode) + 1) % 3];
                           musicPlayback.setRepeatMode(next);
+                          triggerHaptic("selection");
                         }}
                         hitSlop={8}
                       >
@@ -441,7 +461,10 @@ export const MusicPlayerExpanded = ({
                   <Pressable
                     key={`${pl.id}-${index}`}
                     className="w-[47%] sm:w-[30%] md:w-[22%] lg:w-[18%] mb-6 items-center"
-                    onPress={() => setSelectedPlaylist(pl)}
+                    onPress={() => {
+                      setSelectedPlaylist(pl);
+                      triggerHaptic("selection");
+                    }}
                   >
                     {artworkUrl ? (
                       <Image
@@ -503,7 +526,13 @@ export const MusicPlayerExpanded = ({
         >
           <View className="flex-1">
             <View className="flex-row items-center px-6 py-4 justify-between">
-              <Pressable onPress={() => setSelectedPlaylist(null)} hitSlop={16}>
+              <Pressable
+                onPress={() => {
+                  setSelectedPlaylist(null);
+                  triggerHaptic("light");
+                }}
+                hitSlop={16}
+              >
                 <Ionicons name="chevron-back" size={28} color="white" />
               </Pressable>
               <Text className="text-white font-bold text-lg" numberOfLines={1}>
@@ -539,14 +568,20 @@ export const MusicPlayerExpanded = ({
                   <View className="flex-row items-center gap-4 mt-6">
                     <Pressable
                       className="w-12 h-12 rounded-full bg-white/10 items-center justify-center active:bg-white/20"
-                      onPress={() => playPlaylistShuffled(selectedPlaylist.id)}
+                      onPress={() => {
+                        playPlaylistShuffled(selectedPlaylist.id);
+                        triggerHaptic("selection");
+                      }}
                     >
                       <Ionicons name="shuffle" size={24} color="white" />
                     </Pressable>
 
                     <Pressable
                       className="bg-white px-10 py-3 rounded-full active:opacity-80"
-                      onPress={() => playPlaylist(selectedPlaylist.id)}
+                      onPress={() => {
+                        playPlaylist(selectedPlaylist.id);
+                        triggerHaptic("success");
+                      }}
                     >
                       <Text className="text-black font-bold text-lg">
                         Play All
@@ -570,7 +605,10 @@ export const MusicPlayerExpanded = ({
               renderItem={({ item: track }) => (
                 <Pressable
                   className="flex-row items-center gap-4 active:bg-white/5 p-2 rounded-xl mb-2"
-                  onPress={() => playTrack(track.id)}
+                  onPress={() => {
+                    playTrack(track.id);
+                    triggerHaptic("selection");
+                  }}
                 >
                   {track.artworkUrl ? (
                     <Image

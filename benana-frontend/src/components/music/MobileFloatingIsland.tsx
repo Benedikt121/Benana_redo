@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PlayingIndicator } from "./PlayingIndicator";
 import { StatusBar } from "expo-status-bar";
+import { triggerHaptic } from "@/utils/haptics";
 
 const COMPACT_WIDTH = 250;
 const COMPACT_HEIGHT = 42;
@@ -57,6 +58,7 @@ export const MobileFloatingIsland = () => {
     const next = !isExpanded;
     setIsExpanded(next);
     expansion.value = withSpring(next ? 1 : 0, SPRING_CONFIG);
+    triggerHaptic("selection");
   };
 
   const IDLE_WIDTH = 64;
@@ -111,8 +113,14 @@ export const MobileFloatingIsland = () => {
     >
       <StatusBar hidden={true} />
       <Pressable
-        onPress={hasSong ? toggle : () => setExpandedPlayerVisible(true)}
-        onLongPress={() => setExpandedPlayerVisible(true)}
+        onPress={hasSong ? toggle : () => {
+          setExpandedPlayerVisible(true);
+          triggerHaptic("heavy");
+        }}
+        onLongPress={() => {
+          setExpandedPlayerVisible(true);
+          triggerHaptic("heavy");
+        }}
         delayLongPress={400}
         style={{ alignItems: "center" }}
       >
@@ -187,7 +195,10 @@ export const MobileFloatingIsland = () => {
 
             {/* Song Info — tap to open expanded player */}
             <Pressable
-              onPress={() => setExpandedPlayerVisible(true)}
+              onPress={() => {
+                setExpandedPlayerVisible(true);
+                triggerHaptic("selection");
+              }}
               className="flex-1 gap-[2px] overflow-hidden"
             >
               <Text
@@ -205,7 +216,10 @@ export const MobileFloatingIsland = () => {
             {!listeningToHostId && (
               <View className="flex-row items-center gap-[2px]">
                 <Pressable
-                  onPress={skipPrevious}
+                  onPress={() => {
+                    skipPrevious();
+                    triggerHaptic("light");
+                  }}
                   className="w-[34px] h-[34px] rounded-full items-center justify-center"
                   hitSlop={12}
                 >
@@ -213,7 +227,10 @@ export const MobileFloatingIsland = () => {
                 </Pressable>
 
                 <Pressable
-                  onPress={togglePlayPause}
+                  onPress={() => {
+                    togglePlayPause();
+                    triggerHaptic("medium");
+                  }}
                   className="w-[34px] h-[34px] rounded-full bg-white items-center justify-center"
                   hitSlop={12}
                 >
@@ -225,7 +242,10 @@ export const MobileFloatingIsland = () => {
                 </Pressable>
 
                 <Pressable
-                  onPress={skipNext}
+                  onPress={() => {
+                    skipNext();
+                    triggerHaptic("light");
+                  }}
                   className="w-[34px] h-[34px] rounded-full items-center justify-center"
                   hitSlop={12}
                 >
