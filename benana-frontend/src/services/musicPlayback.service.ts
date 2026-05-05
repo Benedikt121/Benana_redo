@@ -390,12 +390,19 @@ export const musicPlayback = {
   },
 
   playPlaylistShuffled: async (playlistId: string, tracks?: any[]) => {
+    const isAppleMusic =
+      useMusicStore.getState().preferedPlatform === "APPLE_MUSIC";
+
+    // Fast-path: If tracks aren't loaded yet, start the playlist immediately
+    // and rely on native shuffle.
+    if (!tracks || tracks.length === 0) {
+      await musicPlayback.playPlaylist(playlistId);
+      await musicPlayback.setShuffle(true);
+      return;
+    }
+
     // For Apple Music, we pick a random starting track to ensure true randomness from the beginning
-    if (
-      useMusicStore.getState().preferedPlatform === "APPLE_MUSIC" &&
-      tracks &&
-      tracks.length > 0
-    ) {
+    if (isAppleMusic) {
       const randomIndex = Math.floor(Math.random() * tracks.length);
       const startTrackId = tracks[randomIndex].id;
       await musicPlayback.playPlaylist(playlistId, startTrackId, tracks);

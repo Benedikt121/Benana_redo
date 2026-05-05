@@ -6,6 +6,7 @@ import {
   Image,
   useWindowDimensions,
   Platform,
+  FlatList,
 } from "react-native";
 import Animated, {
   Easing,
@@ -511,92 +512,98 @@ export const MusicPlayerExpanded = ({
               <View style={{ width: 28 }} />
             </View>
 
-            <ScrollView className="flex-1 px-6">
-              <View className="items-center mt-6 mb-8">
-                <Image
-                  source={{
-                    uri:
-                      selectedPlaylist.attributes?.artwork?.url
-                        ?.replace("{w}", "600")
-                        .replace("{h}", "600") || selectedPlaylist.artworkUrl,
-                  }}
-                  className="w-64 h-64 rounded-2xl shadow-2xl"
-                />
-                <Text className="text-white text-2xl font-bold mt-6 text-center">
-                  {selectedPlaylist.attributes?.name || selectedPlaylist.name}
-                </Text>
-                {preferedPlatform !== "SPOTIFY" && (
-                  <Text className="text-white/50 text-sm mt-1">
-                    {playlistTracks?.length || 0} Songs
+            <FlatList
+              data={playlistTracks || []}
+              keyExtractor={(item, index) => `${item.id}-${index}`}
+              contentContainerStyle={{ paddingBottom: 100 }}
+              ListHeaderComponent={
+                <View className="items-center mt-6 mb-8">
+                  <Image
+                    source={{
+                      uri:
+                        selectedPlaylist.attributes?.artwork?.url
+                          ?.replace("{w}", "600")
+                          .replace("{h}", "600") || selectedPlaylist.artworkUrl,
+                    }}
+                    className="w-64 h-64 rounded-2xl shadow-2xl"
+                  />
+                  <Text className="text-white text-2xl font-bold mt-6 text-center">
+                    {selectedPlaylist.attributes?.name || selectedPlaylist.name}
                   </Text>
-                )}
-
-                <View className="flex-row items-center gap-4 mt-6">
-                  <Pressable
-                    className="w-12 h-12 rounded-full bg-white/10 items-center justify-center active:bg-white/20"
-                    onPress={() => playPlaylistShuffled(selectedPlaylist.id)}
-                  >
-                    <Ionicons name="shuffle" size={24} color="white" />
-                  </Pressable>
-
-                  <Pressable
-                    className="bg-white px-10 py-3 rounded-full active:opacity-80"
-                    onPress={() => playPlaylist(selectedPlaylist.id)}
-                  >
-                    <Text className="text-black font-bold text-lg">
-                      Play All
+                  {preferedPlatform !== "SPOTIFY" && (
+                    <Text className="text-white/50 text-sm mt-1">
+                      {playlistTracks?.length || 0} Songs
                     </Text>
-                  </Pressable>
-                </View>
-              </View>
+                  )}
 
-              <View className="gap-4 pb-20">
-                {isLoadingTracks ? (
+                  <View className="flex-row items-center gap-4 mt-6">
+                    <Pressable
+                      className="w-12 h-12 rounded-full bg-white/10 items-center justify-center active:bg-white/20"
+                      onPress={() => playPlaylistShuffled(selectedPlaylist.id)}
+                    >
+                      <Ionicons name="shuffle" size={24} color="white" />
+                    </Pressable>
+
+                    <Pressable
+                      className="bg-white px-10 py-3 rounded-full active:opacity-80"
+                      onPress={() => playPlaylist(selectedPlaylist.id)}
+                    >
+                      <Text className="text-black font-bold text-lg">
+                        Play All
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              }
+              ListEmptyComponent={
+                isLoadingTracks ? (
                   <ActivityIndicator
                     color={vibrant}
                     style={{ marginTop: 20 }}
                   />
                 ) : (
-                  playlistTracks?.map((track: any, index: number) => (
-                    <Pressable
-                      key={`${track.id}-${index}`}
-                      className="flex-row items-center gap-4 active:bg-white/5 p-2 rounded-xl"
-                      onPress={() => playTrack(track.id)}
+                  <Text className="text-white/30 text-center mt-10">
+                    No songs found.
+                  </Text>
+                )
+              }
+              renderItem={({ item: track }) => (
+                <Pressable
+                  className="flex-row items-center gap-4 active:bg-white/5 p-2 rounded-xl mb-2"
+                  onPress={() => playTrack(track.id)}
+                >
+                  {track.artworkUrl ? (
+                    <Image
+                      source={{ uri: track.artworkUrl }}
+                      className="w-12 h-12 rounded-lg"
+                    />
+                  ) : (
+                    <View className="w-12 h-12 rounded-lg bg-white/10 items-center justify-center">
+                      <Ionicons
+                        name="musical-notes"
+                        size={20}
+                        color="white/30"
+                      />
+                    </View>
+                  )}
+                  <View className="flex-1">
+                    <Text
+                      className="text-white font-semibold"
+                      numberOfLines={1}
                     >
-                      {track.artworkUrl ? (
-                        <Image
-                          source={{ uri: track.artworkUrl }}
-                          className="w-12 h-12 rounded-lg"
-                        />
-                      ) : (
-                        <View className="w-12 h-12 rounded-lg bg-white/10 items-center justify-center">
-                          <Ionicons
-                            name="musical-notes"
-                            size={20}
-                            color="white/30"
-                          />
-                        </View>
-                      )}
-                      <View className="flex-1">
-                        <Text
-                          className="text-white font-semibold"
-                          numberOfLines={1}
-                        >
-                          {track.name}
-                        </Text>
-                        <Text
-                          className="text-white/50 text-xs mt-0.5"
-                          numberOfLines={1}
-                        >
-                          {track.artist}
-                        </Text>
-                      </View>
-                      <Ionicons name="play" size={20} color={vibrant} />
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            </ScrollView>
+                      {track.name}
+                    </Text>
+                    <Text
+                      className="text-white/50 text-xs mt-0.5"
+                      numberOfLines={1}
+                    >
+                      {track.artist}
+                    </Text>
+                  </View>
+                  <Ionicons name="play" size={20} color={vibrant} />
+                </Pressable>
+              )}
+            />
           </View>
         </Animated.View>
       )}
