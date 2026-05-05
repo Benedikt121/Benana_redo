@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { MarqueeText } from "../common/MarqueeText";
 import { useFriendActions } from "@/hooks/friends/useFriendActions";
 import { useListeningParty } from "@/hooks/sockets/useListeningParty";
+import { useMusicStore } from "@/store/music.store";
 import { BlurView } from "expo-blur";
 
 interface FriendItemProps {
@@ -28,14 +29,22 @@ export const FriendItem: React.FC<FriendItemProps> = ({
   const isPlaying = !!friend.musicState;
   const { unfriend } = useFriendActions();
   const { joinParty } = useListeningParty();
+  const listeningToHostId = useMusicStore((state) => state.listeningToHostId);
+  const isListeningToThisFriend = listeningToHostId === friend.friend.id;
   const [menuVisible, setMenuVisible] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const openMenu = () => setMenuVisible(true);
   const closeMenu = () => setMenuVisible(false);
 
+  const { leaveParty } = useListeningParty();
+
   const handleJoin = () => {
-    joinParty(friend.friend.id);
+    if (isListeningToThisFriend) {
+      leaveParty(friend.friend.id);
+    } else {
+      joinParty(friend.friend.id);
+    }
     closeMenu();
   };
 
@@ -46,7 +55,11 @@ export const FriendItem: React.FC<FriendItemProps> = ({
   };
 
   const onJoinPress = () => {
-    joinParty(friend.friend.id);
+    if (isListeningToThisFriend) {
+      leaveParty(friend.friend.id);
+    } else {
+      joinParty(friend.friend.id);
+    }
   };
 
   const MenuContent = () => (
@@ -64,10 +77,20 @@ export const FriendItem: React.FC<FriendItemProps> = ({
             onPress={handleJoin}
             className="flex-row items-center p-3 rounded-xl active:bg-white/10"
           >
-            <View className="bg-[#1DB954]/20 w-8 h-8 rounded-full  items-center justify-center mr-3">
-              <Ionicons name="headset" size={18} color="#1DB954" />
+            <View
+              className={`${isListeningToThisFriend ? "bg-red-500/20" : "bg-[#1DB954]/20"} w-8 h-8 rounded-full items-center justify-center mr-3`}
+            >
+              <Ionicons
+                name={isListeningToThisFriend ? "log-out" : "headset"}
+                size={18}
+                color={isListeningToThisFriend ? "#ef4444" : "#1DB954"}
+              />
             </View>
-            <Text className="text-white font-medium">Party beitreten</Text>
+            <Text
+              className={`${isListeningToThisFriend ? "text-red-500" : "text-white"} font-medium`}
+            >
+              {isListeningToThisFriend ? "Party verlassen" : "Party beitreten"}
+            </Text>
           </Pressable>
         )}
 
@@ -165,9 +188,13 @@ export const FriendItem: React.FC<FriendItemProps> = ({
                 {isPlaying && (
                   <Pressable
                     onPress={onJoinPress}
-                    className="bg-[#1DB954]/20 p-2 rounded-full"
+                    className={`${isListeningToThisFriend ? "bg-red-500/20" : "bg-[#1DB954]/20"} p-2 rounded-full`}
                   >
-                    <Ionicons name="headset" size={16} color="#1DB954" />
+                    <Ionicons
+                      name={isListeningToThisFriend ? "log-out" : "headset"}
+                      size={16}
+                      color={isListeningToThisFriend ? "#ef4444" : "#1DB954"}
+                    />
                   </Pressable>
                 )}
                 <Pressable onPress={openMenu} className="p-2">

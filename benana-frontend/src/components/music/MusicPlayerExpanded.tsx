@@ -30,6 +30,9 @@ import { useMusicProgress } from "@/hooks/music/useMusicProgress";
 import { formatTimeMs } from "@/utils/formatTimeMs";
 import { useQuery } from "@tanstack/react-query";
 import { useMusicStore } from "@/store/music.store";
+import { useFriendsStore } from "@/store/friends.store";
+import { useListeningParty } from "@/hooks/sockets/useListeningParty";
+import { ProfileCircle } from "../profile/profileCircle";
 
 interface MusicPlayerExpandedProps {
   visible: boolean;
@@ -64,10 +67,13 @@ export const MusicPlayerExpanded = ({
   const [isLoading, setIsLoading] = useState(false);
   const appleMusicToken = useUserStore((s) => s.profile?.appleMusicUserToken);
 
-  const { shuffle, repeatMode, autoplay } = useMusicStore();
+  const { listeningToHostId, shuffle, repeatMode, autoplay, preferedPlatform } =
+    useMusicStore();
+  const friends = useFriendsStore((s) => s.friends);
+  const hostFriend = friends.find((f) => f.friend.id === listeningToHostId);
+  const isListener = !!listeningToHostId;
+  const { leaveParty } = useListeningParty();
   const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
-
-  const preferedPlatform = useMusicStore((s) => s.preferedPlatform);
 
   React.useEffect(() => {
     if (visible) {
@@ -256,43 +262,65 @@ export const MusicPlayerExpanded = ({
               </View>
 
               {/* Controls */}
-              <View className="flex-row items-center justify-center gap-10 md:gap-8 mt-7 mb-2">
-                <Pressable
-                  onPress={skipPrevious}
-                  className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
-                  hitSlop={16}
-                >
-                  <Ionicons
-                    name="play-skip-back"
-                    size={isLargeScreen ? 24 : 28}
-                    color="#fff"
-                  />
-                </Pressable>
+              {isListener ? (
+                <View className="w-full md:max-w-[500px] mt-7 mb-2 items-center">
+                  <View className="flex-row items-center bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
+                    <ProfileCircle userId={listeningToHostId!} size={32} />
+                    <View className="ml-3 mr-6">
+                      <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">
+                        Listening to
+                      </Text>
+                      <Text className="text-white font-bold text-base">
+                        {hostFriend?.friend.username || "Friend"}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => leaveParty(listeningToHostId!)}
+                      className="bg-red-500/20 p-2 rounded-xl active:bg-red-500/30"
+                    >
+                      <Ionicons name="log-out" size={20} color="#ef4444" />
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View className="flex-row items-center justify-center gap-10 md:gap-8 mt-7 mb-2">
+                  <Pressable
+                    onPress={skipPrevious}
+                    className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
+                    hitSlop={16}
+                  >
+                    <Ionicons
+                      name="play-skip-back"
+                      size={isLargeScreen ? 24 : 28}
+                      color="#fff"
+                    />
+                  </Pressable>
 
-                <Pressable
-                  onPress={togglePlayPause}
-                  className="w-16 h-16 md:w-14 md:h-14 rounded-full bg-white items-center justify-center"
-                  hitSlop={16}
-                >
-                  <Ionicons
-                    name={isPlaying ? "pause" : "play"}
-                    size={isLargeScreen ? 28 : 32}
-                    color="#000"
-                  />
-                </Pressable>
+                  <Pressable
+                    onPress={togglePlayPause}
+                    className="w-16 h-16 md:w-14 md:h-14 rounded-full bg-white items-center justify-center"
+                    hitSlop={16}
+                  >
+                    <Ionicons
+                      name={isPlaying ? "pause" : "play"}
+                      size={isLargeScreen ? 28 : 32}
+                      color="#000"
+                    />
+                  </Pressable>
 
-                <Pressable
-                  onPress={skipNext}
-                  className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
-                  hitSlop={16}
-                >
-                  <Ionicons
-                    name="play-skip-forward"
-                    size={isLargeScreen ? 24 : 28}
-                    color="#fff"
-                  />
-                </Pressable>
-              </View>
+                  <Pressable
+                    onPress={skipNext}
+                    className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
+                    hitSlop={16}
+                  >
+                    <Ionicons
+                      name="play-skip-forward"
+                      size={isLargeScreen ? 24 : 28}
+                      color="#fff"
+                    />
+                  </Pressable>
+                </View>
+              )}
 
               {/* Platform indicator & Playback Modes */}
               <View className="w-full md:max-w-[500px] flex-row items-center justify-between mt-4 py-2 border-t border-white/5">
@@ -320,51 +348,55 @@ export const MusicPlayerExpanded = ({
                 </View>
 
                 <View className="flex-row items-center gap-6">
-                  <>
-                    <Pressable
-                      onPress={() => musicPlayback.setShuffle(!shuffle)}
-                      hitSlop={8}
-                    >
-                      <Ionicons
-                        name="shuffle"
-                        size={20}
-                        color={shuffle ? vibrant : "rgba(255,255,255,0.3)"}
-                      />
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        const modes: ("off" | "one" | "all")[] = [
-                          "off",
-                          "one",
-                          "all",
-                        ];
-                        const next = modes[(modes.indexOf(repeatMode) + 1) % 3];
-                        musicPlayback.setRepeatMode(next);
-                      }}
-                      hitSlop={8}
-                    >
-                      <View className="items-center justify-center">
+                  {!isListener && (
+                    <>
+                      <Pressable
+                        onPress={() => musicPlayback.setShuffle(!shuffle)}
+                        hitSlop={8}
+                      >
                         <Ionicons
-                          name={
-                            repeatMode === "one" ? "repeat-outline" : "repeat"
-                          }
+                          name="shuffle"
                           size={20}
-                          color={
-                            repeatMode !== "off"
-                              ? vibrant
-                              : "rgba(255,255,255,0.3)"
-                          }
+                          color={shuffle ? vibrant : "rgba(255,255,255,0.3)"}
                         />
-                        {repeatMode === "one" && (
-                          <View className="absolute bg-white rounded-full w-1 h-1 bottom-[-4px]" />
-                        )}
-                      </View>
-                    </Pressable>
-                  </>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => {
+                          const modes: ("off" | "one" | "all")[] = [
+                            "off",
+                            "one",
+                            "all",
+                          ];
+                          const next =
+                            modes[(modes.indexOf(repeatMode) + 1) % 3];
+                          musicPlayback.setRepeatMode(next);
+                        }}
+                        hitSlop={8}
+                      >
+                        <View className="items-center justify-center">
+                          <Ionicons
+                            name={
+                              repeatMode === "one" ? "repeat-outline" : "repeat"
+                            }
+                            size={20}
+                            color={
+                              repeatMode !== "off"
+                                ? vibrant
+                                : "rgba(255,255,255,0.3)"
+                            }
+                          />
+                          {repeatMode === "one" && (
+                            <View className="absolute bg-white rounded-full w-1 h-1 bottom-[-4px]" />
+                          )}
+                        </View>
+                      </Pressable>
+                    </>
+                  )}
 
                   {currentSong.platform === "APPLE_MUSIC" &&
-                    Platform.OS === "web" && (
+                    Platform.OS === "web" &&
+                    !isListener && (
                       <Pressable
                         onPress={() => musicPlayback.setAutoplay(!autoplay)}
                         hitSlop={8}

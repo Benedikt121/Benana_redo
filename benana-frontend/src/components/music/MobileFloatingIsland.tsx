@@ -47,6 +47,7 @@ export const MobileFloatingIsland = () => {
   const setExpandedPlayerVisible = useMusicStore(
     (s) => s.setExpandedPlayerVisible,
   );
+  const listeningToHostId = useMusicStore((s) => s.listeningToHostId);
   const dominant = useColorStore((s) => s.dominant) || "#1DB954";
   const vibrant = useColorStore((s) => s.vibrant) || "#1DB954";
 
@@ -201,35 +202,37 @@ export const MobileFloatingIsland = () => {
             </Pressable>
 
             {/* Controls */}
-            <View className="flex-row items-center gap-[2px]">
-              <Pressable
-                onPress={skipPrevious}
-                className="w-[34px] h-[34px] rounded-full items-center justify-center"
-                hitSlop={12}
-              >
-                <Ionicons name="play-skip-back" size={16} color="#fff" />
-              </Pressable>
+            {!listeningToHostId && (
+              <View className="flex-row items-center gap-[2px]">
+                <Pressable
+                  onPress={skipPrevious}
+                  className="w-[34px] h-[34px] rounded-full items-center justify-center"
+                  hitSlop={12}
+                >
+                  <Ionicons name="play-skip-back" size={16} color="#fff" />
+                </Pressable>
 
-              <Pressable
-                onPress={togglePlayPause}
-                className="w-[34px] h-[34px] rounded-full bg-white items-center justify-center"
-                hitSlop={12}
-              >
-                <Ionicons
-                  name={isPlaying ? "pause" : "play"}
-                  size={18}
-                  color="#000"
-                />
-              </Pressable>
+                <Pressable
+                  onPress={togglePlayPause}
+                  className="w-[34px] h-[34px] rounded-full bg-white items-center justify-center"
+                  hitSlop={12}
+                >
+                  <Ionicons
+                    name={isPlaying ? "pause" : "play"}
+                    size={18}
+                    color="#000"
+                  />
+                </Pressable>
 
-              <Pressable
-                onPress={skipNext}
-                className="w-[34px] h-[34px] rounded-full items-center justify-center"
-                hitSlop={12}
-              >
-                <Ionicons name="play-skip-forward" size={16} color="#fff" />
-              </Pressable>
-            </View>
+                <Pressable
+                  onPress={skipNext}
+                  className="w-[34px] h-[34px] rounded-full items-center justify-center"
+                  hitSlop={12}
+                >
+                  <Ionicons name="play-skip-forward" size={16} color="#fff" />
+                </Pressable>
+              </View>
+            )}
           </Animated.View>
         </Animated.View>
       </Pressable>
