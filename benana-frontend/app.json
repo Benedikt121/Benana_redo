@@ -8,7 +8,11 @@
     "scheme": "benanafrontend",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": {
+        "dark": "./assets/images/ios-dark.png",
+        "light": "./assets/images/ios-light.png",
+        "tinted": "./assets/images/ios-tinted.png"
+      },
       "bundleIdentifier": "com.notbene.benanafrontend",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
