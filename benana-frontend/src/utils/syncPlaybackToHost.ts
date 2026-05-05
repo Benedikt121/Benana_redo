@@ -1,60 +1,67 @@
-import { forcePlaySpotify } from "@/api/music.api";
-import { useAuthStore } from "@/store/auth.store";
+import { musicPlayback } from "@/services/musicPlayback.service";
+import { useMusicStore } from "@/store/music.store";
 import { BackendSongInfo, MusicPlatform } from "@/types/MusicTypes";
 
-export const syncPlaybackToHost = async (
-  hostSong: BackendSongInfo,
-  myPlatform: MusicPlatform | null,
-) => {
-  if (!myPlatform) {
-    console.warn("No prefered platform found");
+export const syncPlaybackToHost = async (hostSong: BackendSongInfo) => {
+  const preferedPlatform = useMusicStore.getState().preferedPlatform;
+  if (!preferedPlatform) {
+    console.warn("No prefered platform found for sync");
     return;
   }
 
-  if (myPlatform === "SPOTIFY") {
-    try {
-      const { token } = useAuthStore.getState();
+  try {
+    const currentLocalSong = useMusicStore.getState().currentSong;
 
-      const trackToPLay = hostSong.spotifyTrackId;
+    const trackToPlay =
+      preferedPlatform === "SPOTIFY"
+        ? hostSong.spotifyTrackId
+        : hostSong.appleTrackId;
 
-      if (!trackToPLay) {
-        console.warn("No spotify track id available to sync");
-        return;
-      }
+    const now = Date.now();
 
-      const response = await forcePlaySpotify(trackToPLay, hostSong.timestamp);
+    const hostElapsed = now - (hostSong.updatedAt || now);
+    const estimatedHostTime =
+      hostSong.timestamp +
+      (hostSong.playbackState === "PLAYING" ? hostElapsed : 0);
 
-      if (response.status !== 200) {
-        throw new Error("Sync failed, is the Spotify-App running?");
-      }
+    const localElapsed = now - (currentLocalSong?.updatedAt || now);
+    const estimatedLocalTime =
+      (currentLocalSong?.timestamp || 0) +
+      (currentLocalSong?.playbackState === "PLAYING" ? localElapsed : 0);
 
-      console.log("Sync successful");
-    } catch (error) {
-      console.error(error);
-    }
-  } else if (myPlatform === "APPLE_MUSIC") {
-    try {
-      if (typeof window !== undefined && window.MusicKit) {
-        const music = window.MusicKit.getInstance();
+    const isSameTrack =
+      currentLocalSong?.trackId === hostSong.trackId ||
+      (preferedPlatform === "SPOTIFY" &&
+        currentLocalSong?.spotifyTrackId === hostSong.spotifyTrackId) ||
+      (preferedPlatform === "APPLE_MUSIC" &&
+        currentLocalSong?.appleTrackId === hostSong.appleTrackId);
 
-        const trackToPlay = hostSong.appleTrackId;
+    const timeDiff = Math.abs(estimatedLocalTime - estimatedHostTime);
 
-        if (!trackToPlay) {
-          console.warn("No apple track id available to sync");
-          return;
-        }
-        await music.setQueue({ song: trackToPlay });
+    const stateChanged =
+      currentLocalSong?.playbackState !== hostSong.playbackState;
 
-        await music.play();
+    if (!isSameTrack || timeDiff > 7000 || stateChanged) {
+      console.log(
+        `[Sync] Triggering sync. Reason: SameTrack=${isSameTrack}, TimeDiff=${Math.round(
+          timeDiff,
+        )}ms, StateChanged=${stateChanged}`,
+      );
+      await musicPlayback.playTrack(trackToPlay!, estimatedHostTime);
 
+      if (hostSong.playbackState === "PAUSED") {
         setTimeout(async () => {
-          await music.seekToTime(hostSong.timestamp / 1000);
+          await musicPlayback.pause();
         }, 500);
       }
-
-      console.log("Apple Music Sync successful");
-    } catch (error) {
-      console.error("Apple Music Sync failed", error);
+    } else {
+      console.log(
+        `[Sync] Skipping sync, already in sync with host (Diff: ${Math.round(
+          timeDiff,
+        )}ms).`,
+      );
     }
+  } catch (error) {
+    console.error(`${preferedPlatform} Sync failed`, error);
   }
 };

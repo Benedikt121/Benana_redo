@@ -93,11 +93,16 @@ export const syncSpotifyPlayback = async (
     const token = await getValidSpotifyToken(userId);
     if (!token) return false;
 
+    // Ensure the track ID has the correct spotify:track: prefix
+    const trackUri = spotifyTrackId.startsWith("spotify:track:")
+      ? spotifyTrackId
+      : `spotify:track:${spotifyTrackId}`;
+
     await axios.put(
       "https://api.spotify.com/v1/me/player/play",
       {
-        uris: [spotifyTrackId],
-        position_ms: positionMs,
+        uris: [trackUri],
+        position_ms: Math.floor(positionMs),
       },
       {
         headers: {

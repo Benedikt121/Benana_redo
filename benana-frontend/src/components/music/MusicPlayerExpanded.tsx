@@ -6,6 +6,7 @@ import {
   Image,
   useWindowDimensions,
   Platform,
+  FlatList,
 } from "react-native";
 import Animated, {
   Easing,
@@ -30,6 +31,10 @@ import { useMusicProgress } from "@/hooks/music/useMusicProgress";
 import { formatTimeMs } from "@/utils/formatTimeMs";
 import { useQuery } from "@tanstack/react-query";
 import { useMusicStore } from "@/store/music.store";
+import { useFriendsStore } from "@/store/friends.store";
+import { useListeningParty } from "@/hooks/sockets/useListeningParty";
+import { ProfileCircle } from "../profile/profileCircle";
+import { triggerHaptic } from "@/utils/haptics";
 
 interface MusicPlayerExpandedProps {
   visible: boolean;
@@ -64,10 +69,13 @@ export const MusicPlayerExpanded = ({
   const [isLoading, setIsLoading] = useState(false);
   const appleMusicToken = useUserStore((s) => s.profile?.appleMusicUserToken);
 
-  const { shuffle, repeatMode, autoplay } = useMusicStore();
+  const { listeningToHostId, shuffle, repeatMode, autoplay, preferedPlatform } =
+    useMusicStore();
+  const friends = useFriendsStore((s) => s.friends);
+  const hostFriend = friends.find((f) => f.friend.id === listeningToHostId);
+  const isListener = !!listeningToHostId;
+  const { leaveParty } = useListeningParty();
   const [selectedPlaylist, setSelectedPlaylist] = useState<any | null>(null);
-
-  const preferedPlatform = useMusicStore((s) => s.preferedPlatform);
 
   React.useEffect(() => {
     if (visible) {
@@ -162,7 +170,10 @@ export const MusicPlayerExpanded = ({
           {/* Header — close button */}
           <View className="w-full flex-row items-center justify-between mb-6">
             <Pressable
-              onPress={onClose}
+              onPress={() => {
+                onClose();
+                triggerHaptic("light");
+              }}
               className="w-7 h-7 items-center justify-center"
               hitSlop={16}
             >
@@ -256,43 +267,77 @@ export const MusicPlayerExpanded = ({
               </View>
 
               {/* Controls */}
-              <View className="flex-row items-center justify-center gap-10 md:gap-8 mt-7 mb-2">
-                <Pressable
-                  onPress={skipPrevious}
-                  className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
-                  hitSlop={16}
-                >
-                  <Ionicons
-                    name="play-skip-back"
-                    size={isLargeScreen ? 24 : 28}
-                    color="#fff"
-                  />
-                </Pressable>
+              {isListener ? (
+                <View className="w-full md:max-w-[500px] mt-7 mb-2 items-center">
+                  <View className="flex-row items-center bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
+                    <ProfileCircle userId={listeningToHostId!} size={32} />
+                    <View className="ml-3 mr-6">
+                      <Text className="text-white/40 text-[10px] font-bold uppercase tracking-wider">
+                        Listening to
+                      </Text>
+                      <Text className="text-white font-bold text-base">
+                        {hostFriend?.friend.username || "Friend"}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        leaveParty(listeningToHostId!);
+                        triggerHaptic("light");
+                      }}
+                      className="bg-red-500/20 p-2 rounded-xl active:bg-red-500/30"
+                    >
+                      <Ionicons name="log-out" size={20} color="#ef4444" />
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View className="flex-row items-center justify-center gap-10 md:gap-8 mt-7 mb-2">
+                  <Pressable
+                    onPress={() => {
+                      skipPrevious();
+                      triggerHaptic("light");
+                    }}
+                    className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
+                    hitSlop={16}
+                  >
+                    <Ionicons
+                      name="play-skip-back"
+                      size={isLargeScreen ? 24 : 28}
+                      color="#fff"
+                    />
+                  </Pressable>
 
-                <Pressable
-                  onPress={togglePlayPause}
-                  className="w-16 h-16 md:w-14 md:h-14 rounded-full bg-white items-center justify-center"
-                  hitSlop={16}
-                >
-                  <Ionicons
-                    name={isPlaying ? "pause" : "play"}
-                    size={isLargeScreen ? 28 : 32}
-                    color="#000"
-                  />
-                </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      togglePlayPause();
+                      triggerHaptic("medium");
+                    }}
+                    className="w-16 h-16 md:w-14 md:h-14 rounded-full bg-white items-center justify-center"
+                    hitSlop={16}
+                  >
+                    <Ionicons
+                      name={isPlaying ? "pause" : "play"}
+                      size={isLargeScreen ? 28 : 32}
+                      color="#000"
+                    />
+                  </Pressable>
 
-                <Pressable
-                  onPress={skipNext}
-                  className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
-                  hitSlop={16}
-                >
-                  <Ionicons
-                    name="play-skip-forward"
-                    size={isLargeScreen ? 24 : 28}
-                    color="#fff"
-                  />
-                </Pressable>
-              </View>
+                  <Pressable
+                    onPress={() => {
+                      skipNext();
+                      triggerHaptic("light");
+                    }}
+                    className="w-12 h-12 md:w-10 md:h-10 rounded-full items-center justify-center"
+                    hitSlop={16}
+                  >
+                    <Ionicons
+                      name="play-skip-forward"
+                      size={isLargeScreen ? 24 : 28}
+                      color="#fff"
+                    />
+                  </Pressable>
+                </View>
+              )}
 
               {/* Platform indicator & Playback Modes */}
               <View className="w-full md:max-w-[500px] flex-row items-center justify-between mt-4 py-2 border-t border-white/5">
@@ -320,51 +365,59 @@ export const MusicPlayerExpanded = ({
                 </View>
 
                 <View className="flex-row items-center gap-6">
-                  <>
-                    <Pressable
-                      onPress={() => musicPlayback.setShuffle(!shuffle)}
-                      hitSlop={8}
-                    >
-                      <Ionicons
-                        name="shuffle"
-                        size={20}
-                        color={shuffle ? vibrant : "rgba(255,255,255,0.3)"}
-                      />
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        const modes: ("off" | "one" | "all")[] = [
-                          "off",
-                          "one",
-                          "all",
-                        ];
-                        const next = modes[(modes.indexOf(repeatMode) + 1) % 3];
-                        musicPlayback.setRepeatMode(next);
-                      }}
-                      hitSlop={8}
-                    >
-                      <View className="items-center justify-center">
+                  {!isListener && (
+                    <>
+                      <Pressable
+                        onPress={() => {
+                          musicPlayback.setShuffle(!shuffle);
+                          triggerHaptic("selection");
+                        }}
+                        hitSlop={8}
+                      >
                         <Ionicons
-                          name={
-                            repeatMode === "one" ? "repeat-outline" : "repeat"
-                          }
+                          name="shuffle"
                           size={20}
-                          color={
-                            repeatMode !== "off"
-                              ? vibrant
-                              : "rgba(255,255,255,0.3)"
-                          }
+                          color={shuffle ? vibrant : "rgba(255,255,255,0.3)"}
                         />
-                        {repeatMode === "one" && (
-                          <View className="absolute bg-white rounded-full w-1 h-1 bottom-[-4px]" />
-                        )}
-                      </View>
-                    </Pressable>
-                  </>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => {
+                          const modes: ("off" | "one" | "all")[] = [
+                            "off",
+                            "one",
+                            "all",
+                          ];
+                          const next =
+                            modes[(modes.indexOf(repeatMode) + 1) % 3];
+                          musicPlayback.setRepeatMode(next);
+                          triggerHaptic("selection");
+                        }}
+                        hitSlop={8}
+                      >
+                        <View className="items-center justify-center">
+                          <Ionicons
+                            name={
+                              repeatMode === "one" ? "repeat-outline" : "repeat"
+                            }
+                            size={20}
+                            color={
+                              repeatMode !== "off"
+                                ? vibrant
+                                : "rgba(255,255,255,0.3)"
+                            }
+                          />
+                          {repeatMode === "one" && (
+                            <View className="absolute bg-white rounded-full w-1 h-1 bottom-[-4px]" />
+                          )}
+                        </View>
+                      </Pressable>
+                    </>
+                  )}
 
                   {currentSong.platform === "APPLE_MUSIC" &&
-                    Platform.OS === "web" && (
+                    Platform.OS === "web" &&
+                    !isListener && (
                       <Pressable
                         onPress={() => musicPlayback.setAutoplay(!autoplay)}
                         hitSlop={8}
@@ -408,7 +461,10 @@ export const MusicPlayerExpanded = ({
                   <Pressable
                     key={`${pl.id}-${index}`}
                     className="w-[47%] sm:w-[30%] md:w-[22%] lg:w-[18%] mb-6 items-center"
-                    onPress={() => setSelectedPlaylist(pl)}
+                    onPress={() => {
+                      setSelectedPlaylist(pl);
+                      triggerHaptic("selection");
+                    }}
                   >
                     {artworkUrl ? (
                       <Image
@@ -470,7 +526,13 @@ export const MusicPlayerExpanded = ({
         >
           <View className="flex-1">
             <View className="flex-row items-center px-6 py-4 justify-between">
-              <Pressable onPress={() => setSelectedPlaylist(null)} hitSlop={16}>
+              <Pressable
+                onPress={() => {
+                  setSelectedPlaylist(null);
+                  triggerHaptic("light");
+                }}
+                hitSlop={16}
+              >
                 <Ionicons name="chevron-back" size={28} color="white" />
               </Pressable>
               <Text className="text-white font-bold text-lg" numberOfLines={1}>
@@ -479,92 +541,107 @@ export const MusicPlayerExpanded = ({
               <View style={{ width: 28 }} />
             </View>
 
-            <ScrollView className="flex-1 px-6">
-              <View className="items-center mt-6 mb-8">
-                <Image
-                  source={{
-                    uri:
-                      selectedPlaylist.attributes?.artwork?.url
-                        ?.replace("{w}", "600")
-                        .replace("{h}", "600") || selectedPlaylist.artworkUrl,
-                  }}
-                  className="w-64 h-64 rounded-2xl shadow-2xl"
-                />
-                <Text className="text-white text-2xl font-bold mt-6 text-center">
-                  {selectedPlaylist.attributes?.name || selectedPlaylist.name}
-                </Text>
-                {preferedPlatform !== "SPOTIFY" && (
-                  <Text className="text-white/50 text-sm mt-1">
-                    {playlistTracks?.length || 0} Songs
+            <FlatList
+              data={playlistTracks || []}
+              keyExtractor={(item, index) => `${item.id}-${index}`}
+              contentContainerStyle={{ paddingBottom: 100 }}
+              ListHeaderComponent={
+                <View className="items-center mt-6 mb-8">
+                  <Image
+                    source={{
+                      uri:
+                        selectedPlaylist.attributes?.artwork?.url
+                          ?.replace("{w}", "600")
+                          .replace("{h}", "600") || selectedPlaylist.artworkUrl,
+                    }}
+                    className="w-64 h-64 rounded-2xl shadow-2xl"
+                  />
+                  <Text className="text-white text-2xl font-bold mt-6 text-center">
+                    {selectedPlaylist.attributes?.name || selectedPlaylist.name}
                   </Text>
-                )}
-
-                <View className="flex-row items-center gap-4 mt-6">
-                  <Pressable
-                    className="w-12 h-12 rounded-full bg-white/10 items-center justify-center active:bg-white/20"
-                    onPress={() => playPlaylistShuffled(selectedPlaylist.id)}
-                  >
-                    <Ionicons name="shuffle" size={24} color="white" />
-                  </Pressable>
-
-                  <Pressable
-                    className="bg-white px-10 py-3 rounded-full active:opacity-80"
-                    onPress={() => playPlaylist(selectedPlaylist.id)}
-                  >
-                    <Text className="text-black font-bold text-lg">
-                      Play All
+                  {preferedPlatform !== "SPOTIFY" && (
+                    <Text className="text-white/50 text-sm mt-1">
+                      {playlistTracks?.length || 0} Songs
                     </Text>
-                  </Pressable>
-                </View>
-              </View>
+                  )}
 
-              <View className="gap-4 pb-20">
-                {isLoadingTracks ? (
+                  <View className="flex-row items-center gap-4 mt-6">
+                    <Pressable
+                      className="w-12 h-12 rounded-full bg-white/10 items-center justify-center active:bg-white/20"
+                      onPress={() => {
+                        playPlaylistShuffled(selectedPlaylist.id);
+                        triggerHaptic("selection");
+                      }}
+                    >
+                      <Ionicons name="shuffle" size={24} color="white" />
+                    </Pressable>
+
+                    <Pressable
+                      className="bg-white px-10 py-3 rounded-full active:opacity-80"
+                      onPress={() => {
+                        playPlaylist(selectedPlaylist.id);
+                        triggerHaptic("success");
+                      }}
+                    >
+                      <Text className="text-black font-bold text-lg">
+                        Play All
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              }
+              ListEmptyComponent={
+                isLoadingTracks ? (
                   <ActivityIndicator
                     color={vibrant}
                     style={{ marginTop: 20 }}
                   />
                 ) : (
-                  playlistTracks?.map((track: any, index: number) => (
-                    <Pressable
-                      key={`${track.id}-${index}`}
-                      className="flex-row items-center gap-4 active:bg-white/5 p-2 rounded-xl"
-                      onPress={() => playTrack(track.id)}
+                  <Text className="text-white/30 text-center mt-10">
+                    No songs found.
+                  </Text>
+                )
+              }
+              renderItem={({ item: track }) => (
+                <Pressable
+                  className="flex-row items-center gap-4 active:bg-white/5 p-2 rounded-xl mb-2"
+                  onPress={() => {
+                    playTrack(track.id);
+                    triggerHaptic("selection");
+                  }}
+                >
+                  {track.artworkUrl ? (
+                    <Image
+                      source={{ uri: track.artworkUrl }}
+                      className="w-12 h-12 rounded-lg"
+                    />
+                  ) : (
+                    <View className="w-12 h-12 rounded-lg bg-white/10 items-center justify-center">
+                      <Ionicons
+                        name="musical-notes"
+                        size={20}
+                        color="white/30"
+                      />
+                    </View>
+                  )}
+                  <View className="flex-1">
+                    <Text
+                      className="text-white font-semibold"
+                      numberOfLines={1}
                     >
-                      {track.artworkUrl ? (
-                        <Image
-                          source={{ uri: track.artworkUrl }}
-                          className="w-12 h-12 rounded-lg"
-                        />
-                      ) : (
-                        <View className="w-12 h-12 rounded-lg bg-white/10 items-center justify-center">
-                          <Ionicons
-                            name="musical-notes"
-                            size={20}
-                            color="white/30"
-                          />
-                        </View>
-                      )}
-                      <View className="flex-1">
-                        <Text
-                          className="text-white font-semibold"
-                          numberOfLines={1}
-                        >
-                          {track.name}
-                        </Text>
-                        <Text
-                          className="text-white/50 text-xs mt-0.5"
-                          numberOfLines={1}
-                        >
-                          {track.artist}
-                        </Text>
-                      </View>
-                      <Ionicons name="play" size={20} color={vibrant} />
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            </ScrollView>
+                      {track.name}
+                    </Text>
+                    <Text
+                      className="text-white/50 text-xs mt-0.5"
+                      numberOfLines={1}
+                    >
+                      {track.artist}
+                    </Text>
+                  </View>
+                  <Ionicons name="play" size={20} color={vibrant} />
+                </Pressable>
+              )}
+            />
           </View>
         </Animated.View>
       )}

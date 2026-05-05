@@ -74,13 +74,15 @@ export default function HeadlessMusicPlayer() {
             };
             setCurrentSong(songInfo);
 
-            // Broadcast status to friends via socket
+            // Broadcast status immediately on track change
             const socket = socketService.connect();
             const backendSong = mapSongInfoToBackendSong(songInfo);
-            const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
-            if (lastEmittedStateRef.current !== stateString) {
+            
+            // Only throttle progress updates, but allow track/state changes through
+            const trackStateKey = `${backendSong.trackId}-${backendSong.playbackState}`;
+            if (lastEmittedStateRef.current !== trackStateKey) {
               socket.emit("music_status_update", backendSong);
-              lastEmittedStateRef.current = stateString;
+              lastEmittedStateRef.current = trackStateKey;
             }
           }
           break;
@@ -97,13 +99,14 @@ export default function HeadlessMusicPlayer() {
             };
             setCurrentSong(updatedSong);
 
-            // Broadcast status to friends via socket
+            // Broadcast status immediately on state change
             const socket = socketService.connect();
             const backendSong = mapSongInfoToBackendSong(updatedSong);
-            const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
-            if (lastEmittedStateRef.current !== stateString) {
+            
+            const trackStateKey = `${backendSong.trackId}-${backendSong.playbackState}`;
+            if (lastEmittedStateRef.current !== trackStateKey) {
               socket.emit("music_status_update", backendSong);
-              lastEmittedStateRef.current = stateString;
+              lastEmittedStateRef.current = trackStateKey;
             }
           } else {
             setPlaybackState(mappedState);

@@ -54,13 +54,14 @@ export function useMusicSync() {
   const lastEmittedState = useRef<string | null>(null);
   const appState = useRef(AppState.currentState);
   const hostId = useMusicStore((state) => state.listeningToHostId);
+  const nextSongTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const socket = socketService.connect();
 
     const onHostSync = (data: BackendSongInfo) => {
+      syncPlaybackToHost(data);
       setCurrentSong(mapBackendSongToSongInfo(data));
-      syncPlaybackToHost(data, preferedPlatform);
       setFriendSong(hostId!, mapBackendSongToSongInfo(data));
     };
 
@@ -97,44 +98,60 @@ export function useMusicSync() {
 
       intervalId = setInterval(async () => {
         try {
-          if (preferedPlatform === "APPLE_MUSIC") {
-            // Apple Music Web Sync is now handled by HeadlessMusicPlayer.web.tsx
-            // to support the iframe bridge architecture.
-          } else if (preferedPlatform === "SPOTIFY") {
-            // LOKALES POLLING FÜR SPOTIFY
+          if (preferedPlatform === "SPOTIFY") {
             const response = await fetchCurrentSpotifySong();
+            if (!response || !response.data) return;
 
-            if (!response) return;
+            const backendSong: BackendSongInfo = response.data;
+            setCurrentSong(mapBackendSongToSongInfo(backendSong));
 
-            if (response.data) {
-              const backendSong: BackendSongInfo = response.data;
+            // Sync external Spotify state to our local UI store
+            if ((backendSong as any).shuffle !== undefined) {
+              useMusicStore.getState().setShuffle((backendSong as any).shuffle);
+            }
+            if ((backendSong as any).repeatMode !== undefined) {
+              let rMode = (backendSong as any).repeatMode;
+              if (rMode === "context") rMode = "all";
+              if (rMode === "track") rMode = "one";
+              useMusicStore.getState().setRepeatMode(rMode);
+            }
 
-              setCurrentSong(mapBackendSongToSongInfo(backendSong));
+            // Regular sync: Only emit if track/state changed OR significant progress jump
+            const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 10000)}`;
+            if (lastEmittedState.current !== stateString) {
+              socket.emit("music_status_update", backendSong);
+              lastEmittedState.current = stateString;
+            }
 
-              // Sync external Spotify state to our local UI store
-              if ((backendSong as any).shuffle !== undefined) {
-                useMusicStore.getState().setShuffle((backendSong as any).shuffle);
-              }
-              if ((backendSong as any).repeatMode !== undefined) {
-                let rMode = (backendSong as any).repeatMode;
-                if (rMode === "context") rMode = "all";
-                if (rMode === "track") rMode = "one";
-                useMusicStore.getState().setRepeatMode(rMode);
-              }
+            const timeLeft = backendSong.length - backendSong.timestamp;
+            if (
+              timeLeft > 0 &&
+              timeLeft < 11000 &&
+              backendSong.playbackState === "PLAYING"
+            ) {
+              if (nextSongTimeoutRef.current)
+                clearTimeout(nextSongTimeoutRef.current);
 
-              const stateString = `${backendSong.trackId}-${backendSong.playbackState}-${Math.floor(backendSong.timestamp / 5000)}`;
-              if (lastEmittedState.current !== stateString) {
-                socket.emit("music_status_update", backendSong);
-                lastEmittedState.current = stateString;
-              }
+              nextSongTimeoutRef.current = setTimeout(async () => {
+                try {
+                  const res = await fetchCurrentSpotifySong();
+                  if (res && res.data) {
+                    const nextSong = res.data;
+                    setCurrentSong(mapBackendSongToSongInfo(nextSong));
+                    socket.emit("music_status_update", nextSong);
+                    console.log("[Music Sync] Prädiktiver Sync ausgeführt.");
+                  }
+                } catch (e) {}
+              }, timeLeft + 200);
             }
           }
         } catch (error) {}
-      }, 5000);
+      }, 10000); // Polling auf 10 Sekunden erhöht um API-Quota zu sparen
     };
 
     const stopLocalPolling = () => {
       if (intervalId) clearInterval(intervalId);
+      if (nextSongTimeoutRef.current) clearTimeout(nextSongTimeoutRef.current);
     };
 
     const subscription = AppState.addEventListener("change", (nextAppState) => {

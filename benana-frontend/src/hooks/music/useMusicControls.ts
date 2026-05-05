@@ -3,6 +3,7 @@ import { useMusicStore } from "@/store/music.store";
 import { musicPlayback } from "@/services/musicPlayback.service";
 import { fetchCurrentSpotifySong } from "@/api/music.api";
 import { mapBackendSongToSongInfo } from "@/hooks/sockets/useMusicSync";
+import { socketService } from "@/services/sockets.service";
 
 export function useMusicControls() {
   const currentSong = useMusicStore((s) => s.currentSong);
@@ -18,9 +19,16 @@ export function useMusicControls() {
       try {
         const response = await fetchCurrentSpotifySong();
         if (response && response.data) {
-          setCurrentSong(mapBackendSongToSongInfo(response.data));
+          const songInfo = mapBackendSongToSongInfo(response.data);
+          setCurrentSong(songInfo);
+
+          // FORCE SYNC: Broadcast immediately after a manual action
+          if (socketService.socket?.connected) {
+            socketService.socket.emit("music_status_update", response.data);
+          }
+
           if (response.data.shuffle !== undefined) {
-             useMusicStore.getState().setShuffle(response.data.shuffle);
+            useMusicStore.getState().setShuffle(response.data.shuffle);
           }
           if (response.data.repeatMode !== undefined) {
             let rMode = response.data.repeatMode;

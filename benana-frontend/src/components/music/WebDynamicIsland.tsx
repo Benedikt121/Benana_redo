@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Platform,
-  Image,
-} from "react-native";
+import { View, Text, Pressable, Platform, Image } from "react-native";
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -43,6 +37,7 @@ export const WebDynamicIsland = () => {
   const setExpandedPlayerVisible = useMusicStore(
     (s) => s.setExpandedPlayerVisible,
   );
+  const listeningToHostId = useMusicStore((s) => s.listeningToHostId);
 
   const dominantColor = useColorStore((s) => s.dominant) || "#1a1a1a";
   const vibrantColor = useColorStore((s) => s.vibrant) || "#1DB954";
@@ -90,18 +85,32 @@ export const WebDynamicIsland = () => {
 
   return (
     <View
-      className="absolute top-4 left-1/2 -translate-x-1/2 z-[9999] items-center"
+      className="absolute top-4 left-1/2 -translate-x-1/2 z-9999 items-center"
       // @ts-ignore — web-only pointer events
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
     >
-      <Animated.View className="rounded-[28px] overflow-hidden justify-center items-center" style={containerStyle}>
+      <Animated.View
+        className="rounded-[28px] overflow-hidden justify-center items-center"
+        style={containerStyle}
+      >
         {/* Background */}
-        <View className="absolute inset-0 bg-black/90 border border-white/10 rounded-[28px]" style={{ backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)" }} />
+        <View
+          className="absolute inset-0 bg-black/90 border border-white/10 rounded-[28px]"
+          style={
+            {
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              boxShadow:
+                "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
+            } as any
+          }
+        />
 
         {/* Compact View */}
         <Animated.View
-          className="absolute inset-0 flex-row items-center justify-center gap-2 px-3" style={compactContentStyle}
+          className="absolute inset-0 flex-row items-center justify-center gap-2 px-3"
+          style={compactContentStyle}
           pointerEvents={isHovered && hasSong ? "none" : "auto"}
         >
           {!hasSong ? (
@@ -146,7 +155,8 @@ export const WebDynamicIsland = () => {
 
         {/* Expanded View — full controls */}
         <Animated.View
-          className="absolute inset-0 flex-row items-center px-4 gap-3" style={expandedContentStyle}
+          className="absolute inset-0 flex-row items-center px-4 gap-3"
+          style={expandedContentStyle}
           pointerEvents={isHovered && hasSong ? "auto" : "none"}
         >
           {/* Album Art */}
@@ -166,47 +176,54 @@ export const WebDynamicIsland = () => {
             onPress={() => setExpandedPlayerVisible(true)}
             className="flex-1 gap-[2px] overflow-hidden"
           >
-            <Text className="text-white text-[14px] font-semibold font-sans" numberOfLines={1}>
+            <Text
+              className="text-white text-[14px] font-semibold font-sans"
+              numberOfLines={1}
+            >
               {currentSong?.title}
             </Text>
-            <Text className="text-white/55 text-[12px] font-sans" numberOfLines={1}>
+            <Text
+              className="text-white/55 text-[12px] font-sans"
+              numberOfLines={1}
+            >
               {currentSong?.artist}
             </Text>
           </Pressable>
 
           {/* Controls */}
-          <View className="flex-row items-center gap-1">
-            <Pressable
-              onPress={skipPrevious}
-              className="w-9 h-9 rounded-full items-center justify-center"
-              hitSlop={8}
-            >
-              <Ionicons name="play-skip-back" size={16} color="#fff" />
-            </Pressable>
+          {!listeningToHostId && (
+            <View className="flex-row items-center gap-1">
+              <Pressable
+                onPress={skipPrevious}
+                className="w-9 h-9 rounded-full items-center justify-center"
+                hitSlop={8}
+              >
+                <Ionicons name="play-skip-back" size={16} color="#fff" />
+              </Pressable>
 
-            <Pressable
-              onPress={togglePlayPause}
-              className="w-9 h-9 rounded-full bg-white items-center justify-center"
-              hitSlop={8}
-            >
-              <Ionicons
-                name={isPlaying ? "pause" : "play"}
-                size={18}
-                color="#000"
-              />
-            </Pressable>
+              <Pressable
+                onPress={togglePlayPause}
+                className="w-9 h-9 rounded-full bg-white items-center justify-center"
+                hitSlop={8}
+              >
+                <Ionicons
+                  name={isPlaying ? "pause" : "play"}
+                  size={18}
+                  color="#000"
+                />
+              </Pressable>
 
-            <Pressable
-              onPress={skipNext}
-              className="w-9 h-9 rounded-full items-center justify-center"
-              hitSlop={8}
-            >
-              <Ionicons name="play-skip-forward" size={16} color="#fff" />
-            </Pressable>
-          </View>
+              <Pressable
+                onPress={skipNext}
+                className="w-9 h-9 rounded-full items-center justify-center"
+                hitSlop={8}
+              >
+                <Ionicons name="play-skip-forward" size={16} color="#fff" />
+              </Pressable>
+            </View>
+          )}
         </Animated.View>
       </Animated.View>
     </View>
   );
 };
-

@@ -2,6 +2,7 @@ import React from "react";
 import { FriendRequestToast } from "@/components/friends/FriendRequestToast";
 import { FriendRequest } from "@/types/FriendTypes";
 import { toast as sonnerToast } from "sonner-native";
+import { triggerHaptic } from "./haptics";
 
 /**
  * Premium toast utility wrapping sonner-native.
@@ -12,21 +13,25 @@ export const toast = {
     sonnerToast.success(message, {
       description,
     });
+    triggerHaptic("success");
   },
   error: (message: string, description?: string) => {
     sonnerToast.error(message, {
       description,
     });
+    triggerHaptic("error");
   },
   info: (message: string, description?: string) => {
     sonnerToast.info(message, {
       description,
     });
+    triggerHaptic("selection");
   },
   warning: (message: string, description?: string) => {
     sonnerToast.warning(message, {
       description,
     });
+    triggerHaptic("warning");
   },
   incomingFriendRequest: (friendRequest: FriendRequest) => {
     sonnerToast.custom(
@@ -35,6 +40,7 @@ export const toast = {
         description="Anfrage erhalten"
       />,
     );
+    triggerHaptic("medium");
   },
   custom: sonnerToast,
 };

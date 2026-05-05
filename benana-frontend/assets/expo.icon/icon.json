@@ -3,11 +3,14 @@
     {
       "layers": [
         {
+          "name": "background",
+          "color": "#ECBDFF"
+        },
+        {
           "image-name": "icon.svg",
           "name": "benana-logo",
           "position": {
-            "scale": 6,
-            "translation-in-points": [1.1008400065293245e-5, -16.046875]
+            "scale": 6.5
           }
         }
       ],

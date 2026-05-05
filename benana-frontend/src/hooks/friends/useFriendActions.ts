@@ -46,12 +46,25 @@ export function useFriendActions() {
     },
   });
 
+  const removeMutation = useMutation({
+    mutationFn: (friendshipId: string) => removeFriend(friendshipId),
+    onSuccess: () => {
+      toast.success("Freund entfernt.");
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.FRIENDS.FRIENDLIST,
+      });
+    },
+    onError: () => toast.error("Fehler beim Entfernen des Freundes."),
+  });
+
   return {
     acceptRequest: acceptMutation.mutate,
     declineRequest: declineMutation.mutate,
     sendRequest: sendRequestMutation.mutate,
+    unfriend: removeMutation.mutate,
     isAccepting: acceptMutation.isPending,
     isDeclining: declineMutation.isPending,
     isSending: sendRequestMutation.isPending,
+    isUnfriending: removeMutation.isPending,
   };
 }
